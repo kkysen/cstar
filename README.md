@@ -1,2 +1,0 @@
-# cstar
-the C* language
