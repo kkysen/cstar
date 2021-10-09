@@ -3,6 +3,9 @@
 Also written as `cstar` and pronounced **Sea Star**.
 
 
+![A sea star (aka starfish)](https://www.papo-france.com/1266-thickbox_default/starfish.jpg =100x100)
+
+
 ### Authors
 
 | Name        | UNI     |       Role       |
@@ -17,9 +20,9 @@ Also written as `cstar` and pronounced **Sea Star**.
 ## Introduction
 C* is a general-purpose systems programming language.  It is between the level of C and Zig on a semantic level, and syntactically it also borrows a lot from Rust (pun intended).  It is meant primarily for programs that would otherwise be implemented in C for the speed, simplicity, and explicitness of the language, but want a few simple higher-level language constructs, more expressiveness, and some safety, but no so many overwhelming language features and implicit costs like in Rust, C++, or Zig.
 
-It has manual memory management (no GC) and uses LLVM as its primary codegen backend, so can be optimized as well as C, or even better in cases.  All of C*'s higher-level language constructs are zero-cost, meaning none of those features give it any overhead over C, often lead to a highly-optimized style where in C you would take less efficient shortcuts (e.x. function pointers and type-erased generics).  In the future, it may also have a C backend so that it can target any architecture where there is a C compiler.
+It has manual memory management (no GC) and uses LLVM as its primary codegen backend, so can be optimized as well as C, or even better in cases.  All of C*'s higher-level language constructs are zero-cost, meaning none of those features give it any overhead over C, which often lead to a highly-optimized style where in C you would take less efficient shortcuts (e.x. function pointers and type-erased generics) and use dangerous constructs like `goto`.  In the future, it may also have a C backend so that it can target any architecture where there is a C compiler.
 
-While a general-purpose language, C* will probably have the most advantages when used in the embedded world.  It's expressivity and high-level features combined with its relative simplicity, performance, and explicitness is a perfect match for many embedded programs.
+While a general-purpose language, C* will probably have the most advantages when used in systems and embedded programming.  It's expressivity and high-level features combined with its relative simplicity, performance, and explicitness is a perfect match for many of these low-level systems and embedded programs.
 
 
 
@@ -46,13 +49,14 @@ Most unary operators and keywords can be used postfix as well.
 * `.*` for dereference
 * `.&` for pointer to
 * `.&mut` for mutable pointer to
+* `.!` for negation
 * `.@()` for builtins, like as (casting), size_of, etc.
     * `.@cast(T)`: convert to `T`, like an int to float cast, or an int widening cast
     * `.@ptr_cast<T>()`: cast a pointer like `*T` to `*U`
     * `.@bit_cast<T>()`: reinterpret the bits, like from `u32` to `f32`
     * `.@size_of()`: size of a type
     * `.@align_of()`: alignment of a type
-	* `.@call(func)`: call a function or closure in a unified syntax
+    * `.@call(func)`: call a function or closure in a unified syntax
 
 Combined with everything [being an expression](#expression-oriented), [`match`](#pattern-matching), and having [methods](#methods), this makes it much easier to write things in a very fluid style.
 
@@ -63,7 +67,7 @@ Furthermore, and perhaps most importantly in practice, this makes autocompletion
 C* has `struct`s for product types and `enum`s for sum types.  This is very powerful combined with [pattern matching](#pattern-matching).  `enum`s in particular, which are like tagged unions, are much safer and correct compared to C unions.  These data types are also fully zero-cost; there is no automatic boxing, and the safe performance as C can be easily be achieved.  Sometimes even better, because the layout of compound types is unspecified in C*.
 
 For example, you can do this to make a copy-on-write string.
-```rust=
+```rust
 struct String {
     ptr: *u8,
     len: usize,
@@ -87,7 +91,7 @@ Instead of having a `switch` statement like in C, C* has a generalized `match` s
 
 Furthermore, just like you can destructure to pattern match in a `match` statement, you can also do the same as a general statement, like in a `let`.  It's like an unconditional `match`.
 
-```rust=
+```rust
 let cow = CowString::Borrowed("🐄");
 let len = match cow {
     Borrowed(s) => s.len(),
@@ -101,7 +105,7 @@ Note that string literals are of the `String` type similarly defined as above, a
 
 ### Generics
 C* supports generic types and values, but they are at this point unconstrained.  That is, they are like C++'s concept-less templates.  They are always monomorphic, except when the exact same code can be shared (no boxing ever).  They are not currently higher-kinded.  Types and functions can be generic over both types and values, like this:
-```rust=
+```rust
 enum Option<T> {
     None,
     Some(T),
@@ -136,7 +140,7 @@ C* has pointers, `*T` and `*mut T`, but they are always non-null valid pointers.
 There are no exceptions in C*, just like C.  It uses return values for error handling, similarly to C.  But C* has much better support for this using the `Option` and `Result` types.
 
 The definitions of these types are:
-```rust=
+```rust
 struct Option<T> {
     None,
     Some(T),
@@ -150,7 +154,7 @@ struct Result<T, E> {
 That is, `Option` represents an optional value, and `Result` represents either a successful `Ok` value or an error `Err` value.
 
 There is special syntactic support for using these two monadic types for error-handling using the `.?` postfix operator in `try` blocks:
-```rust=
+```rust
 struct IndexError {
     index: usize,
 }
@@ -178,7 +182,7 @@ fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> try {
 ```
 
 This desugars to
-```rust=
+```rust
 fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> {
     let first = try {
         get_by_index(a, i).match {
@@ -211,7 +215,7 @@ There is no language-supported unwinding.  `abort` is immediately called after a
 To aid in resource handling, C* has a `defer` keyword.  `defer` defers the following statement or block until the function returns, but will run it no matter where the function returns from (but not `panic`s/`abort`s) (actually, the `defer` will run when its block exits, but its easier to just think about function blocks first).
 
 For example, you can use this to ensure you correctly clean up resources in a function:
-```rust=
+```rust
 extern "C" fn open(path: *u8, flags: i32): i32;
 extern "C" fn close(fd: i32): i32;
 
@@ -242,7 +246,7 @@ In this example, you have to allocate a path to store the directory and filename
 Instead, you can use `defer` for this.  No matter where you return from the function, it will run its statement right before that.  You can also use `defer` for any statement, not just resource cleanup, like logging for example.
 
 However, sometimes you want to cancel a `defer`:
-```rust=
+```rust
 struct FilePair {
     fd1: i32,
     fd2: i32,
@@ -261,6 +265,25 @@ fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try {
 
 In this example, you want open two files and return them if successfull.  If only one is successful, though, that's an error and you should close the first one before returning the error.  In order to do that cleanly, you can use the `undefer` keyword, which cancels an earlier labeled `defer`, in this case labeled `close`.
 
+`defer` and `undefer` are actually syntax sugar for something a bit more low-level and wordy:
+```rust
+fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try {
+    let fd1 = open_file_in_dir(b"", path1).?;
+    let close1 = {fd1} fn() close(fd1);
+    let close1 = close1.@defer());
+    let fd2 = open_file_in_dir(b"", path2).?;
+    let close2 = {fd1} fn() close(fd1);
+    let close2 = close2.@defer());
+    println(f"opened {fd1} and {fd2}");
+    let close = [close2, close1];
+    close.undo();
+    FilePair {fd1, fd2}
+}
+```
+
+That is, `.@defer()` places the closure on the stack and returns a `Defer` struct, which can be undone with `Defer.undo()` (`[Defer].undo()` just maps `Defer.undo()` over the array).  `Defer.undo()` sets a bit in the `Defer` struct that it's been undone.  Then when the stack unwinds, any none-undone `Defers` on the stack are run.
+
+
 ##### Comparison to Destructors
 In many other languages, destructors are used for resource handling instead of defer.  This is more uniform, automatic, and safe, since destructors run automatically when dropped out of scope.  If you have destructors, though, you also need moves in order to do what we can do with `undefer`, but then you also need ownership, which C* doesn't track.  Furthermore, `defer` is a lot more explicit and flexible.  All the resource cleanup is written explicitly so there are no hidden costs, which most programmers coming from C will prefer.  And since you can put any statement in a `defer`, it's much more flexible than destructors.
 
@@ -268,7 +291,7 @@ In many other languages, destructors are used for resource handling instead of d
 ### Methods
 C* has associated functions and simple methods, though these are largely syntactic sugar.  To declare these for a type, simply write:
 
-```rust=
+```rust
 struct Person {
     first_name: String,
     last_name: String,
@@ -325,7 +348,7 @@ Note that the `.&` and `*Self` are explicit, because wan't these kinds of things
 In C*, you can also use anonymous closures.  These are similar to normal functions, but they can "enclose" over values in the current scope.
 
 For example,
-```rust=
+```rust
 impl <T, F> Option<T> {
     fn map(self: Self, f: F): F(T) {
         match self {
@@ -365,7 +388,7 @@ The way closures are implemented are by creating an anonymous struct of the capt
 C* also has slices.  These are a pointer and length, and are much preferred to passing the pointer and length separately, like you usually have to do in C.
 
 They are implemented like this (not actually, but similarly):
-```rust=
+```rust
 struct Slice<T> {
     ptr: *T,
     len: usize,
@@ -385,12 +408,12 @@ Then there are byte strings, which are just `*[u8]` and do not have to be UTF-8 
 
 Furthermore, for easier C FFI, there is also `CString` and `CStringBuf`, which are explicitly null-terminated.  All other string types are not null-terminated, since they store their own length, which is way more efficient and safe.  Literal `CString`s have a `c` prefix, like `c"/home"`.
 
-And finally, there are format strings.  Written `f"i = {i}"`, they can interpolate variables within `{}`.  Types that can be used like this must have a `format` method (might change).  format, or f-strings, don't actually evaluate to a string, but rather evaluate to an anonymous struct that has methods to convert it all at once into a real string.  Thus, f-strings do not allocate.
+And finally, there are format strings.  Written `f"n + m = {n + m}"`, they can interpolate expressions within `{}`.  Types that can be used like this must have a `format` method (might change).  format, or f-strings, don't actually evaluate to a string, but rather evaluate to an anonymous struct that has methods to convert it all at once into a real string.  Thus, f-strings do not allocate.
 
 
 ### Imports
 Instead of using a preprocessor with `#include`s like in C, C* uses imports.  Each file is a module of its name, and it can be imported to use in another file/module, or specific items from that module.  Short modules can also be declared inline with
-```rust=
+```rust
 mod name {
 
 }
@@ -435,381 +458,111 @@ There is also an `extern "C" union {}` type available that is for FFI with C `un
 
 
 ## Examples
-TODO(kkysen): have longer examples here, like larger embedded stuff
 
 
-
-## The C* Language
-TODO(kkysen): I started writing this section first, but realized this was too detailed for the proposal I think, and should be for the language reference manual.  So I'm leaving it for now, but we should move it to a separate document later.
-
-
-#### Literals and Primitives
-In C*, there are a few primitive types that have literals:
-* integers:
-    * can be signed or unsigned, prefixed with `i` for signed and `u` for signed.
-    * have a bit size, either a power of 2 integer or
-        * `size`, which can represent the size of any data.
-        * `ptr`, which can represent, as an integer, any pointer.
-    * unsigned: `u8`, `u16`, `u32`, `u64`, `u128`, `usize`, `uptr`
-    * signed: `i8`, `i16`, `i32`, `i64`, `i128`, `isize`, `iptr`
-    * literals:
-        * are decimal by default.
-        * can also use `0x`, `0b`, and `0o` prefixes for hex, binary, and octal representations.
-            * e.x. `0xFF`
-        * can contain an optional suffix of the integer type, which is necessary when integer type cannot be inferred.
-            * e.x. `123u64`
-* floats:
-    * IEEE floating point numbers
-    * `f16`, `f32`, `f64`, `f128`
-    * literals:
-        * are decimal by default and also support scientific notation
-        * can contain an optional suffix of the float type, like for integers
-* boolean: 
-    * `bool`
-    * literals: `true`, `false`
-    * same size as `u8`
-* characters:
-    * `char`:
-        * literals: `'c'`, `'\u{0065}'`
-        * unicode scalar value
-    * `u8`:
-        * literals: `b'\n'`
-        * just a single `u8` byte
-* void/unit type: 
-    * type and literal are `()`
-    * zero-sized
-* undefined:
-    * not a type, but the `undefined` literal can be used for uninitialized data
-* arrays:
-    * not a primitive type
-    * must be all of same type
-    * size known at compile time
-    * type is `[T; N]` where `T` is the type and `N` is the size
-    * literals:
-        *  `[1, 2, 3]`
-* strings:
-    * strings are not a primitive type, but they have a literal representation for convenience
-    * e.x. `"hello"` for a UTF-8 string
-    * e.x. `b"hello"` for a `u8` array
-    * e.x. `f"hello {name}"` or `fb"hello {name}"` for format strings
-
-There are also some more literals for compound data types, which will be explained later.
-
-
-#### Variables
-In C*, variables are declared with `let`:
-```rust=
-let i = 1usize;
-let s = "hello";
-let n: i32 = 1;
-```
-Variable types are inferred by default, but can also be specified with the `let name: type = value` syntax, and must be if the type is ambiguous (e.x. non-suffixed number literals not deduced through use).  However, this type inference is only local to a function.  All data types and function arguments and return values must have declared types, not because they can't be inferred, but because it is far better for documentation and API versioning.
-
-Variables in C* are immutable by default.  If you want a mutable variable, declare it with `let mut`:
-```rust=
-let i = 1u32;
-i++;
-```
-Most of the time, immutable variables are all that needed, and this encourages mutable variables to only be deliberate and used where actually needed.
-
-Variable names can also be redeclared as a new variable by using a new `let` declaration, in which case the previous variable is shadowed and inaccessible:
-```rust=
-let s = "🏳️‍⚧️";
-let s = s.as_bytes();
-let mut s = s[1..].&;
-```
-
-
-#### Functions
-In C*, functions are declared like:
-```rust=
-fn foo(a: u32, b: u32): u32 {
-    a + b
-}
-```
-Note the implicit return, and see the section on Expression Oriented for more info.  Functions will return the last expression in a function, but the return can also be explicit, like in an early return:
-```rust=
-fn gcd(a: u32, b: u32): u32 {
-    if (b == 0) {
-        return b;
-    }
-    gcd(y, x % y)
-}
-```
-Also, if a function returns the unit type `()`, it can omit that.
-
-
-#### Generics
-C* supports generic types and values, but they are at this point unconstrained.  That is, they are like C++'s concept-less templates.
-TODO(kkysen): stopped this part here for now
-
-
-
-## Old Notes
-
-
-### Algebraic Data Types
-C* supports algrebraic data types: a `struct` product type and an `enum` sum type:
-
-```rust=
-struct String<T> {
-    ptr: *T,
-    len: usize,
-    cap: usize,
-}
-
-enum Option<T> {
-    None,
-    Some(T),
-}
-```
-
-C* also supports a `union` type like in C.  This is meant primarily for C FFI support.  In a `union`, all the fields share the same storage.
-```rust=
-union U {
-    
+### GCD
+Here is how you write simple algorithms like GCD in C*:
+```rust
+fn gcd(a: i64, b: i64): i64 {
+    (fn gcd(a: u64, b: u64): u64 {
+        match b {
+            0 => b,
+            _ => gcd(b, a % b),
+        }
+    })(a.abs(), b.abs()).@cast(i64)
 }
 ```
 
 
-### `match`
-Pattern matching with 
-Limited pattern matching
+### Systems Programming
+Here is an example program in C* for part of a simple HTTP/1.0 server, 
+equivalent to part0 of hw3 in Jae's OS class (https://gist.github.com/RyanLee64/hash-redacted).  It showcases many of C*'s notable features, like enums, methods, generics, defer, expression-orientedness, postfix operators, pattern matching, closures, monadic error handling, and byte, c, and format strings.
 
-
-### Expression-Oriented
-
-
-### Postfix Keywords, Operators
-as much as possible postfix:
-* `if`
-* `if/else`
-* `match`
-* `for` (use ranges)
-    * braces necessary for these control flows
-		maybe they can be prefix too
-* `.*` for dereference
-* `.&` for address of
-* `.@()` for builtins, like as (casting), size_of, etc.
-    * `.@cast(Type)`
-    * `.@size_of()`
-	* `.@call(func)`
-	* `.@ref()`
-	* `.@deref()`
-	* `.@match {}`
-	* `.@if {}`
-	* `.@if {} else {}`
-
-```rust=
-vec![1, 2]
-    .iter()
-    .map(|n| n * 2)
-    .find(|n| n > 2)
-    .match {
-        None => "",
-        Some(n) => n.to_string(),
-    }
-    .len();
-(match vec![1, 2]
-    .iter()
-    .map(|n| n * 2)
-    .find(|n| n > 2) {
-        None => "",
-        Some(n) => n.to_string(),
-    })
-    .len();
-```
-
-
-### `defer`
-```c=
-const int *const ints = malloc(sizeof(int) * 100);
-defer free(ints); //no matter how you exit the function, compiler knows you must run free
-defer printf(""); // prints right before any return statement
-if (read(fd, ints, 100 * sizeof(*ints)) == -1)     {
-    return -1;  //if error occurs, returns but never free's 
-}
-return 0;
-```
-```
-Alternatives to defer is destructor methods. More flexible and more dangerous. More explicit. (You never see the destructors in Rust)
-
-gcc has a language extension similar (but it's inconvienent)
-
-```c=
-const int fd = open("file");
-if (fd == -1) {
-    return;
-}
-close_file:
-    defer close(fd);
-FILE *const file = fdopen(fd, "r");
-if (!file) {
-    return;
-}
-undefer close_file;   //labels?
-defer fclose(file);   //fclose runs close itself, want to cancel the previous defer
-```
-Have an undefer? ^
-
-
-### Struct/Enum Literals aka Designated initalizers
-designated initializers and/or/combo JS/Rust
-```js
-const o = {
-    a: 1,
-    b: "string",
-    hello: "world",
-};
-```
-```c
-const struct string = (struct string) { //Can not initialize all at once and it'll let you do that
-    .ptr = NULL,
-    .len = 0,
-    /*
-     * memset vs ={0}
-     * Don't want uninitalized data 
-     * */
-};
-```
-
-
-    easier to split strings 
-    Faster to get length
+That code (the ported part) is ~230 LOC, while the C* below is only ~80 LOC, and it is more correct in error handling and edge cases, faster in places (though IO dominates here), and the business logic stands out more (while less important things like errors, resource cleanup, allocations, and string handling stay in the background).  That is, C* allows you to be simulatenously more expressive while still staying correct and explicit, and the performance is just as good if not better.
 
 ```rust
-let o = String {
-    ptr: None,
-    len: 0,
-    cap: 0,
-};
-let s = String {
-    cap: 1,
-    ..o,
-};
-```
-object/struct literals (the above)
-
-
-### Strings are not null terminated
-NEED EXAMPLE. MAYBE A DIAGRAM? strings are not null terminated, but pointer + length (as a struct)
-
-
-### Allow redeclaration of a variable
-In addition to allowing redeclaration of variables, our variables will also be **constant by default**.
-```rust=
-let x: i32 = 1;
-let y: String = x.parse();
-let z: &str = x.as_str();
-
-let a = x + 1;
-
-let mut n = 1;
-n = 2;
-n = 3;
-let n = "";
-```
-
-### Function Local Type Inference
-NEED EXAMPLE
-
-
-### Closures / Function Pointers
-```rust=
-
-struct Unnamed {
-    n: i32,
+enum Status {
+    Ok,
+    NotImplemented,
+    BadRequest,
+    // rest skipped for brevity
 }
 
-impl Unnamed {
-    fn call(&self, x: i32) {
-        return self.n + x;
+struct RequestLine {
+    method: *[u8],
+    uri: *[u8],
+    version: *[u8],
+}
+
+impl RequestLine {
+    fn check(self: *Self): Result<(), Status> try {
+        let Self {method, uri, version} = self.*;
+        match (method, version) {
+            (b"GET", b"HTTP/1.0" | b"HTTP/1.1") => {},
+            _ => Err(Status.NotImplemented).?,
+        }
+        if uri.starts_with(b'/').! || uri.equals(b"/..") || uri.contains(b"/../") {
+            Err(Status.BadRequest).?;
+        }
     }
 }
 
-fn f(x: i32, n: i32) -> i32 {
-    return x * 2;
-}
-
-let a = vec![1, 2];
-let n = 10;
-a.iter().map(Unnamed { n: n });
-```
-
-
-
-### Imports
-
-```rust=
-// library.rs
-pub fn hello() {
-    println!("world");
-}
-
-// executable1.rs
-use library;
-
-library::hello();
-
-// executable2.rs
-use library::hello;
-
-hello();
-
-```
-
-
-
-### Slices
-NEED AN EXAMPLE
-need some way to make arrays?
-if we do slices, then pointers can only point to one element
-	and no pointer arithmetic, indexing only on slices
-arrays if we have time (otherwise just use pointers)  (Not hard to implement)
-
-### Let 
-Constant by default
-```rust=
-
-struct S {
-    a: i32,
-    n: usize,
-    s: String,
-};
-
-impl S {
-    
-    fn len(&self) -> usize {
-        return self.s.len();
+fn main(): Result<(), AnyError> try {
+    let (port, web_root) = std.env.argv().match {
+        [_, port, web_root] => (port.parse<u16>().?, web_root),
+        [program, ...] => Err(f"usage: {program} <server_port> <web_root>").?,
+    };
+    let server_socket = Socket.new(PF_INET, SOCK_STREAM, IPPROTO_TCP).?;
+    defer server_socket.&.close();
+    server_socket.&.bind(SocketAddr {
+        family: AF_INET,
+        addr: InetAddr {
+            addr: INADDR_ANY.to_be(),
+        },
+        port: port.to_be(),
+    }).?;
+    server_socket.&.listen(5).?;
+    let mut request_line_buf = Vec.new();
+    defer request_line_buf.free();
+    let mut line_buf = Vec.new();
+    defer line_buf.free();
+    loop try {
+        let client_socket = server_socket.&.accept().?;
+client_socket_close:
+        defer client_socket.&.close();
+        let mut client_stream = fdopen(client_socket.fd, c"r").?;
+        undefer client_socket_close; // stream (`FILE *` in C) takes ownership
+        defer client_stream.&.close();
+        let line_or_status = try {
+            // read and parse request line
+            let line = client_stream.&mut.read_line(buf.&mut)
+                .map_err(fn(_) Status.BadRequest).?
+                .split(fn(b) " \t\r\n".contains(b)).match {
+                    [method, uri, version] => RequestLine { method, uri, version },
+                    _ => Err(Status.NotImplemented).?,
+                };
+            line.&.check().?;
+            // read headers, skip them
+            loop {
+                client_stream.&mut.read_line(buf.&mut)
+                    .map_err(fn(_) Status.BadRequest).?
+                    .match {
+                        "\n" | "\r\n" => break,
+                        _ => {},
+                    }
+            }
+            line
+        }
+        let (line, status) = match line_or_status {
+            Ok(line) => (line, Status.Ok),
+            Err(status) => (RequestLine { method: b"", uri: b"", version: b"" }, status),
+        };
+        client_socket.write(f"HTTP/1.0 {status.code()} {status.reason()}\r\n\r\n").?;
+        match line_or_status {
+            Ok(_) => handle_request(web_root, line.uri, client_socket).?,
+            Err(_) => client_socket.write(f"<html><body>\n<h1>{status.code()} {status.reason()}</h1>\n</body></html>").?;
+        }
+        eprintln(f"{client_socket.addr} \"{line.method} {line.uri} {line.version}\" {status.code()} {status.reason()}").?;
     }
-    
 }
-
-let s = S {
-    a: 0,
-    n: 0,
-    s: String::new(),
-};
-
-s.len(); -> S::len(&s);
-
-
 ```
-
-### Simple methods if we have time (no inheritance, no traits, no interfaces)
-Reword 
-
-### Structural Comments
-Our language will enable different types of comments to accomplish different things based on structure.
-NEED AN EXAMPLE
-
-
-
-
-### ABI and C FFI
-
-
-### Sample Program:
-Do an example of GCD
-
-Do a more thorough embedded systems programming example.
