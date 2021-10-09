@@ -9,7 +9,7 @@ install-opam:
 
 # install tools needed/nice for development
 install-tooling:
-    BOOTSTRAP=1 bash -x install-tooling.sh
+    BOOTSTRAP=1 bash install-tooling.sh
 
 # run dune, but through mold
 dune *args:

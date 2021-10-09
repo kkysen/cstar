@@ -7,7 +7,7 @@ is-command() {
 }
 
 install-ccache() {
-    sudo apt install ccache
+    is-command ccache || sudo apt install ccache
     ccache --max-files 0 --max-size 0
     for compiler in cc c++ gcc g++ clang clang++; do
         ln --symbolic --force "$(which "${compiler}")" ~/.local/bin/ccache
@@ -50,10 +50,14 @@ cargo-install() {
     cargo-has "$exe_name" || cargo quickinstall "$package_name" 
 }
 
-install-all() {
+install-from-opam() {
     install-opam
-    opam install dune ocamlformat ocaml-lsp-server merlin utop
+    # this is the slowest command
+    opam install dune ocamlformat ocamlformat-rpc ocaml-lsp-server merlin utop
+    
+}
 
+install-from-cargo() {
     install-cargo
     cargo-has cargo-quickinstall || cargo install cargo-quickinstall
     cargo-install just
@@ -67,6 +71,18 @@ install-all() {
     cargo-install skim sk
 }
 
+install-from-vscode() {
+    is-command code || return
+    code --install-extension ocamllabs.ocaml-platform
+}
+
+install-all() {
+    install-from-opam &
+    install-from-cargo &
+    install-from-vscode &
+    wait
+}
+
 install-bootstrap() {
     # `ccache` and `mold` can make building things much faster, 
     # including the things we're about to install in `install-all`
@@ -74,7 +90,7 @@ install-bootstrap() {
     install-mold
 
     unset BOOTSTRAP
-    mold -run bash -x "$0"
+    mold -run bash "$0"
 }
 
 if [[ ${BOOTSTRAP} ]]; then
