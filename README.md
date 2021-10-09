@@ -31,9 +31,9 @@ This will contain a high-level overview of the important features of C*, but for
 
 
 ### Expression Oriented
-C* is highly-expression oriented.  Unlike C, where many things are only statements, most things in C* are expressions.  Things like:
+C* is highly expression-oriented.  Unlike C, where many things are only statements, most things in C* are expressions.  Things like:
 * Statements evaluate to the unit type `()`.
-* Blocks evaluate to their last expression, which could be a statement (and thus `()`) or a trailing expression (with no `;)
+* Blocks evaluate to their last expression, which could be a statement (and thus `()`) or a trailing expression (with no `;`)
 * Functions and closures themselves.
 * `if`, `if/else`, `match` are all expressions.
 * `for` evaluates to the `break` value, which is usually `()`.
@@ -60,11 +60,11 @@ Most unary operators and keywords can be used postfix as well.
 
 Combined with everything [being an expression](#expression-oriented), [`match`](#pattern-matching), and having [methods](#methods), this makes it much easier to write things in a very fluid style.
 
-Furthermore, and perhaps most importantly in practice, this makes autocompletion vastly better, because an IDE can narrow done what you may type next based on the type of the previous expression.  This can't be done with postfix operators and functions (rather than methods).  You get to think in one forward direction, rather than having to jump from some prefix things to some postfix things.
+Furthermore, and perhaps most importantly in practice, this makes autocompletion vastly better, because an IDE can narrow down what you may type next based on the type of the previous expression.  This can't be done with postfix operators and functions (rather than methods).  You get to think in one forward direction, rather than having to jump from some prefix things to some postfix things.
 
 
 ### Algebraic Data Types
-C* has `struct`s for product types and `enum`s for sum types.  This is very powerful combined with [pattern matching](#pattern-matching).  `enum`s in particular, which are like tagged unions, are much safer and correct compared to C unions.  These data types are also fully zero-cost; there is no automatic boxing, and the safe performance as C can be easily be achieved.  Sometimes even better, because the layout of compound types is unspecified in C*.
+C* has `struct`s for product types and `enum`s for sum types.  This is very powerful combined with [pattern matching](#pattern-matching).  `enum`s in particular, which are like tagged unions, are much safer and correct compared to C unions.  These data types are also fully zero-cost; there is no automatic boxing, and the same performance as C can be easily be achieved.  Sometimes even better, because the layout of compound types is unspecified in C*.
 
 For example, you can do this to make a copy-on-write string.
 ```rust
@@ -337,11 +337,11 @@ fn main() {
 
 In this example, we first declared a `struct Person`, and then an `impl` block for `Person` to define methods/associated functions for it.  Note that this `impl` block can be anywhere, even in other modules.
 
-In the `impl` block, we first declared an associated function `Person.new`, which is just a normal function but namespaced to `Person`.  Similar, the other three methods are just normal functions, too, as seen when we call them explicity in the second block in `main`.  But we can also use `.` syntax to call them, which just allows us to explicitly naming `Person`.
+In the `impl` block, we first declared an associated function `Person.new`, which is just a normal function but namespaced to `Person`.  Similar, the other three methods are just normal functions, too, as seen when we call them explicity in the second block in `main`.  But we can also use `.` syntax to call them, which just allows us to explicitly name `Person`.
 
 Inside an `impl` block, we can also use the `Self` type as an alias to the type being implemented.  This is especially useful with generics.
 
-Note that the `.&` and `*Self` are explicit, because wan't these kinds of things to be done explicitly.  For example, `Person.say_hi1` takes `Self` by value, which means it must copy the `Person` every time.  If `Person` were a much larger struct, this could be very expensive and we don't want to hide that information.  Also, the difference between `.&` and `.&mut` is explicit to make mutability explicit everywhere.
+Note that the `.&` and `*Self` are explicit, because we wan't these kinds of possible costs to be noted explicitly.  For example, `Person.say_hi1` takes `Self` by value, which means it must copy the `Person` every time.  If `Person` were a much larger struct, this could be very expensive and we don't want to hide that information.  Also, the difference between `.&` and `.&mut` is explicit to make mutability explicit everywhere.
 
 
 ### Closures
