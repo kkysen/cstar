@@ -54,7 +54,7 @@ A high-level overview of the important language features of C*.
 ### Expression Oriented
 C* is highly expression-oriented. Unlike C, 
 where many things are only statements, most things in C* are expressions. 
-Things like:
+Namely,
 * Statements evaluate to the unit type `()`.
 * Blocks evaluate to their last expression, which could be a statement (and thus `()`) or a trailing expression (with no `;`)
 * Functions and closures themselves.
@@ -83,14 +83,14 @@ Most unary operators and keywords can be used postfix as well.
 
 Combined with everything [being an expression](#expression-oriented), 
 [`match`](#pattern-matching), and having [methods](#methods), 
-this makes it much easier to write things in a very fluid style.
+this makes it much easier to write programs in a very fluid style.
 
 Furthermore, and perhaps most importantly in practice, 
 this makes autocompletion vastly better, because an IDE can narrow down 
 what you may type next based on the type of the previous expression. 
 This can't be done with postfix operators and functions (rather than methods).
 You get to think in one forward direction, rather than 
-having to jump from some prefix things to some postfix things.
+having to jump from some prefix keywords to some postfix methods and fields.
 
 
 ### Algebraic Data Types
@@ -686,7 +686,7 @@ and byte, c, and format strings.
 That code (the ported part) is ~230 LOC, while the C* below is only ~80 LOC, 
 and it is more correct in error handling and edge cases, 
 faster in places (though IO dominates here), and the business logic 
-stands out more (while less important things like errors, resource cleanup, 
+stands out more (while less important aspects like errors, resource cleanup, 
 allocations, and string handling stay in the background). 
 That is, C* allows you to be simulatenously more expressive 
 while still staying correct and explicit, 
