@@ -65,7 +65,6 @@ install-from-opam() {
     install-opam
     # this is the slowest command
     opam install dune ocamlformat ocamlformat-rpc ocaml-lsp-server merlin utop
-    
 }
 
 install-from-cargo() {
