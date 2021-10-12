@@ -25,6 +25,17 @@ install-mold() {
     sudo make install
 }
 
+install-mold-ld() {
+    install-mold
+    local mold_path="$(which mold)"
+    local mold_parent_dir="$(dirname "${mold_path}")"
+    local mold_dir="${mold_parent_dir}/mold-ld"
+    local mold_ld_path="${mold_dir}/ld"
+    [[ -x "$mold_ld_path" ]] && return
+    [[ -d "$mold_dir" ]] || test -w "$mold_parent_dir" && mkdir "$mold_dir" || sudo mkdir "$mold_dir"
+    [[ -f "$mold_ld_path" ]] || test -w "$mold_dir" && ln --symbolic "$mold_path" "$mold_ld_path" || sudo ln --symbolic "$mold_path" "$mold_ld_path"
+}
+
 install-opam() {
     is-command opam && return
     bash -c "sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)"
@@ -88,6 +99,7 @@ install-bootstrap() {
     # including the things we're about to install in `install-all`
     install-ccache
     install-mold
+    install-mold-ld
 
     unset BOOTSTRAP
     mold -run bash "$0"
