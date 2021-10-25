@@ -1,0 +1,20 @@
+profile = janestreet
+
+margin = 80
+
+sequence-blank-line = preserve-one
+parens-tuple = always
+module-item-spacing = sparse
+cases-exp-indent = 4
+leading-nested-match-parens = false
+doc-comments-padding = 2
+parens-tuple-patterns = always
+dock-collection-brackets = true
+space-around-arrays = false
+space-around-lists = false
+space-around-records = false
+space-around-variants = false
+wrap-comments = true
+parse-docstrings = true
+
+# f() { ocamlformat --profile $1 --print-config 2>&1 | rg '([^=]*)=([^ ]*)' --only-matching --replace '$1 = $2'; }
