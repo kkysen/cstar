@@ -15,14 +15,21 @@ type number_base =
   | HexaDecimal (* 0x *)
   | Decimal
 
+type sign =
+  | None
+  | Positive
+  | Negative
+
 type raw_int_literal = {
-    base : number_base
+    sign : sign
+  ; base : number_base
   ; number : string
 }
 
 type number_literal = {
     integral : raw_int_literal
   ; floating : raw_int_literal option (* is a float if it has a floating part *)
+  ; exponent : raw_int_literal option
   ; suffix : string (* i32, f64, u1, x1000, usize, "" *)
 }
 

@@ -1,2 +1,4 @@
+(ocamllex lexer)
+(ocamlyacc parser)
 (executable
  (name cstar))
