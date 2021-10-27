@@ -9,12 +9,6 @@ type number_base =
   | HexaDecimal (* 0x *)
   | Decimal
 
-type number_base =
-  | Binary (* 0b *)
-  | Octal (* 0o *)
-  | HexaDecimal (* 0x *)
-  | Decimal
-
 type sign =
   | None
   | Positive
@@ -42,6 +36,8 @@ type string_literal = {
     unescaped : string
   ; prefix : string
 }
+
+(* TODO format_string_literal *)
 
 type literal =
   | Number of number_literal

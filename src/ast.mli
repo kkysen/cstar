@@ -44,6 +44,13 @@ and struct_type = {
   ; fields : field_type StringMap.t
 }
 
+and element_type = {
+    index : int
+  ; type_ : type_
+}
+
+and tuple_type = {elements : element_type list}
+
 and variant_type = {
     name : string
   ; type_ : type_
@@ -71,7 +78,6 @@ and variable = {
 
 and func_type = {
     name : string
-  ; abi : string
   ; generic_args : generic_type StringMap.t
   ; args : variable StringMap.t
 }
@@ -80,14 +86,16 @@ and type_ =
   | Inferred
   | Primitive of primitive_type
   | Struct of struct_type
+  | Tuple of tuple_type
   | Enum of enum_type
   | Union of union_type
   | Func of func_type
+  | Pointer of type_
+  | Slice of type_
 
 type pattern = unit (* TODO *)
 
 type binary_op =
-  | SemiColon
   | Add
   | Subtract
   | Multiply
@@ -104,11 +112,20 @@ type binary_op =
   | BitAnd
   | BitOr
   | BitXor
+  | Assign
+
+type pointer_to = {mut : bool}
+
+and label = {name : string}
 
 type unary_op =
-  | Negate
-  | Not
-  | BitNot
+  | Negate (* - *)
+  | Not (* ! *)
+  | BitNot (* ~ *)
+  | Dereference (* .* *)
+  | PointerTo of pointer_to (*.&, .&mut *)
+  | Try
+(* .? *)
 
 type if_expr = {
     condition : expr
@@ -145,35 +162,131 @@ and while_expr = {
   ; block : block_expr
 }
 
-and block_expr = {value : expr}
+and block_expr = {
+    statements : expr list
+  ; trailing_semicolon : bool
+}
+
+and field_access_expr = {
+    obj : expr option (* None if variable instead of field access *)
+  ; field : string
+}
 
 and func_call_expr = {
-    func_name : string
+    func : expr
   ; generic_args : type_ list
   ; args : expr list
   ; self_arg : expr option (* for methods *)
 }
 
+and func_literal = {
+    type_ : func_type
+  ; value : expr
+  ; extern : bool
+}
+
+and closure_literal = {
+    context : struct_literal
+  ; func : func_literal
+}
+
+and number_literal = Token.number_literal
+
+and char_literal = Token.char_literal
+
+and string_literal = Token.string_literal
+
+and struct_literal = {
+    name : string
+  ; spread : bool (* .. *)
+  ; fields : expr option StringMap.t (* None if field name is same as expr *)
+}
+
+and tuple_literal = {elements : expr list}
+
+(* TODO format_string_literal *)
+and range_literal = {
+    start : expr option
+  ; stop : expr option
+  ; inclusive : bool
+  ; additive : bool (* start..+length *)
+}
+
+and literal =
+  | Unit
+  | Number of number_literal
+  | Char of char_literal
+  | String of string_literal
+  | Range of range_literal
+  | Struct of struct_literal
+  | Tuple of tuple_literal
+  | Func of func_literal
+  | Closure of closure_literal
+
+and unary_expr = {
+    op : unary_op
+  ; value : expr
+}
+
+and binary_op = {
+    op : binary_op
+  ; left : expr
+  ; right : expr
+}
+
+and return_expr = {
+    value : expr
+  ; label : option label
+}
+
+and break_expr = {
+    value : expr
+  ; label : option label
+}
+
+and continue_expr = {
+    value : expr (* not allowed as of now but maybe later? *)
+  ; label : option label
+}
+
+and defer_expr = {
+    value : expr
+  ; label : option label
+}
+
+and un_defer_expr = {label : label}
+
 and expr =
-  | Assign of string * expr
-  | UnaryOp of unary_op * expr
-  | BinaryOp of expr * binary_op * expr
-  | Lit of int
-  | Var of string
+  | Literal of liral
+  | UnaryOp of unary_expr
+  | BinaryOp of binary_expr
+  | Return of return_expr
+  | Break of break_expr
+  | Continue of continue_expr
   | Match of match_expr
-  | Defer of expr
-  | Return of expr
+  | Defer of defer_expr
+  | UnDefer of un_defer_expr
   | If of if_expr
   | IfElse of if_else_expr
   | For of for_expr
   | While of while_expr
-  | Block of block_expr
   | FuncCall of func_call_expr
+  | Block of block_expr
+  (* includes variables *)
+  | FieldAccess of field_access_expr
 
-type func = {
-    type_ : type_
-  ; expr : expr
-}
+(* TODO where do labels go?
+ * Should they be `'label:` like Rust?
+ * Or could they be like this?
+ *    for@label
+ *    while@label
+ *    break@label
+ *    continue@label
+ *    defer@label
+ *    undefer@label
+ * No space b/w keyword, @, and label name
+ * I think I like that way most.
+ *)
 
 type annotation_arg = unit (* TODO *)
 
@@ -201,9 +314,13 @@ type type_let = {
   ; value : type_
 }
 
+type func_decl = {
+  func: func_literal;
+}
+
 type impl = {
     type_ : type_
-  ; functions : func StringMap.t
+  ; functions : func_decl StringMap.t
 }
 
 type let_ =
