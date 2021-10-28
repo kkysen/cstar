@@ -214,6 +214,7 @@ and range_literal = {
 
 and literal =
   | Unit
+  | Bool of bool
   | Number of number_literal
   | Char of char_literal
   | String of string_literal
