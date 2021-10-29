@@ -53,24 +53,12 @@ rule token = parse
    * naively don't follow this rule, which is why we require another `0x` prefix.
    * This also has the added benefit of allowing you to switch bases between the integral and floating parts.
    *)
-  | raw_int {  }
-  | '+' { Plus }
-  | '-' { Minus }
-  | '*' { Times }
-  | '/' { Divide }
-  | ';' { SemiColon }
-  | '=' { Assign }
-  | "if" { If }
-  | "then" { Then }
-  | "else" { Else }
-  | ['0'-'9']+ as i { IntLiteral(int_of_string i) }
-  | ['a'-'z']+ as s { Identifier(s) }
 
 (* https://stackoverflow.com/questions/7117975/how-to-deal-with-nested-comments-in-fslex
    How do I get the comment value, or do I even need to?
 *)
 and block_comment depth = parse
-  | "*/" { match level with
+  | "*/" { match depth with
              | 0 -> token lexbuf
              | _ -> block_comment (depth - 1) lexbuf
          }

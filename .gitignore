@@ -1,3 +1,7 @@
 .vscode/
 _build/
 .DS_Store
+_esy/
+esy.lock/
+/*.install
+node_modules/

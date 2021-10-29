@@ -63,8 +63,6 @@ cargo-install() {
 
 install-from-opam() {
     install-opam
-    # this is the slowest command
-    opam install dune ocamlformat ocamlformat-rpc ocaml-lsp-server merlin utop
 }
 
 install-from-cargo() {
@@ -79,6 +77,7 @@ install-from-cargo() {
     cargo-install git-delta delta
     cargo-install tokei
     cargo-install skim sk
+    cargo-install hyperfine
 }
 
 install-from-vscode() {
@@ -86,11 +85,34 @@ install-from-vscode() {
     code --install-extension ocamllabs.ocaml-platform
 }
 
+install-volta() {
+    is-command volta && return
+    curl https://get.volta.sh | bash
+    . ~/.bashrc
+}
+
+npm-install() {
+    local package_name="$1"
+    local exe_name="$2"
+    if [[ "$exe_name" == "" ]]; then
+        exe_name="$package_name"
+    fi
+    is-command "$exe_name" || volta install "$package_name" 
+}
+
+install-from-npm() {
+    install-volta
+    volta install node@latest
+    npm-install esy
+}
+
 install-all() {
     install-from-opam &
     install-from-cargo &
     install-from-vscode &
+    install-from-npm &
     wait
+    esy
 }
 
 install-bootstrap() {
