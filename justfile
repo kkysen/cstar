@@ -167,5 +167,6 @@ test *args: (dune "test" args)
 alias t := test
 
 clean *args: (dune "clean" args)
+    rm -rf esy.lock _esy/ node_modules/
 
 alias c := clean

@@ -1,29 +1,31 @@
-module StringMap : Map.S with type key = string
-
 type publicity =
   | Public
   | PublicIn of string
   | Private
+[@@deriving show]
 
 type int_bits =
   | Exact of int
   | Size
   | Ptr
+[@@deriving show]
 
 type int_type = {
     unsigned : bool
   ; bits : int_bits
 }
+[@@deriving show]
 
-type float_type = {bits : int}
+type float_type = {bits : int} [@@deriving show]
 
-type char_type = {byte : bool}
+type char_type = {byte : bool} [@@deriving show]
 
 type string_type = {
     byte : bool
   ; raw : bool
   ; c : bool
 }
+[@@deriving show]
 
 type primitive_type =
   | Unit
@@ -31,56 +33,66 @@ type primitive_type =
   | Float of float_type
   | Char of char_type
   | String of string_type
+[@@deriving show]
 
 type field_type = {
-    name : string
-  ; type_ : type_
+    field_name : string
+  ; field_type : type_
   ; publicity : publicity
 }
+[@@deriving show]
 
 (* tuples are just structs with whole number field names *)
 and struct_type = {
-    name : string
-  ; fields : field_type StringMap.t
+    struct_name : string
+  ; struct_fields : field_type StringMap.t
 }
+[@@deriving show]
 
 and element_type = {
-    index : int
-  ; type_ : type_
+    element_index : int
+  ; element_type : type_
 }
+[@@deriving show]
 
-and tuple_type = {elements : element_type list}
+and tuple_type = {elements : element_type list} [@@deriving show]
 
 and variant_type = {
-    name : string
-  ; type_ : type_
+    variant_name : string
+  ; variant_type : type_
 }
+[@@deriving show]
 
 and enum_type = {
-    name : string
-  ; variants : variant_type StringMap.t
+    enum_name : string
+  ; enum_variants : variant_type StringMap.t
 }
+[@@deriving show]
 
 and union_type = {
-    name : string
-  ; fields : field_type StringMap.t
+    union_name : string
+  ; union_fields : field_type StringMap.t
 }
+[@@deriving show]
 
 and generic_type = {
-    name : string
-  ; bounds : type_ list
+    generic_name : string
+  ; generic_bounds : type_ list
 }
+[@@deriving show]
 
 and variable = {
-    name : string
-  ; type_ : type_
+    variable_name : string
+  ; variable_type : type_
 }
+[@@deriving show]
 
 and func_type = {
-    name : string
+    func_name : string
   ; generic_args : generic_type StringMap.t
   ; args : variable StringMap.t
 }
+[@@deriving show]
 
 and type_ =
   | Inferred
@@ -92,8 +104,9 @@ and type_ =
   | Func of func_type
   | Pointer of type_
   | Slice of type_
+[@@deriving show]
 
-type pattern = unit (* TODO *)
+type pattern = unit (* TODO *) [@@deriving show]
 
 type binary_op =
   | Add
@@ -113,10 +126,11 @@ type binary_op =
   | BitOr
   | BitXor
   | Assign
+[@@deriving show]
 
-type pointer_to = {mut : bool}
+type pointer_to = {mut : bool} [@@deriving show]
 
-and label = {name : string}
+and label = {name : string} [@@deriving show]
 
 type unary_op =
   | Negate (* - *)
@@ -124,53 +138,61 @@ type unary_op =
   | BitNot (* ~ *)
   | Dereference (* .* *)
   | PointerTo of pointer_to (*.&, .&mut *)
-  | Try
-(* .? *)
+  | Try (* .? *)
+[@@deriving show]
 
 type if_expr = {
-    condition : expr
-  ; then_case : block_expr
+    if_condition : expr
+  ; if_then_case : block_expr
 }
+[@@deriving show]
 
 and if_else_expr = {
-    condition : expr
-  ; then_case : block_expr
-  ; else_case : block_expr
+    if_else_condition : expr
+  ; if_else_then_case : block_expr
+  ; if_else_else_case : block_expr
 }
+[@@deriving show]
 
 and match_arm = {
-    pattern : pattern
-  ; condition : expr option
-  ; value : expr
+    match_pattern : pattern
+  ; match_condition : expr option
+  ; match_arm_value : expr
 }
+[@@deriving show]
 
 and match_expr = {
-    value : expr
-  ; arms : match_arm list
+    match_value : expr
+  ; match_arms : match_arm list
 }
+[@@deriving show]
 
 (* TODO might change*)
 and for_expr = {
-    initializer_ : expr
-  ; condition : expr
-  ; update : expr
-  ; block : block_expr
+    for_initializer_ : expr
+  ; for_condition : expr
+  ; for_update : expr
+  ; for_block : block_expr
 }
+[@@deriving show]
 
 and while_expr = {
-    condition : expr
-  ; block : block_expr
+    while_condition : expr
+  ; while_block : block_expr
 }
+[@@deriving show]
 
 and block_expr = {
     statements : expr list
   ; trailing_semicolon : bool
 }
+[@@deriving show]
 
 and field_access_expr = {
     obj : expr option (* None if variable instead of field access *)
   ; field : string
 }
+[@@deriving show]
 
 and func_call_expr = {
     func : expr
@@ -178,17 +200,20 @@ and func_call_expr = {
   ; args : expr list
   ; self_arg : expr option (* for methods *)
 }
+[@@deriving show]
 
 and func_literal = {
-    type_ : func_type
-  ; value : expr
-  ; extern : bool
+    func_type : func_type
+  ; func_value : expr
+  ; func_extern : bool
 }
+[@@deriving show]
 
 and closure_literal = {
-    context : struct_literal
-  ; func : func_literal
+    closure_context : struct_literal
+  ; closure_func : func_literal
 }
+[@@deriving show]
 
 and number_literal = Token.number_literal
 
@@ -197,12 +222,14 @@ and char_literal = Token.char_literal
 and string_literal = Token.string_literal
 
 and struct_literal = {
-    name : string
-  ; spread : bool (* .. *)
-  ; fields : expr option StringMap.t (* None if field name is same as expr *)
+    struct_name : string
+  ; struct_spread : bool (* .. *)
+  ; struct_fields : expr option StringMap.t
+        (* None if field name is same as expr *)
 }
+[@@deriving show]
 
-and tuple_literal = {elements : expr list}
+and tuple_literal = {elements : expr list} [@@deriving show]
 
 (* TODO format_string_literal *)
 and range_literal = {
@@ -211,6 +238,7 @@ and range_literal = {
   ; inclusive : bool
   ; additive : bool (* start..+length *)
 }
+[@@deriving show]
 
 and literal =
   | Unit
@@ -223,50 +251,31 @@ and literal =
   | Tuple of tuple_literal
   | Func of func_literal
   | Closure of closure_literal
+[@@deriving show]
 
 and unary_expr = {
-    op : unary_op
-  ; value : expr
+    unary_op : unary_op
+  ; unary_value : expr
 }
+[@@deriving show]
 
-and binary_op = {
-    op : binary_op
+and binary_expr = {
+    binary_op : binary_op
   ; left : expr
   ; right : expr
 }
-
-and return_expr = {
-    value : expr
-  ; label : option label
-}
-
-and break_expr = {
-    value : expr
-  ; label : option label
-}
-
-and continue_expr = {
-    value : expr (* not allowed as of now but maybe later? *)
-  ; label : option label
-}
-
-and defer_expr = {
-    value : expr
-  ; label : option label
-}
-
-and un_defer_expr = {label : label}
+[@@deriving show]
 
 and expr =
-  | Literal of liral
+  | Literal of literal
   | UnaryOp of unary_expr
   | BinaryOp of binary_expr
-  | Return of return_expr
-  | Break of break_expr
-  | Continue of continue_expr
+  | Return of expr * label
+  | Break of expr * label
+  | Continue of expr * label
   | Match of match_expr
-  | Defer of defer_expr
-  | UnDefer of un_defer_expr
+  | Defer of expr * label
+  | UnDefer of label
   | If of if_expr
   | IfElse of if_else_expr
   | For of for_expr
@@ -275,6 +284,7 @@ and expr =
   | Block of block_expr
   (* includes variables *)
   | FieldAccess of field_access_expr
+[@@deriving show]
 
 (* TODO where do labels go?
  * Should they be `'label:` like Rust?
@@ -289,14 +299,15 @@ and expr =
  * I think I like that way most.
  *)
 
-type annotation_arg = unit (* TODO *)
+type annotation_arg = unit (* TODO *) [@@deriving show]
 
 type annotation = {
     name : string
   ; args : annotation_arg list
 }
+[@@deriving show]
 
-type doc_comment = {lines : string list}
+type doc_comment = {lines : string list} [@@deriving show]
 
 type let_binding = {
     name : string
@@ -304,35 +315,42 @@ type let_binding = {
   ; annotations : annotation list
   ; doc_comment : doc_comment
 }
+[@@deriving show]
 
 type value_let = {
     binding : let_binding
   ; value : expr
 }
+[@@deriving show]
 
 type type_let = {
     binding : let_binding
   ; value : type_
 }
+[@@deriving show]
 
-type func_decl = {
-  func: func_literal;
-}
+type func_decl = {func : func_literal} [@@deriving show]
 
 type impl = {
     type_ : type_
   ; functions : func_decl StringMap.t
 }
+[@@deriving show]
 
 type let_ =
   | Value of value_let
   | Type of type_let
+[@@deriving show]
 
 type item =
   | Let of let_
   | Impl of impl
+[@@deriving show]
 
 type module_ = {
     name : string
   ; items : item list
 }
+[@@deriving show]
+
+type ast = {module_ : module_} [@@deriving show]
