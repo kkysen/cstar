@@ -4,5 +4,7 @@
 
 (executable
  (preprocess
-  (pps ppx_deriving.show))
+  (pps ppx_deriving.std)
+  ; (staged_pps ppx_import ppx_deriving.show)
+  )
  (name cstar))

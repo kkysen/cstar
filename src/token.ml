@@ -12,7 +12,7 @@ type number_base =
 [@@deriving show]
 
 type sign =
-  | None
+  | Unspecified
   | Positive
   | Negative
 [@@deriving show]
@@ -26,8 +26,8 @@ type raw_int_literal = {
 
 type number_literal = {
     integral : raw_int_literal
-  (*; floating : raw_int_literal option*) (* is a float if it has a floating part *)
-  (* ; exponent : raw_int_literal option *)
+  ; floating : raw_int_literal option (* is a float if it has a floating part *)
+  ; exponent : raw_int_literal option
   ; suffix : string (* i32, f64, u1, x1000, usize, "" *)
 }
 [@@deriving show]
