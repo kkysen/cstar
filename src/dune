@@ -1,4 +1,8 @@
 (ocamllex lexer)
+
 (ocamlyacc parser)
+
 (executable
+ (preprocess
+  (pps ppx_deriving.show))
  (name cstar))
