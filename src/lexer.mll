@@ -1,4 +1,7 @@
-{ open Token }
+{ 
+open Token
+exception InvalidChar of string 
+}
 
 let sign = ['+' '-']? as sign
 let int_base = ('0'(['b' 'o' 'x'] as base) '_'?)?
@@ -64,3 +67,21 @@ and block_comment depth = parse
          }
   | "/*" { block_comment (depth + 1) lexbuf }
   | _ { block_comment depth lexbuf }
+  
+(*Modified: https://github.com/realworldocaml/examples/blob/v1/code/parsing/lexer.mll*)
+and read_string buf = parse
+  | '"' { STRING (Buffer.contents buf) }
+    (*we have to escape '\' so '\\' needed*)
+  | '\\' '/' { Buffer.add_char buf '/'; read_string buf lexbuf } 
+  | '\\' '\\' { Buffer.add_char buf '\\'; read_string buf lexbuf } 
+  | '\\' 'b' { Buffer.add_char buf '\b'; read_string buf lexbuf } 
+  | '\\' 'f' { Buffer.add_char buf '\012'; read_string buf lexbuf } 
+  | '\\' 'n' { Buffer.add_char buf '\n'; read_string buf lexbuf } 
+  | '\\' 'r' { Buffer.add_char buf '\r'; read_string buf lexbuf } 
+  | '\\' 't' { Buffer.add_char buf '\t'; read_string buf lexbuf } 
+  | [^ '"' '\\']+ (*processing any char in the string that is not an escape*)
+{ Buffer.add_string buf (Lexing.lexeme lexbuf); 
+  read_string buf lexbuf
+}
+  (*catch all for any invalid char in our string*)
+  | _ { (raise (InvalidChar("Illegal string character: " ^ Lexing.lexeme lexbuf))) }

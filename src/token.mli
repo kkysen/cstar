@@ -87,4 +87,5 @@ type token =
   | Pound (* # *)
   | DollarSign (* $ *)
   | Unknown
+  | STRING of string
 [@@deriving show]
