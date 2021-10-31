@@ -25,7 +25,7 @@ let () =
     ; Token.Comment Token.Structural
     ; Token.Comment (Token.Line "line comment")
     ; Token.Comment (Token.Block "block comment")
-    (* ; Token.Literal (Token.Number) *)
+      (* ; Token.Literal (Token.Number) *)
     ; Token.Literal (Token.Char {unescaped = ","; prefix = ""})
     ; Token.Literal (Token.String {unescaped = "hello\\nworld"; prefix = "b"})
     ; Token.Identifier "identifier"
@@ -60,7 +60,107 @@ let () =
     ]
   in
   tokens |> List.to_seq |> Seq.map Token.show_token |> Seq.iter print_endline;
-  let ast = {Ast.module_ = {Ast.name = "hello"; Ast.items = []}} in
+  let example_type : Ast.type_ =
+    Ast.Struct
+      {
+        Ast.struct_name = "Example"
+      ; Ast.struct_fields =
+          {
+            map =
+              StringMap.S.singleton
+                "field"
+                {
+                  Ast.field_name = "field"
+                ; Ast.field_type =
+                    Ast.Primitive
+                      (Ast.Int {Ast.unsigned = true; Ast.bits = Ast.Exact 64})
+                ; Ast.publicity = Ast.Public
+                }
+          }
+      }
+  in
+  let print_method : Ast.func_decl =
+    {
+      Ast.binding =
+        {
+          Ast.name = "print"
+        ; Ast.publicity = Ast.Public
+        ; Ast.annotations = []
+        ; Ast.doc_comment = {Ast.lines = []}
+        }
+    ; Ast.func =
+        {
+          func_type =
+            {
+              Ast.func_name = "print"
+            ; Ast.generic_args = {map = StringMap.S.empty}
+            ; Ast.args =
+                {
+                  map =
+                    StringMap.S.singleton
+                      "self"
+                      {Ast.variable_name = "self"; Ast.variable_type = Ast.Self}
+                }
+            ; Ast.return_type = Ast.Primitive Ast.Unit
+            }
+        ; Ast.func_value = Ast.Literal Ast.Unit
+        }
+    }
+  in
+  let main_func : Ast.value_let =
+    {
+      Ast.binding =
+        {
+          Ast.name = "main"
+        ; Ast.publicity = Ast.Private
+        ; Ast.annotations = []
+        ; Ast.doc_comment = {Ast.lines = []}
+        }
+    ; Ast.value =
+        Ast.Literal
+          (Ast.Func
+             {
+               Ast.func_type =
+                 {
+                   Ast.func_name = "main"
+                 ; Ast.generic_args = {map = StringMap.S.empty}
+                 ; Ast.args = {map = StringMap.S.empty}
+                 ; Ast.return_type = Ast.Primitive Ast.Unit
+                 }
+             ; Ast.func_value = Ast.Literal Ast.Unit
+             })
+    }
+  in
+  let ast =
+    {
+      Ast.module_ =
+        {
+          Ast.name = "hello"
+        ; Ast.items =
+            [
+              Ast.Let
+                (Ast.Type
+                   {
+                     Ast.binding =
+                       {
+                         Ast.name = "Example"
+                       ; Ast.publicity = Ast.Private
+                       ; Ast.annotations = []
+                       ; Ast.doc_comment = {Ast.lines = []}
+                       }
+                   ; Ast.value = example_type
+                   })
+            ; Ast.Impl
+                {
+                  Ast.impl_type = example_type
+                ; Ast.impl_funcs =
+                    {map = StringMap.S.singleton "print" print_method}
+                }
+            ; Ast.Let (Ast.Value main_func)
+            ]
+        }
+    }
+  in
   ast |> Ast.show_ast |> print_endline;
   ()
 ;;
