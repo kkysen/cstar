@@ -91,6 +91,7 @@ and func_type = {
     func_name : string
   ; generic_args : generic_type StringMap.t
   ; args : variable StringMap.t
+  ; return_type : type_
 }
 [@@deriving show]
 
@@ -104,6 +105,7 @@ and type_ =
   | Func of func_type
   | Pointer of type_
   | Slice of type_
+  | Self
 [@@deriving show]
 
 type pattern = unit (* TODO *) [@@deriving show]
@@ -205,7 +207,6 @@ and func_call_expr = {
 and func_literal = {
     func_type : func_type
   ; func_value : expr
-  ; func_extern : bool
 }
 [@@deriving show]
 
@@ -329,11 +330,15 @@ type type_let = {
 }
 [@@deriving show]
 
-type func_decl = {func : func_literal} [@@deriving show]
+type func_decl = {
+    binding : let_binding
+  ; func : func_literal
+}
+[@@deriving show]
 
 type impl = {
-    type_ : type_
-  ; functions : func_decl StringMap.t
+    impl_type : type_
+  ; impl_funcs : func_decl StringMap.t
 }
 [@@deriving show]
 
