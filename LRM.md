@@ -105,10 +105,10 @@ fn static(): = {}
 | == | binary relational equal                    |  a==2        |
 | != | binary relational not equal                |  a!=2        |
 | -  | unary negation                             |  -a          |
-| && | binary logical AND                         |  a && b      |
-| || | binary locical OR                          |  a || b      |
-| !  | unary locial NOT                           |  !a          |
-| ?  | 
+| & | binary logical AND                          |  a && b      |
+| | | binary logical OR                           |  a || b      |
+| !  | unary logical NOT                          |  !a          |
+| ?  | conditional ternary operator               |  x? a : b    |
 
 ### Keywords
 Keywords are reserved identifiers that cannot be used as regular identifiers for other purposes. 
@@ -388,8 +388,6 @@ undefer@b;
 ### Functions
 fn(): return type = x - for closures
 
-### Function Class
-
 ### Assignment
 
 ### Pattern Matching
@@ -619,6 +617,26 @@ limited to just the monads `Option<T>`, and `Result<T, E>` (over `T`).
 Note also that `try` blocks can be specified at the function level 
 as well as normal blocks.
 
+### Uncatchable Panics
+While monadic error-handling with `Option` and `Result` is usually superior, 
+there are still cases where you have unrecoverable errors 
+(maybe you don't want to handle out of memory conditions), 
+or where you'd rather just end the program than handle the error. 
+In this case, you can `panic`, which will 
+print an error message and immediately `abort`.
+
+To do this with an `Option` or `Result`, 
+you can just call `.unwrap()`, which will panic if 
+it was `None` or `Err` and return the `Some` or `Ok` value.
+
+There is no language-supported unwinding. 
+`abort` is immediately called after a panic, and only the OS cleans things up.
+Nothing is stopping you from calling `setjmp` and `longjmp` from C, 
+but no unwinding of `defer` statements is done, 
+and it may result in undefined behavior.  There is no undefined behavior, 
+however, in a normal panic because you just simply `abort`.
+
+
 ## Standard Library
 ### Option
 
@@ -629,6 +647,23 @@ as well as normal blocks.
 ### Vector
 
 ## Operator Precedence
-generic higher than comparison
+The table below shows the operator precedence for binary and unary operators from lowest precedence to highest precedence. 
+
+| Operator       | Description                    |    Associativity     |
+| -----------    | ---------------------------    | ---------------- |
+| ;  | sequencing                           |  Left    |
+| =  | assignment                           |  Right   |
+| .  | access                               |  Left    |
+| |  | or                                   |  Left    |
+| &  | and                                  |  Left    |
+| == !=  | equality/inequality              |  Left    |
+| < > <= >=  | comparison                   |  Left    |
+| +-| addition/subtraction                  |  Left    |
+| */ | multiplication/division              |  Left    |
+| -  | negation                             |  Right   |
+| !  | logical NOT                          |  Right   |
+| ?  | conditional 
+
+In C* generics have a higher precedence than comparison thus removing ambiguity from "< >"
 
 ## Examples
