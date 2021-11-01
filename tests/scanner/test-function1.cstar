@@ -1,0 +1,7 @@
+
+fn find_min<T>(a: T, b: T): c T{
+	let c = (a, b).match {
+		a <= b => a,
+		a > b => b,
+	}
+}

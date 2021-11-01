@@ -1,0 +1,5 @@
+//generic type mismatch
+enum<T> data{
+	contents: G,
+	len: usize
+}

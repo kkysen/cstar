@@ -37,6 +37,7 @@ rule token = parse
   | '~' { Tilde }
   | '#' { Pound }
   | '$' { DollarSign }
+  | '"' { read_string (Buffer.create 80) lexbuf }
   | [' ' '\n' '\r' '\t' '\x0B' '\x0C']+ { WhiteSpace }
   (* Only match the actual structural "slashdash" comment, 
    * since we need to fully parse to know what it comments out. 

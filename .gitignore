@@ -5,3 +5,7 @@ _esy/
 esy.lock/
 /*.install
 node_modules/
+*.diff
+*.err
+*.out
+runtests.log
