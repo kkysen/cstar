@@ -75,7 +75,6 @@ Everything inside here is commented out until "*/"
 /- let x = 25 //this comments out the entire let expression
 ```
 
-
 ### Identifiers
 All identifiers in C* must be created from ASCII letters and decimal digits. Identifiers may contain underscore but must begin with a letter. They can not be a C* keyword.
 
@@ -113,7 +112,7 @@ fn static(): = {}
 ### Keywords
 Keywords are reserved identifiers that cannot be used as regular identifiers for other purposes. 
 C* keywords:
-- for, if, else, return, int, float, char, void, let, match, defer, break, label (add more)
+- for, if, else, return, int, float, char, void, let, match, defer, break, label, true, false
 
 ### Separators
 | Separator | Description | 
@@ -131,7 +130,7 @@ C* keywords:
 C* Literals: string, int, float, char, boolean, unit, struct, tuple, closure, function, range
 
 #### String Literals
-There are multiple types of strings in C* owing to the inherent complexity of string-handling without incurring overhead. The default string literal type is String, which is UTF-8 encoded and wraps a *[u8]. This is a borrowed slice type and can't change size. To have a growable string, there is the StringBuf type, but there is no special syntactic support for this owned string. Strings are made of chars, unicode scalar values, when iterating (even though they are stored as *[u8]). chars have literals like c'\n'.
+The default string literal type is String, which is UTF-8 encoded and wraps a *[u8]. This is a borrowed slice type and can't change size. To have a growable string, there is the StringBuf type, but there is no special syntactic support for this owned string. Strings are made of chars, unicode scalar values, when iterating (even though they are stored as *[u8]). chars have literals like c'\n'.
 
 Then there are byte strings, which are just *[u8] and do not have to be UTF-8 encoded. String literals for this are prefixed with b, like b"hello" (and for char byte literals, a b prefix, too: b'c'). The owning version of this is just a Box<[u8]>.
 
@@ -139,37 +138,45 @@ Furthermore, for easier C FFI, there is also CString and CStringBuf, which are e
 
 And finally, there are format strings. Written `f"n + m = {n + m}"`, they can interpolate expressions within {}. Types that can be used like this must have a format method (might change). Format, or f-strings, don't actually evaluate to a string, but rather evaluate to an anonymous struct that has methods to convert it all at once into a real string. Thus, f-strings do not allocate.
 
-#### Int Literals
+#### Number Literals
+Number literals represent any sequence of integers between 0 and 9. They can be represented in decimal form, fraction form, or exponential form as well.
 
-#### Float Literals
+Ex. 123, 532, 6, 12.3, 43/23
 
 #### Char Literals
+Char literals represent any single character and make up string literals. 
 
-#### Boolean Literals
+Ex. 'a', '1'
+
+#### Bool Literals
+Bool literals are booleans that represent true and false. In C* they are represented by the keywords true and false. 
 
 #### Unit Literal
-- void type
+Unit literals are a void type that return nothing
 
 #### Struct Literal
-literal for intializing a struct
+Struct literals are the creation of new struct values by using the keyword "struct" and denoting the values of its fields. 
 
 #### Tuple Literal
+Tuple literals contain a list of expressions that are separated by commmas and contained in parenthesis.
+
+Ex. (3,2), (a,b)
 
 #### Closure Literal
+Closure literals (not sure about this)
 
-#### Function Literal
-- pass function in as a param
-also encloses state, when you create a new function that references a local vairable - makes anonymous struct that contains all of the enclosed context variables
+#### Func Literal
+Func literals are function literals. A func literal is a closure so it can reference vairables that have been defined in a surrounding function. It can also share variables between the function literal and the surrounding function. Func literals can also be passed into other functions as parameters.
 
 ### Range Literal
-0..1 
+Range literals are used to write ranges in values and are denoted using "..". A normal range literal is from an inclusive value a to an exclusive value b. They can be denoted using different variations such as using a "=" to denote inclusivity and "+" to denote a range from a inclusive to a+b exclusive. 
 
-`a..b` - `[a, b)`  
-`a..=b` - `[a, b]`  
-`a..+b` `[a, a + b)`  
-`a..`  
-`..b`  
-
+Ex. 
+- `a..b` 
+- `a..=b`
+- `a..+b` 
+- `a..`
+- `..b`
 
 ## Algebraic Data Types
 C* has `struct`s for product types and `enum`s for sum types. 
@@ -367,19 +374,6 @@ Then when the stack unwinds, any none-undone `Defers` on the stack are run.
 
 
 
-
-
-
-keyword@label
-
-for@a (...) {
-    break@a;
-}
-
-defer@b x.free();
-undefer@b;
-
-
 ### Expressions and Operators
 #### Unary Operators
 #### Binary Operators
@@ -389,6 +383,14 @@ undefer@b;
 fn(): return type = x - for closures
 
 ### Assignment
+keyword@label
+
+for@a (...) {
+    break@a;
+}
+
+defer@b x.free();
+undefer@b;
 
 ### Pattern Matching
 Instead of having a `switch` statement like in C, 
@@ -636,16 +638,6 @@ but no unwinding of `defer` statements is done,
 and it may result in undefined behavior.  There is no undefined behavior, 
 however, in a normal panic because you just simply `abort`.
 
-
-## Standard Library
-### Option
-
-### Result
-
-### Strings
-
-### Vector
-
 ## Operator Precedence
 The table below shows the operator precedence for binary and unary operators from lowest precedence to highest precedence. 
 
@@ -662,7 +654,7 @@ The table below shows the operator precedence for binary and unary operators fro
 | */ | multiplication/division              |  Left    |
 | -  | negation                             |  Right   |
 | !  | logical NOT                          |  Right   |
-| ?  | conditional 
+| ?  | conditional                          |  Left    |
 
 In C* generics have a higher precedence than comparison thus removing ambiguity from "< >"
 
