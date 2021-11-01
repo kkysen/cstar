@@ -7,6 +7,8 @@
 | Ryan Lee    | dbl2127 | System Architect |
 | Joanne Wang | jyw2118 | Tester           |
 
+Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
+
 ## Table of Contents
 1. Overview
 2. Lexical Conventions
