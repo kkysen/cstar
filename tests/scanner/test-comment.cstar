@@ -1,0 +1,8 @@
+/// Definition for an employee data type could be used later...
+struct employee {
+	department: String,
+	emp_id: i32,
+	manager: *employee,
+}
+\\\
+
