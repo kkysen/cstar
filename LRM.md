@@ -41,10 +41,12 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
     - Expressions and Operators
         - Unary Operators
         - Binary Operators
+        - Assignment Operators
+        - Arithmetic Operators
         - Relational Operators
-    - Function Class
-    - Assignment
+    - Functions
     - Pattern Matching
+    - Methods
     - Postfix
 6. Slices
 7. Monadic Error Handling
@@ -373,6 +375,7 @@ while(expr1){
 }
 ```
 Similiar to `if` statements due to the expression oriented nature of C* `statement1` must evaluate to the unit type and it is possible to replace `statement1` with `expr2`.
+
 #### Defer
 To aid in resource handling, C* has a `defer` keyword. 
 `defer` defers the following statement or block until the function returns, 
