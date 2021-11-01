@@ -24,9 +24,9 @@
         - Unit
         - Struct
         - Tuple
+        - Range
         - Closure
         - Function
-        - Range
 3. Algebraic Data Types
     - Structs
 4. Generics
@@ -34,6 +34,8 @@
     - Statements
         - If Else Statements
         - For Statements
+        - While Statements
+        - Defer Statements
     - Expressions and Operators
         - Unary Operators
         - Binary Operators
@@ -44,12 +46,9 @@
     - Postfix
 6. Slices
 7. Monadic Error Handling
-8. Classes
-9. Standard Library
-    - Lists
-    - Strings
-10. Operator Precedence
-11. Examples
+    - Uncatchable Panics
+8. Operator Precedence
+9. Examples
 
 ## Overview
 C* is a general-purpose systems programming language. It is between the level of C and Zig on a semantic level, and syntactically it also borrows a lot from Rust (pun intended). It is meant primarily for programs that would otherwise be implemented in C for the speed, simplicity, and explicitness of the language, but want a few simple higher-level language constructs, more expressiveness, and some safety, but not so many overwhelming language features and implicit costs like in Rust, C++, or Zig.
@@ -58,14 +57,13 @@ It has manual memory management (no GC) and uses LLVM as its primary codegen bac
 
 While a general-purpose language, C* will probably have the most advantages when used in systems and embedded programming. It's expressivity and high-level features combined with its relative simplicity, performance, and explicitness is a perfect match for many of these low-level systems and embedded programs.
 
-
 ## Lexical Conventions
 ### Comments
 C* implements single-line, multi-line and structural comments. Tokens followed by ```//``` are considered single line comments and tokens followed by ```/*``` are considered multi-line comments. C* also has an additional structural comment ```/-``` which will comment out the next item, whether that be the next expression, the next line, or the next function.
 /// are doc comments
 
 Example:
-```
+```rust
 // This is a regular single line comment
 
 /* This is a multiline comment
@@ -79,10 +77,10 @@ Everything inside here is commented out until "*/"
 All identifiers in C* must be created from ASCII letters and decimal digits. Identifiers may contain underscore but must begin with a letter. They can not be a C* keyword.
 
 Examples:
-```rust=
+```rust
 //valid identifier
 let validWord = 2
-fn get_num(): {}
+fn get_num(): = {}
 
 //invalid identifier
 let 2words = 2
@@ -162,12 +160,6 @@ Tuple literals contain a list of expressions that are separated by commmas and c
 
 Ex. (3,2), (a,b)
 
-#### Closure Literal
-Closure literals (not sure about this)
-
-#### Func Literal
-Func literals are function literals. A func literal is a closure so it can reference vairables that have been defined in a surrounding function. It can also share variables between the function literal and the surrounding function. Func literals can also be passed into other functions as parameters.
-
 ### Range Literal
 Range literals are used to write ranges in values and are denoted using "..". A normal range literal is from an inclusive value a to an exclusive value b. They can be denoted using different variations such as using a "=" to denote inclusivity and "+" to denote a range from a inclusive to a+b exclusive. 
 
@@ -177,6 +169,53 @@ Ex.
 - `a..+b` 
 - `a..`
 - `..b`
+
+#### Closure Literal
+Closure literals are similar to normal functions but they can "enclose" over values in the current scope.
+
+These are some example of how to create closures and how to call them. 
+In particular:
+* Closures have a generic, unnamed type. 
+  So when we take a closure as a parameter, we need to use a generic 
+  (this is because closure type depend on what they capture). 
+  You can also apply a type to a function type to get its return type, 
+  like `F(T)`.
+* We can call a closure using the unified calling syntax: `.@call()`. 
+  Normal function calls are `()`, and we want to be explicit 
+  when we're actually calling a closure, so `.@call()` is needed. 
+  `.@call()` also works on normal functions, though, 
+  since all functions can be implicitly converted to non-capturing closures.
+* The closure syntax is very similar to function syntax, 
+  with a few differences:
+    * The return expression does not have to be a block 
+      like in normal functions; it can directly use an expression. 
+      Note that functions effectively just return a block. 
+      That's how `try` blocks work, for example.
+    * Argument and return types are inferred, 
+      though they can still be specified if you want. 
+      This is because they are more local, 
+      and thus documented types are not as necessary.
+    * If you want to capture variables, 
+      you specify an anonymous struct literal before the `fn`. 
+      This follows the same normal rules for struct literals, 
+      but you don't have to specify the type, since the type is anonymous. 
+      Then that struct's fields are available within the closure as variables.
+
+The way closures are implemented is by 
+creating an anonymous struct of the captured closure context. 
+Then there is a method on that struct that takes the closure arguments and 
+returns the closure body with the context struct destructured inside 
+(so its variables are in scope).  This is what is called by `.@call()`. 
+Note that there are no indirect function calls, boxing, 
+or allocations involved in this, but it requires the use of generics. 
+If nothing is captured by a closure, though, 
+then it can be cast to a function pointer: `fn(T, U): R`, 
+which can be called indirectly and passed to C over FFI. 
+The same is true of normal functions.
+
+#### Func Literal
+Func literals are function literals. A func literal is a closure so it can reference vairables that have been defined in a surrounding function. It can also share variables between the function literal and the surrounding function. Func literals can also be passed into other functions as parameters.
+
 
 ## Algebraic Data Types
 C* has `struct`s for product types and `enum`s for sum types. 
@@ -260,7 +299,7 @@ enum ShortVec<T, N: u8> {
     },
 }
 
-fn short_vec_len<T, N: u8>(v: *ShortVec<T, N>): usize {
+fn short_vec_len<T, N: u8>(v: *ShortVec<T, N>): usize = {
     v.match {
         Inline {len, _} => len.@cast(),
         Allocated {len, _} => len,
@@ -289,7 +328,7 @@ you correctly clean up resources in a function:
 extern "C" fn open(path: *u8, flags: i32): i32;
 extern "C" fn close(fd: i32): i32;
 
-fn open_file_in_dir(dir: *[u8], filename: *[u8]): Result<i32, String> try {
+fn open_file_in_dir(dir: *[u8], filename: *[u8]): Result<i32, String> try = {
     let mut path = Vec.new(Mallocator());
     defer path.free();
     try {
@@ -332,7 +371,7 @@ struct FilePair {
     fd2: i32,
 }
 
-fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try {
+fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try = {
     let fd1 = open_file_in_dir(b"", path1).?;
     close: defer close(fd1);
     let fd2 = open_file_in_dir(b"", path2).?;
@@ -352,7 +391,7 @@ which cancels an earlier labeled `defer`, in this case labeled `close`.
 `defer` and `undefer` are actually syntax sugar 
 for something a bit more low-level and wordy:
 ```rust
-fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try {
+fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try = {
     let fd1 = open_file_in_dir(b"", path1).?;
     let close1 = {fd1} fn() close(fd1);
     let close1 = close1.@defer());
@@ -372,25 +411,105 @@ returns a `Defer` struct, which can be undone with `Defer.undo()`
 `Defer.undo()` sets a bit in the `Defer` struct that it's been undone. 
 Then when the stack unwinds, any none-undone `Defers` on the stack are run.
 
-
-
 ### Expressions and Operators
 #### Unary Operators
+Unary operators are operators that can act on an expression. C* uses the unary operators "-" and "!" to represent negation and the logical not repectively. "-" negates a number literal such as 
+```rust
+let x = -2
+```
+The logical not "!" represents negation for bool literals or boolean expressions such as
+```rust
+let a = true
+let b = !a
+```
+where b returns the value of false. 
+
 #### Binary Operators
-#### Relational Operators
+A binary operator acts on two expressions and can be show as follows:
+
+Binary operator = expr * operator * expr
+
+##### Assignment operator
+The assignment operator stores values into vairables. It uses the keyword "let" and the = symbol so that the left side variable stores the expression on the right.
+
+Ex. 
+``` rust
+let a = 23 // a stores the value 23
+```
+
+##### Arithmetic Operator
+- The addition operator "+" adds two values of the same type. Automatic type conversion is applied when adding two number literals and can also be applied to string addition. 
+
+Ex. 
+```rust
+1 + 2 // 3
+12.3 + 10 // 22.3
+"string" + "test" // "stringtest"
+```
+- The subtraction operator "-" subtracts two values of the same type. Automatic type conversion is applied when adding two number literals.
+
+Ex. 
+```rust
+1 - 2 // -1
+12.3 - 10 // 2.3
+```
+
+- The multiplication operator "*" multiplies two values of the same type. Automatic type conversion is applied when adding two number literals. 
+
+Ex. 
+```rust
+1 * 2 // 2
+12.3 * 10 // 123
+```
+
+- The division operator "/" divides two values of the same type. Automatic type conversion is applied when adding two number literals. 
+
+Ex. 
+```rust
+1 / 2 // .5
+12.3 / 10 // 1.23
+```
+
+- The modulus operator "%" takes the modulus of two values of the same type. Automatic type conversion is applied when adding two number literals. 
+
+Ex. 
+```rust
+1 % 2 // 1
+12.3 % 10 // 2.3
+```
+
+##### Relational Operators
+Relational operators represent how the operands relate to each other. Each expression using a relational operator has two values as inputs and outputs either true or false. The relational operators are: ==, !=, <, >, <=, >=, &, |.
+
+```rust
+1 < 2 // true
+1 > 2 // false
+1 != 2 // true
+1 == 2 // false
+true | false // true
+true & false // false
+```
 
 ### Functions
-fn(): return type = x - for closures
+Functions are a type of statement that can be declared one of two ways: 
+```rust
+fn name(parameters): return type = body
+```
 
-### Assignment
-keyword@label
+or 
 
-for@a (...) {
-    break@a;
-}
+```rust
+fn name(parameters): return type = { body }
+```
 
-defer@b x.free();
-undefer@b;
+It takes in a list of parameters and returns a value based on the expression. Functions can be written with or without specifying the return type.
+
+Ex. 
+```rust
+fn hello(): string = "hello world"
+
+fn adding(a, b): = { return a + b }
+```
 
 ### Pattern Matching
 Instead of having a `switch` statement like in C, 
@@ -428,19 +547,19 @@ struct Person {
 
 impl Hello {
 
-    fn new(first_name: String, last_name: String): Self {
+    fn new(first_name: String, last_name: String): Self = {
         Self {first_name, last_name}
     }
     
-    fn say_hi1(self: Self) {
+    fn say_hi1(self: Self) = {
         print(f"Hi {self.first_name} {self.last_name}");
     }
     
-    fn say_hi1(self: *Self) {
+    fn say_hi1(self: *Self) = {
         print(f"Hi {self.last_name}, {self.first_name}");
     }
     
-    fn remove_last_name(self: *mut Self) {
+    fn remove_last_name(self: *mut Self) = {
         self.last_name = "";
     }
     
@@ -585,7 +704,7 @@ struct IndexPair {
     second: usize,
 }
 
-fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> try {
+fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> try = {
     let first = try {
         get_by_index(a, i).?
     };
@@ -596,7 +715,7 @@ fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> try {
 
 This desugars to
 ```rust
-fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> {
+fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> ={
     let first = try {
         get_by_index(a, i).match {
             Ok(i) => i,
@@ -656,6 +775,123 @@ The table below shows the operator precedence for binary and unary operators fro
 | !  | logical NOT                          |  Right   |
 | ?  | conditional                          |  Left    |
 
-In C* generics have a higher precedence than comparison thus removing ambiguity from "< >"
+In C* generics have a higher precedence than comparison thus removing ambiguity from "< >".
 
 ## Examples
+### GCD
+Here is how you write simple algorithms like GCD in C*:
+```rust
+fn gcd(a: i64, b: i64): i64 = {
+    (fn gcd(a: u64, b: u64): u64 = {
+        match b {
+            0 => b,
+            _ => gcd(b, a % b),
+        }
+    })(a.abs(), b.abs()).@cast(i64)
+}
+```
+
+### Systems Programming
+Here is an example program in C* for part of a simple HTTP/1.0 server, 
+equivalent to part0 of hw3 in Jae's OS class 
+(https://gist.github.com/RyanLee64/hash-redacted). 
+It showcases many of C*'s notable features, 
+like enums, methods, generics, defer, expression-orientedness, 
+postfix operators, pattern matching, closures, monadic error handling, 
+and byte, c, and format strings.
+
+That code (the ported part) is ~230 LOC, while the C* below is only ~80 LOC, 
+and it is more correct in error handling and edge cases, 
+faster in places (though IO dominates here), and the business logic 
+stands out more (while less important aspects like errors, resource cleanup, 
+allocations, and string handling stay in the background). 
+That is, C* allows you to be simulatenously more expressive 
+while still staying correct and explicit, 
+and the performance is just as good if not better.
+
+```rust
+enum Status {
+    Ok,
+    NotImplemented,
+    BadRequest,
+    // rest skipped for brevity
+}
+
+struct RequestLine {
+    method: *[u8],
+    uri: *[u8],
+    version: *[u8],
+}
+
+impl RequestLine {
+    fn check(self: *Self): Result<(), Status> try = {
+        let Self {method, uri, version} = self.*;
+        match (method, version) {
+            (b"GET", b"HTTP/1.0" | b"HTTP/1.1") => {},
+            _ => Err(Status.NotImplemented).?,
+        }
+        if uri.starts_with(b'/').! || uri.equals(b"/..") || uri.contains(b"/../") {
+            Err(Status.BadRequest).?;
+        }
+    }
+}
+
+fn main(): Result<(), AnyError> try = {
+    let (port, web_root) = std.env.argv().match {
+        [_, port, web_root] => (port.parse<u16>().?, web_root),
+        [program, ...] => Err(f"usage: {program} <server_port> <web_root>").?,
+    };
+    let server_socket = Socket.new(PF_INET, SOCK_STREAM, IPPROTO_TCP).?;
+    defer server_socket.&.close();
+    server_socket.&.bind(SocketAddr {
+        family: AF_INET,
+        addr: InetAddr {
+            addr: INADDR_ANY.to_be(),
+        },
+        port: port.to_be(),
+    }).?;
+    server_socket.&.listen(5).?;
+    let mut request_line_buf = Vec.new();
+    defer request_line_buf.free();
+    let mut line_buf = Vec.new();
+    defer line_buf.free();
+    loop try {
+        let client_socket = server_socket.&.accept().?;
+client_socket_close:
+        defer client_socket.&.close();
+        let mut client_stream = fdopen(client_socket.fd, c"r").?;
+        undefer client_socket_close; // stream (`FILE *` in C) takes ownership
+        defer client_stream.&.close();
+        let line_or_status = try {
+            // read and parse request line
+            let line = client_stream.&mut.read_line(buf.&mut)
+                .map_err(fn(_) Status.BadRequest).?
+                .split(fn(b) " \t\r\n".contains(b)).match {
+                    [method, uri, version] => RequestLine { method, uri, version },
+                    _ => Err(Status.NotImplemented).?,
+                };
+            line.&.check().?;
+            // read headers, skip them
+            loop {
+                client_stream.&mut.read_line(buf.&mut)
+                    .map_err(fn(_) Status.BadRequest).?
+                    .match {
+                        "\n" | "\r\n" => break,
+                        _ => {},
+                    }
+            }
+            line
+        }
+        let (line, status) = match line_or_status {
+            Ok(line) => (line, Status.Ok),
+            Err(status) => (RequestLine { method: b"", uri: b"", version: b"" }, status),
+        };
+        client_socket.write(f"HTTP/1.0 {status.code()} {status.reason()}\r\n\r\n").?;
+        match line_or_status {
+            Ok(_) => handle_request(web_root, line.uri, client_socket).?,
+            Err(_) => client_socket.write(f"<html><body>\n<h1>{status.code()} {status.reason()}</h1>\n</body></html>").?;
+        }
+        eprintln(f"{client_socket.addr} \"{line.method} {line.uri} {line.version}\" {status.code()} {status.reason()}").?;
+    }
+}
+```
