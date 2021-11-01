@@ -309,12 +309,68 @@ fn short_vec_len<T, N: u8>(v: *ShortVec<T, N>): usize = {
 
 ## Statements and Expressions
 ### Statements 
+Due to the expression oriented nature of C* all control flow statements are
+themselves expressions. 
 #### If-Else Statements
+If-Else statements execute one of two cases. The first consists of typical
+C-style semantics wherein we have:
+```c
+if (expr1)
+    statement1
+else
+    statement2
+```
+Both `statement1` and `statement2` must evaluate to the unit type. Like
+C the `else` part of the If-Else control flow block is optional. In addition to
+the C-style control flow we also can have:
+```c
+if (expr1)
+    expr2
+else
+    expr3
+``` 
+In both cases the expressions in the `if` statement are evaluated and in the case
+they evaluate to a non-zero value the flow of execution continues down that
+path otherwise the body of the `else` statement is executed. 
+
+C* utilizes the same mechanism to eliminate ambiguity relating to a "dangling-else". An `else` is grouped to the nearest `if`. In the case of:
+```rust
+let i: i32 = 6;
+let j: i32 = 7;
+
+if(i > 4)
+    if(j > i)
+        println!("j is greater than i!");
+    else
+        println("j is less than or equal to i!");
+```
+While the indentation and print statements make clear which `if` the `else`
+clause is grouped with it should be clear that barring the use of additional
+brackets to direct control flow the `else` is grouped to the nearest `if` above
+it.
 
 #### For Statements
+For statements can execute over a range in the case of: 
+```rust
+for season in seasons.iter()
+    println!(season);
+```
+In addition to the use of an explicit iterator it is also possible to use a range literal to bound the execution of the body of a for loop in the case of:
+```rust
+let mut day_ = 1;
+for x in 1..365{
+    println!("Day {} of 365", x);
+}
+```
 
 #### While Statements
-
+Execution of the body of a while statement continues until the expression labeled `expr1` evaluates to zero. For example:
+```c
+while(expr1){
+    statement1;
+}
+```
+Similiar to `if` statements due to the expression oriented nature of C* `statement1` must evaluate to the unit type and it is possible to replace `statement1` with `expr2`.
 #### Defer
 To aid in resource handling, C* has a `defer` keyword. 
 `defer` defers the following statement or block until the function returns, 
