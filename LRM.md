@@ -203,13 +203,35 @@ C* Literals:
 * [range](#range-literal)
 
 #### String Literals
-The default string literal type is String, which is UTF-8 encoded and wraps a *[u8]. This is a borrowed slice type and can't change size. To have a growable string, there is the StringBuf type, but there is no special syntactic support for this owned string. Strings are made of chars, unicode scalar values, when iterating (even though they are stored as *[u8]). chars have literals like c'\n'.
+There are multiple types of strings in C* owing to 
+the inherent complexity of string-handling without incurring overhead. 
+The default string literal type is `String`, which is UTF-8 encoded and 
+wraps a `*[u8]`.  This is a borrowed slice type and can't change size. 
+To have a growable string, there is the `StringBuf` type, 
+but there is no special syntactic support for this owned string. 
+`String`s are made of `char`s, unicode scalar values, when iterating 
+(even though they are stored as `*[u8]`).  `char`s have literals like `c'\n'`.
 
-Then there are byte strings, which are just *[u8] and do not have to be UTF-8 encoded. String literals for this are prefixed with b, like b"hello" (and for char byte literals, a b prefix, too: b'c'). The owning version of this is just a Box<[u8]>.
+Then there are byte strings, which are just `*[u8]` and 
+do not have to be UTF-8 encoded. 
+String literals for this are prefixed with `b`, like `b"hello"` 
+(and for char byte literals, a `b` prefix, too: `b'c'`). 
+The owning version of this is just a `Box<[u8]>` 
+(notice the unsized slice use), and 
+the growable owning version is just a `Vec<u8>`.
 
-Furthermore, for easier C FFI, there is also CString and CStringBuf, which are explicitly null-terminated. All other string types are not null-terminated, since they store their own length, which is way more efficient and safe. Literal CStrings have a c prefix, like c"/home".
+Furthermore, for easier C FFI, there is also `CString` and `CStringBuf`, 
+which are explicitly null-terminated.  All other string types are 
+not null-terminated, since they store their own length, 
+which is way more efficient and safe. 
+Literal `CString`s have a `c` prefix, like `c"/home"`.
 
-And finally, there are format strings. Written `f"n + m = {n + m}"`, they can interpolate expressions within {}. Types that can be used like this must have a format method (might change). Format, or f-strings, don't actually evaluate to a string, but rather evaluate to an anonymous struct that has methods to convert it all at once into a real string. Thus, f-strings do not allocate.
+And finally, there are format strings.  Written `f"n + m = {n + m}"`, 
+they can interpolate expressions within `{}`. 
+Types that can be used like this must have a `format` method (might change). 
+Format, or f-strings, don't actually evaluate to a string, 
+but rather evaluate to an anonymous struct that has methods to 
+convert it all at once into a real string.  Thus, f-strings do not allocate.
 
 #### Number Literals
 Number literals represent any sequence of integers between 0 and 9. They can be represented in decimal form, fraction form, or exponential form as well.
