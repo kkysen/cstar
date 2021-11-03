@@ -135,7 +135,7 @@ pattern match in a `match` statement, you can also do the same
 as a general statement, like in a `let`.  It's like an unconditional `match`.
 
 ```rust
-let cow = CowString::Borrowed("🐄");
+let cow = CowString.Borrowed("🐄");
 let len = match cow {
     Borrowed(s) => s.len(),
     Owned(s) => s.len(),
@@ -160,22 +160,26 @@ enum Option<T> {
     Some(T),
 }
 
-enum ShortVec<T, N: u8> {
-    Inline {
-        array: [T; N],
-        len: u8,
-    },
-    Allocated {
-        ptr: Option<*T>,
-        len: usize,
-        cap: usize,
-    },
+struct InlineVec<T, N: u8> {
+    array: [T; N],
+    len: u8,
 }
 
-fn short_vec_len<T, N: u8>(v: *ShortVec<T, N>): usize {
+struct AllocatedVec<T> {
+    ptr: Option<*T>,
+    len: usize,
+    cap: usize,
+}
+
+enum ShortVec<T, N: u8> {
+    Inline(InlineVec<T, N>),
+    Allocated(AllocatedVec<T>),
+}
+
+fn short_vec_len<T, N: u8>(v: *ShortVec<T, N>): usize = {
     v.match {
-        Inline {len, _} => len.@cast(),
-        Allocated {len, _} => len,
+        Inline(InlineVec {len, _}) => len.@cast(),
+        Allocated(AllocatedVec {len, _}) => len,
     }
 }
 ```
@@ -217,7 +221,7 @@ struct IndexError {
     index: usize,
 }
 
-fn get_by_index<T>(a: *[T], i: usize): Result<T, IndexError> {
+fn get_by_index<T>(a: *[T], i: usize): Result<T, IndexError> = {
     if (i < a.len()) {
         Ok(a[i])
     } else {
@@ -230,7 +234,7 @@ struct IndexPair {
     second: usize,
 }
 
-fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> try {
+fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> = try {
     let first = try {
         get_by_index(a, i).?
     };
@@ -241,7 +245,7 @@ fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> try {
 
 This desugars to
 ```rust
-fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> {
+fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> = {
     let first = try {
         get_by_index(a, i).match {
             Ok(i) => i,
@@ -295,10 +299,15 @@ its block exits, but its easier to just think about function blocks first).
 For example, you can use this to ensure 
 you correctly clean up resources in a function:
 ```rust
-extern "C" fn open(path: *u8, flags: i32): i32;
-extern "C" fn close(fd: i32): i32;
+@extern("C")
+fn open(path: *u8, flags: i32): i32;
 
-fn open_file_in_dir(dir: *[u8], filename: *[u8]): Result<i32, String> try {
+@extern("C")
+fn close(fd: i32): i32;
+
+let O_RDWR = const { 2i32 };
+
+fn open_file_in_dir(dir: *[u8], filename: *[u8]): Result<i32, String> = try {
     let mut path = Vec.new(Mallocator());
     defer path.free();
     try {
@@ -308,7 +317,7 @@ fn open_file_in_dir(dir: *[u8], filename: *[u8]): Result<i32, String> try {
         }
         path.extend(filename).?;
         path.push(0).?;
-    }.map_err(fn(_) "alloc error").?;
+    }.map_err(fn(_) = "alloc error").?;
     
     let path = path.as_ptr();
     let fd = open(path, O_RDWR).match {
@@ -341,13 +350,13 @@ struct FilePair {
     fd2: i32,
 }
 
-fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try {
+fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> = try {
     let fd1 = open_file_in_dir(b"", path1).?;
-    close: defer close(fd1);
+    defer@close close(fd1);
     let fd2 = open_file_in_dir(b"", path2).?;
-    close: defer close(fd2);
+    defer@close close(fd2);
     println(f"opened {fd1} and {fd2}");
-    undefer close;
+    undefer@close;
     FilePair {fd1, fd2}
 }
 ```
@@ -361,7 +370,7 @@ which cancels an earlier labeled `defer`, in this case labeled `close`.
 `defer` and `undefer` are actually syntax sugar 
 for something a bit more low-level and wordy:
 ```rust
-fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try {
+fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> = try {
     let fd1 = open_file_in_dir(b"", path1).?;
     let close1 = {fd1} fn() close(fd1);
     let close1 = close1.@defer());
@@ -408,19 +417,19 @@ struct Person {
 
 impl Hello {
 
-    fn new(first_name: String, last_name: String): Self {
+    fn new(first_name: String, last_name: String): Self = {
         Self {first_name, last_name}
     }
     
-    fn say_hi1(self: Self) {
+    fn say_hi1(self: Self) = {
         print(f"Hi {self.first_name} {self.last_name}");
     }
     
-    fn say_hi1(self: *Self) {
+    fn say_hi1(self: *Self) = {
         print(f"Hi {self.last_name}, {self.first_name}");
     }
     
-    fn remove_last_name(self: *mut Self) {
+    fn remove_last_name(self: *mut Self) = {
         self.last_name = "";
     }
     
@@ -478,7 +487,7 @@ but they can "enclose" over values in the current scope.
 For example,
 ```rust
 impl <T, F> Option<T> {
-    fn map(self: Self, f: F): F(T) {
+    fn map(self: Self, f: F): F(T) = {
         match self {
             None => None,
             Some(t) => Some(f.@call(t)),
@@ -488,10 +497,10 @@ impl <T, F> Option<T> {
 
 fn main() {
     try {
-        let a = Some("hello").map(fn(s) s.len()).?;
-        let b = Some("world").map({a} fn(s) a + s.len()).?;
-        let c = Some("🏳️‍⚧️").map({n: b} fn(s) n + s.len()).?;
-        None.map({a.&, b.&mut, n: &mut c} fn(s) {
+        let a = Some("hello").map(fn(s) = s.len()).?;
+        let b = Some("world").map({a} fn(s) = a + s.len()).?;
+        let c = Some("🏳️‍⚧️").map({n: b} fn(s) = n + s.len()).?;
+        None.map({a.&, b.&mut, n: &mut c} fn(s) = {
             print(f"{s}: {a.*}, {b.*}, {n.*}");
             n.*++;
             b.* += n.*;
@@ -618,6 +627,7 @@ Besides just using `//` for line comments and `///` for doc comments,
 `/-` can be used for a sort of structural comment. 
 That is, it will comment out the next item, 
 whether that be the next expression, the next line, or the next function.
+`/*` and `*/` can also be used for multi-line and nested comments.
 
 
 ### C FFI
@@ -663,8 +673,8 @@ unlike `enum`s, which track that.
 ### GCD
 Here is how you write simple algorithms like GCD in C*:
 ```rust
-fn gcd(a: i64, b: i64): i64 {
-    (fn gcd(a: u64, b: u64): u64 {
+fn gcd(a: i64, b: i64): i64 = {
+    (fn gcd(a: u64, b: u64): u64 = {
         match b {
             0 => b,
             _ => gcd(b, a % b),
@@ -707,7 +717,7 @@ struct RequestLine {
 }
 
 impl RequestLine {
-    fn check(self: *Self): Result<(), Status> try {
+    fn check(self: *Self): Result<(), Status> = try {
         let Self {method, uri, version} = self.*;
         match (method, version) {
             (b"GET", b"HTTP/1.0" | b"HTTP/1.1") => {},
@@ -719,7 +729,7 @@ impl RequestLine {
     }
 }
 
-fn main(): Result<(), AnyError> try {
+fn main(): Result<(), AnyError> = try {
     let (port, web_root) = std.env.argv().match {
         [_, port, web_root] => (port.parse<u16>().?, web_root),
         [program, ...] => Err(f"usage: {program} <server_port> <web_root>").?,
@@ -740,16 +750,15 @@ fn main(): Result<(), AnyError> try {
     defer line_buf.free();
     loop try {
         let client_socket = server_socket.&.accept().?;
-client_socket_close:
-        defer client_socket.&.close();
+        defer@client_socket_close client_socket.&.close();
         let mut client_stream = fdopen(client_socket.fd, c"r").?;
-        undefer client_socket_close; // stream (`FILE *` in C) takes ownership
+        undefer@client_socket_close; // stream (`FILE *` in C) takes ownership
         defer client_stream.&.close();
         let line_or_status = try {
             // read and parse request line
             let line = client_stream.&mut.read_line(buf.&mut)
-                .map_err(fn(_) Status.BadRequest).?
-                .split(fn(b) " \t\r\n".contains(b)).match {
+                .map_err(fn(_) = Status.BadRequest).?
+                .split(fn(b) = " \t\r\n".contains(b)).match {
                     [method, uri, version] => RequestLine { method, uri, version },
                     _ => Err(Status.NotImplemented).?,
                 };
@@ -757,7 +766,7 @@ client_socket_close:
             // read headers, skip them
             loop {
                 client_stream.&mut.read_line(buf.&mut)
-                    .map_err(fn(_) Status.BadRequest).?
+                    .map_err(fn(_) = Status.BadRequest).?
                     .match {
                         "\n" | "\r\n" => break,
                         _ => {},
