@@ -748,7 +748,7 @@ fn main(): Result<(), AnyError> = try {
     defer request_line_buf.free();
     let mut line_buf = Vec.new();
     defer line_buf.free();
-    loop try {
+    while (true) try {
         let client_socket = server_socket.&.accept().?;
         defer@client_socket_close client_socket.&.close();
         let mut client_stream = fdopen(client_socket.fd, c"r").?;
@@ -764,7 +764,7 @@ fn main(): Result<(), AnyError> = try {
                 };
             line.&.check().?;
             // read headers, skip them
-            loop {
+            while (true) {
                 client_stream.&mut.read_line(buf.&mut)
                     .map_err(fn(_) = Status.BadRequest).?
                     .match {
