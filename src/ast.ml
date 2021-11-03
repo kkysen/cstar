@@ -300,6 +300,11 @@ and expr =
  * I think I like that way most.
  *)
 
+type  stmt = Block of stmt list | Expr of expr
+| Return of expr
+| If of expr * stmt * stmt
+| For of expr * expr * expr * stmt | While of expr * stmt
+
 type annotation_arg = unit (* TODO *) [@@deriving show]
 
 type annotation = {
