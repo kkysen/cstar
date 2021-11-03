@@ -68,7 +68,7 @@ C* contains single-line, nested multi-line, and structural comments.
 #### `//` Single-Line Comments
 Tokens followed by `//` until a `\n` newline are considered single-line comments.
 
-##### '///' Doc Comments
+##### `///` Doc Comments
 Tokens followed by `///` until a `\n` newline are considered doc comments.  They are a form of single-line comments, 
 but may also be processed by tools for generating documentation.
 #### `/* */` Nested, Multi-Line Comments
@@ -118,6 +118,7 @@ let 2words = 2;
 struct static {}
 ```
 
+
 ### Operators
 | Operator | Arity  | In-Place |    Type    |       Description        |     Example      |
 | -------- | -----  | -------- | ---------- | ------------------------ | ---------------- |
@@ -134,10 +135,10 @@ struct static {}
 | `>=`     | binary | yes      | relational | greater than or equal to |  `a >= 2`             |
 | `<=`     | binary | yes      | relational | less than or equal to    |  `a <= 2`             |
 | `&&`     | binary | yes      | logical    | and                      |  `a && b`             |
-| `||`     | binary | yes      | logical    | or                       |  `a || b`             |
+| `\|\|`   | binary | yes      | logical    | or                       |  `a \|\| b`           |
 | `!`      | unary  | yes      | logical    | not                      |  `!a`                 |
 | `&`      | binary | yes      | bitwise    | and                      |                       |
-| `|`      | binary | yes      | bitwise    | or                       |                       |
+| `\|`     | binary | yes      | bitwise    | or                       |                       |
 | `^`      | binary | yes      | bitwise    | xor                      |                       |
 | `~`      | unary  | yes      | bitwise    | not                      |                       |
 | `[]`     | binary | no       | indexing   | index a slice            | `a[1]`                |
@@ -147,9 +148,9 @@ struct static {}
 | `/=`     | binary | no       | arithmetic | division                 |                       |
 | `%=`     | binary | no       | arithmetic | modulus                  |                       |
 | `&&=`    | binary | no       | logical    | and                      |                       |
-| `||=`    | binary | no       | logical    | or                       |                       |
+| `\|\|=`  | binary | no       | logical    | or                       |                       |
 | `&=`     | binary | no       | bitwise    | and                      |                       |
-| `|=`     | binary | no       | bitwise    | or                       |                       |
+| `\|=`    | binary | no       | bitwise    | or                       |                       |
 | `^=`     | binary | no       | bitwise    | xor                      |                       |
 
 ### Keywords
