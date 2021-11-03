@@ -18,17 +18,17 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
     - Keywords
     - Separators
     - Literals
-        - String
+        - Unit
+        - Boolean
         - Int
         - Float
         - Char
-        - Boolean
-        - Unit
+        - String
         - Struct
         - Tuple
         - Range
-        - Closure
         - Function
+        - Closure
 3. Algebraic Data Types
     - Structs
 4. Generics
@@ -63,73 +63,143 @@ While a general-purpose language, C* will probably have the most advantages when
 
 ## Lexical Conventions
 ### Comments
-C* implements single-line, multi-line and structural comments. Tokens followed by ```//``` are considered single line comments and tokens followed by ```/*``` are considered multi-line comments. C* also has an additional structural comment ```/-``` which will comment out the next item, whether that be the next expression, the next line, or the next function.
-/// are doc comments
+C* contains single-line, nested multi-line, and structural comments. 
+
+#### `//` Single-Line Comments
+Tokens followed by `//` until a `\n` newline are considered single-line comments.
+
+##### '///' Doc Comments
+Tokens followed by `///` until a `\n` newline are considered doc comments.  They are a form of single-line comments, 
+but may also be processed by tools for generating documentation.
+#### `/* */` Nested, Multi-Line Comments
+Tokens followed by `/*` are considered multi-line comments. 
+They can be nested, and end at the next `*/` that is not a part
+of an inner multi-line comment.
+They also do not have to be multi-line, 
+and can comment out only part of a line.
+
+#### `/-` Structural Comments
+`/-` denotes a structral comment.  It comments out the next item in the AST, which could be the next expression, function, type definition, etc.
 
 Example:
 ```rust
-// This is a regular single line comment
+// This is a regular single line comment.
+
+/// This is a doc comment for the function below.
+fn foo() = {}
 
 /* This is a multiline comment
-Everything inside here is commented out until "*/"
+Everything inside here is commented out until "* /"
 */
 
-/- let x = 25 //this comments out the entire let expression
+/* They can be /* nested */, too. */
+fn /* and appear in-between things */ bar() = {}
+
+/- let x = 25; // This comments out the entire let expression.
 ```
 
 ### Identifiers
-All identifiers in C* must be created from ASCII letters and decimal digits. Identifiers may contain underscore but must begin with a letter. They can not be a C* keyword.
+Identifiers in C* may be any UTF-8 string 
+in which the first characters is `_` or belongs to the [XID_Start](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=) character set,
+and the remaining characters belong to the [XID_Continue](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Continue%3A%5D&abb=on&g=&i=) character set.
+
+There are no keywords at the lexer level, but identifiers may not be a C* [keyword](#keywords).
+They may also not be the literals `true` or `false`.
 
 Examples:
 ```rust
-//valid identifier
-let validWord = 2
-fn get_num(): = {}
+// valid identifiers
+let validWord = 2;
+fn get_num() = {}
+enum 小笼包 {}
 
-//invalid identifier
-let 2words = 2
-fn static(): = {}
+// invalid identifier
+let 2words = 2;
+struct static {}
 ```
 
 ### Operators
-| Operator       | Description                    |     Example      |
-| -----------    | ---------------------------    | ---------------- |
-| +  | binary arthmetic addition                  | 2+2, 4.0+2.0     |
-| -  | binary arithmetic subtraction              | 2-2, 4.2-2.2     |
-| *  | binary arithmetic multiplication           | 2 * 2, 4.0 * 2.0 |
-| /  | binary arithmetic division                 |  2/2, 4.0/2.0    |
-| %  | binary arithmetic modulus                  |  2%2             |
-| >  | binary relational greater than             |  a>2             |
-| <  | binary relational less than                |  a<2             |
-| >= | binary relational greater than or equal to |  a>=2            |
-| <= | binary relational less than or equal to    |  a<=2        |
-| == | binary relational equal                    |  a==2        |
-| != | binary relational not equal                |  a!=2        |
-| -  | unary negation                             |  -a          |
-| & | binary logical AND                          |  a && b      |
-| | | binary logical OR                           |  a || b      |
-| !  | unary logical NOT                          |  !a          |
-| ?  | conditional ternary operator               |  x? a : b    |
+| Operator | Arity  | In-Place |    Type    |       Description        |     Example      |
+| -------- | -----  | -------- | ---------- | ------------------------ | ---------------- |
+| `+`      | binary | yes      | arithmetic | addition                 | `2 +2 `, `4.0 + 2.0`  |
+| `-`      | binary | yes      | arithmetic | subtraction              | `2 - 2`, `4.2 - 2.2`  |
+| `*`      | binary | yes      | arithmetic | multiplication           | `2 * 2`, `4.0 * 2.0`  |
+| `/`      | binary | yes      | arithmetic | division                 |  `2 / 2`, `4.0 / 2.0` |
+| `%`      | binary | yes      | arithmetic | modulus                  |  `2 % 2`              |
+| `-`      | unary  | yes      | arithmetic | negation                 |  `-a`                 |
+| `==`     | binary | yes      | relational | equal to                 |  `a == 2`             |
+| `!=`     | binary | yes      | relational | not equal to             |  `a != 2`             |
+| `>`      | binary | yes      | relational | greater than             |  `a > 2`              |
+| `<`      | binary | yes      | relational | less than                |  `a < 2`              |
+| `>=`     | binary | yes      | relational | greater than or equal to |  `a >= 2`             |
+| `<=`     | binary | yes      | relational | less than or equal to    |  `a <= 2`             |
+| `&&`     | binary | yes      | logical    | and                      |  `a && b`             |
+| `||`     | binary | yes      | logical    | or                       |  `a || b`             |
+| `!`      | unary  | yes      | logical    | not                      |  `!a`                 |
+| `&`      | binary | yes      | bitwise    | and                      |                       |
+| `|`      | binary | yes      | bitwise    | or                       |                       |
+| `^`      | binary | yes      | bitwise    | xor                      |                       |
+| `~`      | unary  | yes      | bitwise    | not                      |                       |
+| `[]`     | binary | no       | indexing   | index a slice            | `a[1]`                |
+| `+=`     | binary | no       | arithmetic | addition                 |                       |
+| `-=`     | binary | no       | arithmetic | subtraction              |                       |
+| `*=`     | binary | no       | arithmetic | multiplication           |                       |
+| `/=`     | binary | no       | arithmetic | division                 |                       |
+| `%=`     | binary | no       | arithmetic | modulus                  |                       |
+| `&&=`    | binary | no       | logical    | and                      |                       |
+| `||=`    | binary | no       | logical    | or                       |                       |
+| `&=`     | binary | no       | bitwise    | and                      |                       |
+| `|=`     | binary | no       | bitwise    | or                       |                       |
+| `^=`     | binary | no       | bitwise    | xor                      |                       |
 
 ### Keywords
 Keywords are reserved identifiers that cannot be used as regular identifiers for other purposes. 
 C* keywords:
-- for, if, else, return, int, float, char, void, let, match, defer, break, label, true, false
+* `let`
+* `mut`
+* `pub`
+* `try`
+* `const`
+* `static`
+* `fn`
+* `struct`
+* `enum`
+* `union`
+* `return`
+* `break`
+* `continue`
+* `for`
+* `while`
+* `if`
+* `else`
+* `match`
+* `defer`
 
 ### Separators
-| Separator | Description | 
-| --------- | ----------- |
-| (         | Left parenthesis for expression |
-| )         | Right parenthesis for expression |
-| {         | Left bracket for function |
-| }         | Right bracket for function |
-| <         | Left arrow for generics |
-| >         | Right arrow for generics |
-| ;         | Semicolon to separate expressions |
-| ,         | Comma to separate elements |
+| Separator |                Description                      | 
+| --------- | ----------------------------------------------- |
+| `(`       | left parenthesis for expressions and arguments  |
+| `)`       | right parenthesis for expressions and arguments |
+| `{`       | left brace for blocks                           |
+| `}`       | right brace for blocks                          |
+| `<`       | left arrow for generics                         |
+| `>`       | right arrow for generics                        |
+| `;`       | semicolon to separate expressions               |
+| `,`       | comma to separate elements and fields           |
 
 ### Literals
-C* Literals: string, int, float, char, boolean, unit, struct, tuple, closure, function, range
+C* Literals: 
+* [unit](#unit-literal)
+* [bool](#bool-literals)
+* [int](#number-literals)
+* [float](#number-literals)
+* [char](#char-literals)
+* [string](#string-literals)
+* [struct](#struct-literal)
+* [tuple](#tuple-literal)
+* [function](#func-literal)
+* [closure](#closure-literal)
+* [range](#range-literal)
 
 #### String Literals
 The default string literal type is String, which is UTF-8 encoded and wraps a *[u8]. This is a borrowed slice type and can't change size. To have a growable string, there is the StringBuf type, but there is no special syntactic support for this owned string. Strings are made of chars, unicode scalar values, when iterating (even though they are stored as *[u8]). chars have literals like c'\n'.
