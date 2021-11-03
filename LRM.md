@@ -122,36 +122,36 @@ struct static {}
 ### Operators
 | Operator | Arity  | In-Place |    Type    |       Description        |     Example      |
 | -------- | -----  | -------- | ---------- | ------------------------ | ---------------- |
-| `+`      | binary | yes      | arithmetic | addition                 | `2 +2 `, `4.0 + 2.0`  |
-| `-`      | binary | yes      | arithmetic | subtraction              | `2 - 2`, `4.2 - 2.2`  |
-| `*`      | binary | yes      | arithmetic | multiplication           | `2 * 2`, `4.0 * 2.0`  |
-| `/`      | binary | yes      | arithmetic | division                 |  `2 / 2`, `4.0 / 2.0` |
-| `%`      | binary | yes      | arithmetic | modulus                  |  `2 % 2`              |
-| `-`      | unary  | yes      | arithmetic | negation                 |  `-a`                 |
-| `==`     | binary | yes      | relational | equal to                 |  `a == 2`             |
-| `!=`     | binary | yes      | relational | not equal to             |  `a != 2`             |
-| `>`      | binary | yes      | relational | greater than             |  `a > 2`              |
-| `<`      | binary | yes      | relational | less than                |  `a < 2`              |
-| `>=`     | binary | yes      | relational | greater than or equal to |  `a >= 2`             |
-| `<=`     | binary | yes      | relational | less than or equal to    |  `a <= 2`             |
-| `&&`     | binary | yes      | logical    | and                      |  `a && b`             |
-| `\|\|`   | binary | yes      | logical    | or                       |  `a \|\| b`           |
-| `!`      | unary  | yes      | logical    | not                      |  `!a`                 |
-| `&`      | binary | yes      | bitwise    | and                      |                       |
-| `\|`     | binary | yes      | bitwise    | or                       |                       |
-| `^`      | binary | yes      | bitwise    | xor                      |                       |
-| `~`      | unary  | yes      | bitwise    | not                      |                       |
+| `+`      | binary | no       | arithmetic | addition                 | `2 +2 `, `4.0 + 2.0`  |
+| `-`      | binary | no       | arithmetic | subtraction              | `2 - 2`, `4.2 - 2.2`  |
+| `*`      | binary | no       | arithmetic | multiplication           | `2 * 2`, `4.0 * 2.0`  |
+| `/`      | binary | no       | arithmetic | division                 |  `2 / 2`, `4.0 / 2.0` |
+| `%`      | binary | no       | arithmetic | modulus                  |  `2 % 2`              |
+| `-`      | unary  | no       | arithmetic | negation                 |  `-a`                 |
+| `==`     | binary | no       | relational | equal to                 |  `a == 2`             |
+| `!=`     | binary | no       | relational | not equal to             |  `a != 2`             |
+| `>`      | binary | no       | relational | greater than             |  `a > 2`              |
+| `<`      | binary | no       | relational | less than                |  `a < 2`              |
+| `>=`     | binary | no       | relational | greater than or equal to |  `a >= 2`             |
+| `<=`     | binary | no       | relational | less than or equal to    |  `a <= 2`             |
+| `&&`     | binary | no       | logical    | and                      |  `a && b`             |
+| `\|\|`   | binary | no       | logical    | or                       |  `a \|\| b`           |
+| `!`      | unary  | no       | logical    | not                      |  `!a`                 |
+| `&`      | binary | no       | bitwise    | and                      |                       |
+| `\|`     | binary | no       | bitwise    | or                       |                       |
+| `^`      | binary | no       | bitwise    | xor                      |                       |
+| `~`      | unary  | no       | bitwise    | not                      |                       |
 | `[]`     | binary | no       | indexing   | index a slice            | `a[1]`                |
-| `+=`     | binary | no       | arithmetic | addition                 |                       |
-| `-=`     | binary | no       | arithmetic | subtraction              |                       |
-| `*=`     | binary | no       | arithmetic | multiplication           |                       |
-| `/=`     | binary | no       | arithmetic | division                 |                       |
-| `%=`     | binary | no       | arithmetic | modulus                  |                       |
-| `&&=`    | binary | no       | logical    | and                      |                       |
-| `\|\|=`  | binary | no       | logical    | or                       |                       |
-| `&=`     | binary | no       | bitwise    | and                      |                       |
-| `\|=`    | binary | no       | bitwise    | or                       |                       |
-| `^=`     | binary | no       | bitwise    | xor                      |                       |
+| `+=`     | binary | yes      | arithmetic | addition                 |                       |
+| `-=`     | binary | yes      | arithmetic | subtraction              |                       |
+| `*=`     | binary | yes      | arithmetic | multiplication           |                       |
+| `/=`     | binary | yes      | arithmetic | division                 |                       |
+| `%=`     | binary | yes      | arithmetic | modulus                  |                       |
+| `&&=`    | binary | yes      | logical    | and                      |                       |
+| `\|\|=`  | binary | yes      | logical    | or                       |                       |
+| `&=`     | binary | yes      | bitwise    | and                      |                       |
+| `\|=`    | binary | yes      | bitwise    | or                       |                       |
+| `^=`     | binary | yes      | bitwise    | xor                      |                       |
 
 ### Keywords
 Keywords are reserved identifiers that cannot be used as regular identifiers for other purposes. 
