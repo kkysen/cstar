@@ -194,7 +194,7 @@ C* Literals:
 * [bool](#boolean-literals)
 * [int](#integer-literals)
 * [float](#float-literals)
-* [char](#char-literals)
+* [char](#character-literals)
 * [string](#string-literals)
 * [struct](#struct-literal)
 * [tuple](#tuple-literalss)
@@ -312,6 +312,39 @@ If it cannot be unambiguously inferred,
 then it is an error and the user must 
 explicitly specify the suffix type.
 
+#### Character Literals
+In C*, character literals are of type `char` and are denoted with single ` ` quotes.
+They are [unicode scalar values](https://www.unicode.org/glossary/#unicode_scalar_value),
+which are slightly different from [unicode code points](https://www.unicode.org/glossary/#code_point).
+This means they are always 32 bits on all architectures.
+
+For the actual char literal within the quotes,
+it may be any unicode scalar value, 
+but some characters need to be or may be escaped.
+The ascii values that must be escaped are:
+* `\n`: newline
+* `\r`: carriage return
+* `\t`: tab
+* `\0`: null char
+* `\\`: backslash
+* `\'`: single quote
+
+Other ascii values may also be escaped as well using the syntax `\x7F`,
+where `7F` is the hexadecimal value of the ascii character, 
+from 0 to 127 (aka `0x7F`).
+Thus it may only be two digits.
+
+Unicode scalar values can also be escaped with the syntax `\u{7FFF}`.
+The hexadecimal value is the 24-bit unicode character code.
+
+
+Character literals can also be prefixed with a `b`: `b' '`,
+in which case they are byte literals, i.e. a `u8`.
+The required ascii escapes are the same, 
+though the `\xFF` escape can now go up to 255 (aka `0xFF`),
+and there may not be unicode escapes 
+(since it's only a `u8` byte literal now).
+
 #### String Literals
 There are multiple types of strings in C* owing to 
 the inherent complexity of string-handling without incurring overhead. 
@@ -342,11 +375,6 @@ Types that can be used like this must have a `format` method (might change).
 Format, or f-strings, don't actually evaluate to a string, 
 but rather evaluate to an anonymous struct that has methods to 
 convert it all at once into a real string.  Thus, f-strings do not allocate.
-
-#### Char Literals
-Char literals represent any single character and make up string literals. 
-
-Ex. 'a', '1'
 
 #### Struct Literals
 Struct literals are the creation of new struct values by using the keyword "struct" and denoting the values of its fields. 
