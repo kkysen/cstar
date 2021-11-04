@@ -104,7 +104,7 @@ in which the first characters is `_` or belongs to the [XID_Start](https://util.
 and the remaining characters belong to the [XID_Continue](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Continue%3A%5D&abb=on&g=&i=) character set.
 
 There are no keywords at the lexer level, but identifiers may not be a C* [keyword](#keywords).
-They may also not be the literals `true` or `false`.
+They may also not be the [boolean literals](#boolean-literals) `true` or `false`.
 
 Examples:
 ```rust
@@ -122,7 +122,7 @@ struct static {}
 ### Operators
 | Operator | Arity  | In-Place |    Type    |       Description        |     Example      |
 | -------- | -----  | -------- | ---------- | ------------------------ | ---------------- |
-| `+`      | binary | no       | arithmetic | addition                 | `2 +2 `, `4.0 + 2.0`  |
+| `+`      | binary | no       | arithmetic | addition                 | `2 + 2 `, `4.0 + 2.0`  |
 | `-`      | binary | no       | arithmetic | subtraction              | `2 - 2`, `4.2 - 2.2`  |
 | `*`      | binary | no       | arithmetic | multiplication           | `2 * 2`, `4.0 * 2.0`  |
 | `/`      | binary | no       | arithmetic | division                 |  `2 / 2`, `4.0 / 2.0` |
@@ -190,17 +190,127 @@ C* keywords:
 
 ### Literals
 C* Literals: 
-* [unit](#unit-literal)
-* [bool](#bool-literals)
-* [int](#number-literals)
-* [float](#number-literals)
+* [unit](#unit-literals)
+* [bool](#boolean-literals)
+* [int](#integer-literals)
+* [float](#float-literals)
 * [char](#char-literals)
 * [string](#string-literals)
 * [struct](#struct-literal)
-* [tuple](#tuple-literal)
-* [function](#func-literal)
-* [closure](#closure-literal)
-* [range](#range-literal)
+* [tuple](#tuple-literalss)
+* [function](#function-literals)
+* [closure](#closure-literals)
+* [range](#range-literals)
+
+#### Unit Literals
+In C*, every expression has a type.  Even statements that return "nothing",
+they really return unit, or `()`.  
+The type of this unit literal is also called unit and written `()` as well.
+
+#### Boolean Literals
+There are two boolean literals of type `bool`: `true` and `false`.
+Note that identifiers cannot be named `true` or `false`.
+
+#### Number Literals
+In C*, number literals are composed of 4 (potentially optional) parts (in order):
+* the integral part
+* the floating part (optional)
+* the exponent (optional)
+* the suffix (optional)
+
+For each of the integral part, floating part, and exponent, 
+they contain an optional sign, optional base, 
+and then a series of one or more digits.  
+Note that each part may specify a different base.
+
+The sign may be `+` for positive numbers, `-` for negative numbers, or nothing, which defaults to `+`.
+
+The base and corresponding digits may be:
+| Prefix |     Name    | Base |       Digits        |
+| ------ | ----------- | ---- | ------------------- |
+| none   | decimal     |  10  | `0-9`               |
+| `0b`   | binary      |   2  | `0-1`               |
+| `0o`   | octal       |   8  | `0-8`               |
+| `0x`   | hexadecimal |  16  | `0-9`, `a-f`, `A-F` |
+
+The series of digits may also be separated by
+any number of `_` underscores between the digits.
+It cannot begin or end with `_` underscores, though.
+
+If there is a floating part, then a decimal point `.`
+separates it from the preceeding integral part.
+The floating part may not have a sign and is always positive (in itself).
+
+If there is an exponent, then an `e` or `E` precedes it.
+
+The (optional) suffix contains the type of number and a bit size.
+
+The type of number may be:
+`u`: unsigned integer`
+`i`: signed integer
+`f`: floating-point number
+
+The bit size is usually a literal power of 2 number,
+but may also be a word whose bit size is architecture-dependent.
+
+For integers (`u` and `i`), the bit size may be:
+* `8`
+* `16`
+* `32`
+* `64`
+* `128`
+* `size` (bit size necessary to store an array index)
+* `ptr` (bit size necessary to store a pointer 
+         or the difference between them)
+
+For floats (`f`), the bit size may be:
+* `16`
+* `32`
+* `64`
+* `128`
+
+These suffixes are the primitive number types.
+Thus, in total, they are (with their C equivalent for FFI):
+| C*            | C                   |
+| ------------- | ------------------- |
+| `u8`          | `uint8_t`           |
+| `i8`          | `int8_t`            |
+| `u16`         | `uint16_t`          |
+| `i16`         | `int16_t`           |
+| `u32`         | `uint32_t`          |
+| `i32`         | `int32_t`           |
+| `u64`         | `uint64_t`          |
+| `i64`         | `int64_t`           |
+| `u128`        | `unsigned __int128` |
+| `i128`        | `__int128`          |
+| `usize`       | `size_t`            |
+| `isize`       | `ssize_t`           |
+| `uptr`        | `uintptr_t`         |
+| `iptr`        | `intptr_t`          |
+| `f16`         | `_Float16`          |
+| `f32`         | `float`             |
+| `f64`         | `double`            |
+| `f128`        | `_Float128`         |
+
+Integers always use 2's-complement
+and floats always are IEEE 754 floating point numbers.
+
+If the type is a float, then it must contain 
+a `.` decimal point and a floating part.
+If the type is an integer, then it must not.
+Both can contain exponents, though for integers,
+the exponent (in scientific notation) cannot cause
+the integer to exceed its finite size.
+
+If there is no suffix type, then the type is inferred.
+If there is a `.` decimal point, then the type must be a float, and vice versa with integers.
+If there is a `-` sign for the integral part,
+then the type must be a float or a signed integer.
+To infer the bit size of the number,
+general type inference is used.
+If it cannot be unambiguously inferred, 
+then it is an error and the user must 
+explicitly specify the suffix type.
 
 #### String Literals
 There are multiple types of strings in C* owing to 
@@ -233,31 +343,20 @@ Format, or f-strings, don't actually evaluate to a string,
 but rather evaluate to an anonymous struct that has methods to 
 convert it all at once into a real string.  Thus, f-strings do not allocate.
 
-#### Number Literals
-Number literals represent any sequence of integers between 0 and 9. They can be represented in decimal form, fraction form, or exponential form as well.
-
-Ex. 123, 532, 6, 12.3, 43/23
-
 #### Char Literals
 Char literals represent any single character and make up string literals. 
 
 Ex. 'a', '1'
 
-#### Bool Literals
-Bool literals are booleans that represent true and false. In C* they are represented by the keywords true and false. 
-
-#### Unit Literal
-Unit literals are a void type that return nothing
-
-#### Struct Literal
+#### Struct Literals
 Struct literals are the creation of new struct values by using the keyword "struct" and denoting the values of its fields. 
 
-#### Tuple Literal
+#### Tuple Literals
 Tuple literals contain a list of expressions that are separated by commmas and contained in parenthesis.
 
 Ex. (3,2), (a,b)
 
-### Range Literal
+### Range Literals
 Range literals are used to write ranges in values and are denoted using "..". A normal range literal is from an inclusive value a to an exclusive value b. They can be denoted using different variations such as using a "=" to denote inclusivity and "+" to denote a range from a inclusive to a+b exclusive. 
 
 Ex. 
@@ -267,7 +366,7 @@ Ex.
 - `a..`
 - `..b`
 
-#### Closure Literal
+#### Closure Literals
 Closure literals are similar to normal functions but they can "enclose" over values in the current scope.
 
 These are some example of how to create closures and how to call them. 
@@ -310,7 +409,7 @@ then it can be cast to a function pointer: `fn(T, U): R`,
 which can be called indirectly and passed to C over FFI. 
 The same is true of normal functions.
 
-#### Func Literal
+#### Function Literals
 Func literals are function literals. A func literal is a closure so it can reference vairables that have been defined in a surrounding function. It can also share variables between the function literal and the surrounding function. Func literals can also be passed into other functions as parameters.
 
 
