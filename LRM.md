@@ -198,6 +198,7 @@ C* Literals:
 * [string](#string-literals)
 * [struct](#struct-literal)
 * [tuple](#tuple-literalss)
+* [array](#array-literals)
 * [function](#function-literals)
 * [closure](#closure-literals)
 * [range](#range-literals)
@@ -476,6 +477,17 @@ so it is just a `,` comma separated list of values of any type delimited by open
 There may be a trailing `,` comma separator,
 and for 1-element tuple literals, this trailing `,` comma
 is required to distinguish it from using `()` parentheses for associating general expressions.
+
+#### Array Literals
+In C*, arrays are finite, homogenous lists of a single type.
+There are delimited by open `[` and close `]` brackets,
+as opposed to `()` parentheses for tuples.
+Their values are also `,` comma separated.
+Trailing `,` commas are allowed but never required, 
+unlike in 1-element tuple literals.
+
+Array types are denoted `[T; N]`, where `T` is any type
+and `N: usize`.
 
 #### Function Literals
 Func literals are function literals. A func literal is a closure so it can reference vairables that have been defined in a surrounding function. It can also share variables between the function literal and the surrounding function. Func literals can also be passed into other functions as parameters.
