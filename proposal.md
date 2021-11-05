@@ -372,10 +372,10 @@ for something a bit more low-level and wordy:
 ```rust
 fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> = try {
     let fd1 = open_file_in_dir(b"", path1).?;
-    let close1 = {fd1} fn() close(fd1);
+    let close1 = fn {fd1}() close(fd1);
     let close1 = close1.@defer());
     let fd2 = open_file_in_dir(b"", path2).?;
-    let close2 = {fd1} fn() close(fd1);
+    let close2 = fn {fd1}() close(fd1);
     let close2 = close2.@defer());
     println(f"opened {fd1} and {fd2}");
     let close = [close2, close1];
@@ -498,9 +498,9 @@ impl <T, F> Option<T> {
 fn main() {
     try {
         let a = Some("hello").map(fn(s) = s.len()).?;
-        let b = Some("world").map({a} fn(s) = a + s.len()).?;
-        let c = Some("🏳️‍⚧️").map({n: b} fn(s) = n + s.len()).?;
-        None.map({a.&, b.&mut, n: &mut c} fn(s) = {
+        let b = Some("world").map(fn {a}(s) = a + s.len()).?;
+        let c = Some("🏳️‍⚧️").map(fn {n: b}(s) = n + s.len()).?;
+        None.map(fn {a: a.&, b: b.&mut, n: &mut c}(s) = {
             print(f"{s}: {a.*}, {b.*}, {n.*}");
             n.*++;
             b.* += n.*;

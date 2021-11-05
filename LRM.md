@@ -495,7 +495,7 @@ and function literals (using them as values).
 
 In function declarations, they are written
 ```rust
-PUBLICITY fn FUNC_NAME GENERIC_ARGS ARGS = EXPRESSION
+PUBLICITY fn FUNC_NAME GENERIC_ARGS ARGS = BODY_EXPRESSION
 ```
 such as
 ```rust
@@ -511,55 +511,43 @@ Furthermore, type inference of function arguments and return type
 is allowed for function literals, since they cannot be public declarations.
 If the types are ambiguous, though, type annotations are still required of course.
 
-The type of a function literal is unique,
+The type of a function literal is unique and opaque,
 but can be casted to a function pointer like `fn(T): T`.
 
-Note that annotations like `abi("C")` can still be applied
+Note that annotations like `@abi("C")` can still be applied
 to function literals just like function declarations.
 
 
 #### Closure Literals
-Closure literals are similar to normal functions but they can "enclose" over values in the current scope.
+Closure literals are very similar to function literals—in fact, 
+they are a superset of function literals—except they also have a closure context.
+That is, they can "enclose" over values in the current scope.
 
-These are some example of how to create closures and how to call them. 
-In particular:
-* Closures have a generic, unnamed type. 
-  So when we take a closure as a parameter, we need to use a generic 
-  (this is because closure type depend on what they capture). 
-  You can also apply a type to a function type to get its return type, 
-  like `F(T)`.
-* We can call a closure using the unified calling syntax: `.@call()`. 
-  Normal function calls are `()`, and we want to be explicit 
-  when we're actually calling a closure, so `.@call()` is needed. 
-  `.@call()` also works on normal functions, though, 
-  since all functions can be implicitly converted to non-capturing closures.
-* The closure syntax is very similar to function syntax, 
-  with a few differences:
-    * The return expression does not have to be a block 
-      like in normal functions; it can directly use an expression. 
-      Note that functions effectively just return a block. 
-      That's how `try` blocks work, for example.
-    * Argument and return types are inferred, 
-      though they can still be specified if you want. 
-      This is because they are more local, 
-      and thus documented types are not as necessary.
-    * If you want to capture variables, 
-      you specify an anonymous struct literal before the `fn`. 
-      This follows the same normal rules for struct literals, 
-      but you don't have to specify the type, since the type is anonymous. 
-      Then that struct's fields are available within the closure as variables.
+The syntax for a closure literal is simply a normal function literal with an anonymous struct literal, the closure context, following the `fn`.
 
-The way closures are implemented is by 
-creating an anonymous struct of the captured closure context. 
-Then there is a method on that struct that takes the closure arguments and 
-returns the closure body with the context struct destructured inside 
-(so its variables are in scope).  This is what is called by `.@call()`. 
-Note that there are no indirect function calls, boxing, 
-or allocations involved in this, but it requires the use of generics. 
-If nothing is captured by a closure, though, 
-then it can be cast to a function pointer: `fn(T, U): R`, 
-which can be called indirectly and passed to C over FFI. 
-The same is true of normal functions.
+The closure context is an anonymous struct literal
+in that it has no named struct type. That is, instead of
+```rust
+Example {a: 0, b: 0.0, c: ""}
+```
+it would just be
+```rust
+{a: 0, b: 0.0, c: ""}
+```
+
+The fields in this closure context struct
+are then immediately available within the function body
+as if they were immediately destructured.
+
+The type of a closure literal is unique and opaque.
+Unlike function literals (in which there is no context),
+the type of closure literals cannot be casted to a bare function pointer.
+The closure function corresponds to a method on the closure context struct,
+and as such, cannot be casted to a function pointer
+since there is an implicit `*Self` argument.
+Thus, the only way to accept a closure as an argument is by using generics, 
+which ensures there is no pointer indirection
+and the closure can be inlined into the call site.
 
 ### Range Literals
 Range literals are used to write ranges in values and are denoted using "..". A normal range literal is from an inclusive value a to an exclusive value b. They can be denoted using different variations such as using a "=" to denote inclusivity and "+" to denote a range from a inclusive to a+b exclusive. 
