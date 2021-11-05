@@ -235,7 +235,7 @@ The base and corresponding digits may be:
 
 The series of digits may also be separated by
 any number of `_` underscores between the digits.
-It cannot begin or end with `_` underscores, though.
+It cannot begin or end with `_` underscores, however.
 
 If there is a floating part, then a decimal point `.`
 separates it from the preceeding integral part.
@@ -246,9 +246,9 @@ If there is an exponent, then an `e` or `E` precedes it.
 The (optional) suffix contains the type of number and a bit size.
 
 The type of number may be:
-`u`: unsigned integer`
-`i`: signed integer
-`f`: floating-point number
+* `u`: unsigned integer
+* `i`: signed integer
+* `f`: floating-point number
 
 The bit size is usually a literal power of 2 number,
 but may also be a word whose bit size is architecture-dependent.
@@ -313,7 +313,7 @@ then it is an error and the user must
 explicitly specify the suffix type.
 
 #### Character Literals
-In C*, character literals are of type `char` and are denoted with single ` ` quotes.
+In C*, character literals are of type `char` and are denoted with single `''` quotes.
 They are [unicode scalar values](https://www.unicode.org/glossary/#unicode_scalar_value),
 which are slightly different from [unicode code points](https://www.unicode.org/glossary/#code_point).
 This means they are always 32 bits on all architectures.
@@ -448,7 +448,7 @@ struct SmallExample {
 let x = SmallExample {
     a: 0,
     b: 0.0,
-}
+};
 
 Example {
     ..x,
