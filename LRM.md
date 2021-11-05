@@ -459,19 +459,27 @@ Note that the struct type does not have to be the same,
 but the fields that are being spread must match between the struct types in name and type.
 
 #### Tuple Literals
-Tuple literals contain a list of expressions that are separated by commmas and contained in parenthesis.
+C* has tuples, but they are simply shorthand and syntax sugar for structs.
+A tuple type is a finite, heterogenous list of types,
+such as `(i32, usize, String)`,
+and its field names are unsigned integers (`.0`, `.1`, and `.2` for this tuple).
+This is the only difference between tuples and desugaring them to structs:
+struct field names must be [valid C* identifiers](#identifiers),
+but tuple field names begin with digits.
+Otherwise, they are exactly the same.
+The tuple type with 0 element types, `()`, is also valid,
+but it is equivalent to the `()` unit type.
 
-Ex. (3,2), (a,b)
+Tuple literals mirror tuple types.
+The field names are unnamed (unlike [struct literals](#struct-literals)),
+so it is just a `,` comma separated list of values of any type delimited by open `(` and close `)` parentheses.
+There may be a trailing `,` comma separator,
+and for 1-element tuple literals, this trailing `,` comma
+is required to distinguish it from using `()` parentheses for associating general expressions.
 
-### Range Literals
-Range literals are used to write ranges in values and are denoted using "..". A normal range literal is from an inclusive value a to an exclusive value b. They can be denoted using different variations such as using a "=" to denote inclusivity and "+" to denote a range from a inclusive to a+b exclusive. 
+#### Function Literals
+Func literals are function literals. A func literal is a closure so it can reference vairables that have been defined in a surrounding function. It can also share variables between the function literal and the surrounding function. Func literals can also be passed into other functions as parameters.
 
-Ex. 
-- `a..b` 
-- `a..=b`
-- `a..+b` 
-- `a..`
-- `..b`
 
 #### Closure Literals
 Closure literals are similar to normal functions but they can "enclose" over values in the current scope.
@@ -516,9 +524,15 @@ then it can be cast to a function pointer: `fn(T, U): R`,
 which can be called indirectly and passed to C over FFI. 
 The same is true of normal functions.
 
-#### Function Literals
-Func literals are function literals. A func literal is a closure so it can reference vairables that have been defined in a surrounding function. It can also share variables between the function literal and the surrounding function. Func literals can also be passed into other functions as parameters.
+### Range Literals
+Range literals are used to write ranges in values and are denoted using "..". A normal range literal is from an inclusive value a to an exclusive value b. They can be denoted using different variations such as using a "=" to denote inclusivity and "+" to denote a range from a inclusive to a+b exclusive. 
 
+Ex. 
+- `a..b` 
+- `a..=b`
+- `a..+b` 
+- `a..`
+- `..b`
 
 ## Algebraic Data Types
 C* has `struct`s for product types and `enum`s for sum types. 
