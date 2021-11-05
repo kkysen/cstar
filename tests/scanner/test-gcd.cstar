@@ -1,6 +1,8 @@
-fn gcd(a: i64, b: i64): i64 {
-	(fn gcd(a: u64, b: u64): u64 {
-		match b { 0 => b,
-		_ => gcd(b, a % b), }
-	}(a.abs(), b.abs()).@cast(i64) 
+fn gcd(a: i64, b: i64): i64 = {
+    (fn gcd(a: u64, b: u64): u64 = {
+        match b {
+            0 => b,
+            _ => gcd(b, a % b),
+        }
+    })(a.abs(), b.abs()).@cast(i64)
 }

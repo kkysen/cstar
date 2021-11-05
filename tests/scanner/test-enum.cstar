@@ -1,6 +1,6 @@
-enum Seasons{
-	"Winter",
-	"Summer",
-	"Fall",
-	"Spring",
+enum Season {
+	Winter,
+	Summer,
+	Fall,
+	Spring,
 }
