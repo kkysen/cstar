@@ -106,6 +106,10 @@ and the remaining characters belong to the [XID_Continue](https://util.unicode.o
 There are no keywords at the lexer level, but identifiers may not be a C* [keyword](#keywords).
 They may also not be the [boolean literals](#boolean-literals) `true` or `false`.
 
+`_` is a valid C* identifier at the syntactic level,
+but has a special meaning and cannot be used everywhere.
+That is, it can only be assigned to.
+
 Examples:
 ```rust
 // valid identifiers
