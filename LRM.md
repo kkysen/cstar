@@ -10,49 +10,59 @@
 Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
 
 ## Table of Contents
-1. Overview
-2. Lexical Conventions
-    - Comments
-    - Identifiers
-    - Operators
-    - Keywords
-    - Separators
-    - Literals
-        - Unit
-        - Boolean
-        - Int
-        - Float
-        - Char
-        - String
-        - Struct
-        - Tuple
-        - Range
-        - Function
-        - Closure
-3. Algebraic Data Types
-    - Structs
-4. Generics
-5. Statements and Expressions
-    - Statements
-        - If Else Statements
-        - For Statements
-        - While Statements
-        - Defer Statements
-    - Expressions and Operators
-        - Unary Operators
-        - Binary Operators
-        - Assignment Operators
-        - Arithmetic Operators
-        - Relational Operators
-    - Functions
-    - Pattern Matching
-    - Methods
-    - Postfix
-6. Slices
-7. Monadic Error Handling
-    - Uncatchable Panics
-8. Operator Precedence
-9. Examples
+- [Overview](#overview)
+- [Lexical Structure](#lexical-structure)
+  - [Comments](#comments)
+    - [`//` Single-Line](#-single-line-comments)
+      - [`///` Doc](#-doc-comments)
+    - [`/* */` Nested, Multi-Line(#--nested-multi-line-comments)
+    - [`/-` Structural](#--structural-comments)
+  - [Identifiers](#identifiers)
+  - [Operators](#operators)
+  - [Keywords](#keywords)
+  - [Separators](#separators)
+  - [Literals](#literals-and-their-types)
+    - [Unit](#unit-literals)
+    - [Boolean](#boolean-literals)
+    - [Number](#number-literals)
+    - [Character](#character-literals)
+    - [String](#string-literals)
+    - [Struct](#struct-literals)
+    - [Tuple](#tuple-literals)
+    - [Array](#array-literals)
+    - [Enum](#enum-literals)
+    - [Union](#union-literals)
+    - [Function](#function-literals)
+    - [Closure](#closure-literals)
+    - [Range](#range-literals)
+- [Algebraic Data Types](#algebraic-data-types)
+  - [Structs](#structs)
+- [Generics](#generics)
+- [Statements and Expressions](#statements-and-expressions)
+  - [Statements](#statements)
+    - [If-Else Statements](#if-else-statements)
+    - [For Statements](#for-statements)
+    - [While Statements](#while-statements)
+    - [Defer](#defer)
+  - [Expressions and Operators](#expressions-and-operators)
+    - [Unary Operators](#unary-operators)
+    - [Binary Operators](#binary-operators)
+      - [Assignment operator](#assignment-operator)
+      - [Arithmetic Operator](#arithmetic-operator)
+      - [Relational Operators](#relational-operators)
+  - [Functions](#functions)
+  - [Pattern Matching](#pattern-matching)
+  - [Methods](#methods)
+  - [Postfix](#postfix)
+- [Slices](#slices)
+- [Monadic Error-Handling](#monadic-error-handling)
+  - [Uncatchable Panics](#uncatchable-panics)
+- [Operator Precedence](#operator-precedence)
+- [Examples](#examples)
+  - [GCD](#gcd)
+  - [Systems Programming](#systems-programming)
+
+[Table of Contents](#table-of-contents)
 
 ## Overview
 C* is a general-purpose systems programming language. It is between the level of C and Zig on a semantic level, and syntactically it also borrows a lot from Rust (pun intended). It is meant primarily for programs that would otherwise be implemented in C for the speed, simplicity, and explicitness of the language, but want a few simple higher-level language constructs, more expressiveness, and some safety, but not so many overwhelming language features and implicit costs like in Rust, C++, or Zig.
@@ -61,22 +71,35 @@ It has manual memory management (no GC) and uses LLVM as its primary codegen bac
 
 While a general-purpose language, C* will probably have the most advantages when used in systems and embedded programming. It's expressivity and high-level features combined with its relative simplicity, performance, and explicitness is a perfect match for many of these low-level systems and embedded programs.
 
-## Lexical Conventions
+[Table of Contents](#table-of-contents)
+
+## Lexical Structure
+
+[Table of Contents](#table-of-contents)
 ### Comments
 C* contains single-line, nested multi-line, and structural comments. 
+
+[Table of Contents](#table-of-contents)
 
 #### `//` Single-Line Comments
 Tokens followed by `//` until a `\n` newline are considered single-line comments.
 
+[Table of Contents](#table-of-contents)
+
 ##### `///` Doc Comments
 Tokens followed by `///` until a `\n` newline are considered doc comments.  They are a form of single-line comments, 
 but may also be processed by tools for generating documentation.
+
+[Table of Contents](#table-of-contents)
+
 #### `/* */` Nested, Multi-Line Comments
 Tokens followed by `/*` are considered multi-line comments. 
 They can be nested, and end at the next `*/` that is not a part
 of an inner multi-line comment.
 They also do not have to be multi-line, 
 and can comment out only part of a line.
+
+[Table of Contents](#table-of-contents)
 
 #### `/-` Structural Comments
 `/-` denotes a structral comment.  It comments out the next item in the AST, which could be the next expression, function, type definition, etc.
@@ -98,6 +121,8 @@ fn /* and appear in-between things */ bar() = {}
 /- let x = 25; // This comments out the entire let expression.
 ```
 
+[Table of Contents](#table-of-contents)
+
 ### Identifiers
 Identifiers in C* may be any UTF-8 string 
 in which the first characters is `_` or belongs to the [XID_Start](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=) character set,
@@ -105,6 +130,10 @@ and the remaining characters belong to the [XID_Continue](https://util.unicode.o
 
 There are no keywords at the lexer level, but identifiers may not be a C* [keyword](#keywords).
 They may also not be the [boolean literals](#boolean-literals) `true` or `false`.
+
+`_` is a valid C* identifier at the syntactic level,
+but has a special meaning and cannot be used everywhere.
+That is, it can only be assigned to.
 
 Examples:
 ```rust
@@ -118,6 +147,7 @@ let 2words = 2;
 struct static {}
 ```
 
+[Table of Contents](#table-of-contents)
 
 ### Operators
 | Operator | Arity  | In-Place |    Type    |       Description        |     Example      |
@@ -153,6 +183,8 @@ struct static {}
 | `\|=`    | binary | yes      | bitwise    | or                       |                       |
 | `^=`     | binary | yes      | bitwise    | xor                      |                       |
 
+[Table of Contents](#table-of-contents)
+
 ### Keywords
 Keywords are reserved identifiers that cannot be used as regular identifiers for other purposes. 
 C* keywords:
@@ -176,6 +208,8 @@ C* keywords:
 * `match`
 * `defer`
 
+[Table of Contents](#table-of-contents)
+
 ### Separators
 | Separator |                Description                      | 
 | --------- | ----------------------------------------------- |
@@ -187,6 +221,8 @@ C* keywords:
 | `>`       | right arrow for generics                        |
 | `;`       | semicolon to separate expressions               |
 | `,`       | comma to separate elements and fields           |
+
+[Table of Contents](#table-of-contents)
 
 ### Literals and Their Types
 C* Literals: 
@@ -205,14 +241,20 @@ C* Literals:
 * [closure](#closure-literals)
 * [range](#range-literals)
 
+[Table of Contents](#table-of-contents)
+
 #### Unit Literals
 In C*, every expression has a type.  Even statements that return "nothing",
 they really return unit, or `()`.  
 The type of this unit literal is also called unit and written `()` as well.
 
+[Table of Contents](#table-of-contents)
+
 #### Boolean Literals
 There are two boolean literals of type `bool`: `true` and `false`.
 Note that identifiers cannot be named `true` or `false`.
+
+[Table of Contents](#table-of-contents)
 
 #### Number Literals
 In C*, number literals are composed of 4 (potentially optional) parts (in order):
@@ -315,6 +357,8 @@ If it cannot be unambiguously inferred,
 then it is an error and the user must 
 explicitly specify the suffix type.
 
+[Table of Contents](#table-of-contents)
+
 #### Character Literals
 In C*, character literals are of type `char` and are denoted with single `''` quotes.
 They are [unicode scalar values](https://www.unicode.org/glossary/#unicode_scalar_value),
@@ -347,6 +391,8 @@ The required ascii escapes are the same,
 though the `\xFF` escape can now go up to 255 (aka `0xFF`),
 and there may not be unicode escapes 
 (since it's only a `u8` byte literal now).
+
+[Table of Contents](#table-of-contents)
 
 #### String Literals
 There are multiple types of strings in C* owing to 
@@ -407,6 +453,8 @@ For byte `b` strings, the string must contains [byte literals](#string-literals)
 The other string modifiers apply in the same way,
 and again, double quotes (`\"`) must be escaped instead of single quotes (`\'`).
 
+[Table of Contents](#table-of-contents)
+
 #### Struct Literals
 Struct literals are literals that create a value of a struct type.
 That is, if we have a struct `Example`:
@@ -461,6 +509,8 @@ Example {
 Note that the struct type does not have to be the same,
 but the fields that are being spread must match between the struct types in name and type.
 
+[Table of Contents](#table-of-contents)
+
 #### Tuple Literals
 C* has tuples, but they are simply shorthand and syntax sugar for structs.
 A tuple type is a finite, heterogenous list of types,
@@ -480,6 +530,8 @@ There may be a trailing `,` comma separator,
 and for 1-element tuple literals, this trailing `,` comma
 is required to distinguish it from using `()` parentheses for associating general expressions.
 
+[Table of Contents](#table-of-contents)
+
 #### Array Literals
 In C*, arrays are finite, homogenous lists of a single type.
 There are delimited by open `[` and close `]` brackets,
@@ -490,6 +542,8 @@ unlike in 1-element tuple literals.
 
 Array types are denoted `[T; N]`, where `T` is any type
 and `N: usize`.
+
+[Table of Contents](#table-of-contents)
 
 #### Enum Literals
 In an enum, such as
@@ -512,9 +566,13 @@ that returns the `B` variant with the given data attached.
 Thus, `Example.B(0)` or `Example.B(100)` is normally written,
 though the function can also be referred to by itself.
 
+[Table of Contents](#table-of-contents)
+
 #### Union Literals
 Union literals are the same as struct literals
 except only one field may be specified.
+
+[Table of Contents](#table-of-contents)
 
 #### Function Literals
 In C*, there is very little difference between function declarations
@@ -544,6 +602,7 @@ but can be casted to a function pointer like `fn(T): T`.
 Note that annotations like `@abi("C")` can still be applied
 to function literals just like function declarations.
 
+[Table of Contents](#table-of-contents)
 
 #### Closure Literals
 Closure literals are very similar to function literals—in fact, 
@@ -576,7 +635,9 @@ Thus, the only way to accept a closure as an argument is by using generics,
 which ensures there is no pointer indirection
 and the closure can be inlined into the call site.
 
-### Range Literals
+[Table of Contents](#table-of-contents)
+
+#### Range Literals
 Range literals denote an integer range.
 There are a few different forms of ranges,
 which we will define in terms of set interval notation
@@ -592,6 +653,7 @@ as to what integers the range includes.
 | `a..+b` | `[a, a + b)` |
 | `..=b`  | `(-∞, b]`    |
 
+[Table of Contents](#table-of-contents)
 
 ## Algebraic Data Types
 C* has `struct`s for product types and `enum`s for sum types. 
@@ -622,6 +684,8 @@ enum CowString {
 }
 ```
 
+[Table of Contents](#table-of-contents)
+
 ### Structs
 C* has `struct`s for product types and `enum`s for sum types. 
 This is very powerful combined with [pattern matching](#pattern-matching). 
@@ -650,6 +714,8 @@ enum CowString {
     Owned(StringBuf),
 }
 ```
+
+[Table of Contents](#table-of-contents)
 
 ## Generics
 C* supports generic types and values, 
@@ -683,10 +749,18 @@ fn short_vec_len<T, N: u8>(v: *ShortVec<T, N>): usize = {
 }
 ```
 
+[Table of Contents](#table-of-contents)
+
 ## Statements and Expressions
+
+[Table of Contents](#table-of-contents)
+
 ### Statements 
 Due to the expression oriented nature of C* all control flow statements are
-themselves expressions. 
+themselves expressions.
+
+[Table of Contents](#table-of-contents)
+
 #### If-Else Statements
 If-Else statements execute one of two cases. The first consists of typical
 C-style semantics wherein we have:
@@ -725,6 +799,8 @@ clause is grouped with it should be clear that barring the use of additional
 brackets to direct control flow the `else` is grouped to the nearest `if` above
 it.
 
+[Table of Contents](#table-of-contents)
+
 #### For Statements
 For statements can execute over a range in the case of: 
 ```rust
@@ -739,6 +815,8 @@ for x in 1..365{
 }
 ```
 
+[Table of Contents](#table-of-contents)
+
 #### While Statements
 Execution of the body of a while statement continues until the expression labeled `expr1` evaluates to zero. For example:
 ```c
@@ -747,6 +825,8 @@ while(expr1){
 }
 ```
 Similiar to `if` statements due to the expression oriented nature of C* `statement1` must evaluate to the unit type and it is possible to replace `statement1` with `expr2`.
+
+[Table of Contents](#table-of-contents)
 
 #### Defer
 To aid in resource handling, C* has a `defer` keyword. 
@@ -844,7 +924,12 @@ returns a `Defer` struct, which can be undone with `Defer.undo()`
 `Defer.undo()` sets a bit in the `Defer` struct that it's been undone. 
 Then when the stack unwinds, any none-undone `Defers` on the stack are run.
 
+[Table of Contents](#table-of-contents)
+
 ### Expressions and Operators
+
+[Table of Contents](#table-of-contents)
+
 #### Unary Operators
 Unary operators are operators that can act on an expression. C* uses the unary operators "-" and "!" to represent negation and the logical not repectively. "-" negates a number literal such as 
 ```rust
@@ -857,10 +942,14 @@ let b = !a
 ```
 where b returns the value of false. 
 
+[Table of Contents](#table-of-contents)
+
 #### Binary Operators
 A binary operator acts on two expressions and can be show as follows:
 
 Binary operator = expr * operator * expr
+
+[Table of Contents](#table-of-contents)
 
 ##### Assignment operator
 The assignment operator stores values into vairables. It uses the keyword "let" and the = symbol so that the left side variable stores the expression on the right.
@@ -869,6 +958,8 @@ Ex.
 ``` rust
 let a = 23 // a stores the value 23
 ```
+
+[Table of Contents](#table-of-contents)
 
 ##### Arithmetic Operator
 - The addition operator "+" adds two values of the same type. Automatic type conversion is applied when adding two number literals and can also be applied to string addition. 
@@ -911,6 +1002,8 @@ Ex.
 12.3 % 10 // 2.3
 ```
 
+[Table of Contents](#table-of-contents)
+
 ##### Relational Operators
 Relational operators represent how the operands relate to each other. Each expression using a relational operator has two values as inputs and outputs either true or false. The relational operators are: ==, !=, <, >, <=, >=, &, |.
 
@@ -922,6 +1015,8 @@ Relational operators represent how the operands relate to each other. Each expre
 true | false // true
 true & false // false
 ```
+
+[Table of Contents](#table-of-contents)
 
 ### Functions
 Functions are a type of statement that can be declared one of two ways: 
@@ -943,6 +1038,8 @@ fn hello(): string = "hello world"
 
 fn adding(a, b): = { return a + b }
 ```
+
+[Table of Contents](#table-of-contents)
 
 ### Pattern Matching
 Instead of having a `switch` statement like in C, 
@@ -966,6 +1063,8 @@ let String {ptr, len} = "🐄";
 
 Note that string literals are of the `String` type similarly defined as above,
 and you can redeclare/shadow variables like `len`.
+
+[Table of Contents](#table-of-contents)
 
 ### Methods
 C* has associated functions and simple methods, 
@@ -1041,6 +1140,8 @@ this could be very expensive and we don't want to hide that information.
 Also, the difference between `.&` and `.&mut` 
 is explicit to make mutability explicit everywhere.
 
+[Table of Contents](#table-of-contents)
+
 ### Postfix
 Most unary operators and keywords can be used postfix as well.
 
@@ -1071,6 +1172,8 @@ This can't be done with postfix operators and functions (rather than methods).
 You get to think in one forward direction, rather than 
 having to jump from some prefix keywords to some postfix methods and fields.
 
+[Table of Contents](#table-of-contents)
+
 ## Slices
 C* also has slices.  These are a pointer and length, 
 and are much preferred to passing the pointer and length separately, 
@@ -1096,6 +1199,8 @@ so the performance hit is minimal, and can be side-stepped if really needed.
 Slices can also be sliced to create subslices by indexing them with 
 a range (e.x. `[1..10]` or `[1..]`). 
 Again, this is bounds checked by default.
+
+[Table of Contents](#table-of-contents)
 
 ## Monadic Error-Handling
 There are no exceptions in C*, just like C. 
@@ -1171,6 +1276,8 @@ limited to just the monads `Option<T>`, and `Result<T, E>` (over `T`).
 Note also that `try` blocks can be specified at the function level 
 as well as normal blocks.
 
+[Table of Contents](#table-of-contents)
+
 ### Uncatchable Panics
 While monadic error-handling with `Option` and `Result` is usually superior, 
 there are still cases where you have unrecoverable errors 
@@ -1189,6 +1296,8 @@ Nothing is stopping you from calling `setjmp` and `longjmp` from C,
 but no unwinding of `defer` statements is done, 
 and it may result in undefined behavior.  There is no undefined behavior, 
 however, in a normal panic because you just simply `abort`.
+
+[Table of Contents](#table-of-contents)
 
 ## Operator Precedence
 The table below shows the operator precedence for binary and unary operators from lowest precedence to highest precedence. 
@@ -1210,7 +1319,12 @@ The table below shows the operator precedence for binary and unary operators fro
 
 In C* generics have a higher precedence than comparison thus removing ambiguity from "< >".
 
+[Table of Contents](#table-of-contents)
+
 ## Examples
+
+[Table of Contents](#table-of-contents)
+
 ### GCD
 Here is how you write simple algorithms like GCD in C*:
 ```rust
@@ -1223,6 +1337,8 @@ fn gcd(a: i64, b: i64): i64 = {
     })(a.abs(), b.abs()).@cast(i64)
 }
 ```
+
+[Table of Contents](#table-of-contents)
 
 ### Systems Programming
 Here is an example program in C* for part of a simple HTTP/1.0 server, 
@@ -1328,3 +1444,5 @@ client_socket_close:
     }
 }
 ```
+
+[Table of Contents](#table-of-contents)
