@@ -550,14 +550,21 @@ which ensures there is no pointer indirection
 and the closure can be inlined into the call site.
 
 ### Range Literals
-Range literals are used to write ranges in values and are denoted using "..". A normal range literal is from an inclusive value a to an exclusive value b. They can be denoted using different variations such as using a "=" to denote inclusivity and "+" to denote a range from a inclusive to a+b exclusive. 
+Range literals denote an integer range.
+There are a few different forms of ranges,
+which we will define in terms of set interval notation
+as to what integers the range includes.
 
-Ex. 
-- `a..b` 
-- `a..=b`
-- `a..+b` 
-- `a..`
-- `..b`
+|  Range  |   Interval   |
+| ------- | ------------ |
+| `a..b`  | `[a, b)`     |
+| `a..`   | `[a, ∞)`     |
+| `..b`   | `(-∞, b)`    |
+| `..`    | `(-∞, ∞)`    |
+| `a..=b` | `[a, b]`     |
+| `a..+b` | `[a, a + b)` |
+| `..=b`  | `(-∞, b]`    |
+
 
 ## Algebraic Data Types
 C* has `struct`s for product types and `enum`s for sum types. 
