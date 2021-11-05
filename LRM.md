@@ -199,6 +199,8 @@ C* Literals:
 * [struct](#struct-literal)
 * [tuple](#tuple-literalss)
 * [array](#array-literals)
+* [enum](#enum-literals)
+* [union](#union-literals)
 * [function](#function-literals)
 * [closure](#closure-literals)
 * [range](#range-literals)
@@ -488,6 +490,31 @@ unlike in 1-element tuple literals.
 
 Array types are denoted `[T; N]`, where `T` is any type
 and `N: usize`.
+
+#### Enum Literals
+In an enum, such as
+```rust
+enum Example {
+    A,
+    B(i32),
+}
+```
+there are two possible forms of enum literals
+depending on if the variant has any data or not.
+
+In the case of the variant `A`, which has no data attached,
+the enum literal `Example.A` (or just `A` if `A` is imported)
+is a value of type `Example`.
+
+In the case of the variant `B`, which has data attached,
+the enum literal `Example.B` is a function of type `fn(i32): Example`
+that returns the `B` variant with the given data attached.
+Thus, `Example.B(0)` or `Example.B(100)` is normally written,
+though the function can also be referred to by itself.
+
+#### Union Literals
+Union literals are the same as struct literals
+except only one field may be specified.
 
 #### Function Literals
 In C*, there is very little difference between function declarations
