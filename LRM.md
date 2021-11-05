@@ -405,7 +405,58 @@ The other string modifiers apply in the same way,
 and again, double quotes (`\"`) must be escaped instead of single quotes (`\'`).
 
 #### Struct Literals
-Struct literals are the creation of new struct values by using the keyword "struct" and denoting the values of its fields. 
+Struct literals are literals that create a value of a struct type.
+That is, if we have a struct `Example`:
+```rust
+struct Example {
+    a: u32,
+    b: f64,
+    c: String,
+}
+```
+then we can create a value of type `Example` with the struct literal
+```rust
+Example {
+    a: 0,
+    b: 0.0,
+    c: "",
+}
+```
+That is, we first have the struct type name, an open `{` brace,
+the list of fields and their values, and then a closing `}` brace.
+The fields are separate by `,` commas (a trailing `,` comma is allowed),
+and `:` colons separate the field name and its value.
+
+If the name of a field and its value expression are the same,
+then the `:` colon and value may be omitted, like so:
+```rust
+let c = "";
+Example {
+    a: 0,
+    b: 0.0,
+    c,
+}
+```
+
+Furthermore, `..` can be used to spread the fields of another struct into a struct literal, like so:
+```rust
+struct SmallExample {
+    a: u32,
+    b: f64,
+}
+
+let x = SmallExample {
+    a: 0,
+    b: 0.0,
+}
+
+Example {
+    ..x,
+    c: "",
+}
+```
+Note that the struct type does not have to be the same,
+but the fields that are being spread must match between the struct types in name and type.
 
 #### Tuple Literals
 Tuple literals contain a list of expressions that are separated by commmas and contained in parenthesis.
