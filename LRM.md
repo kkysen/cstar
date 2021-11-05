@@ -490,7 +490,32 @@ Array types are denoted `[T; N]`, where `T` is any type
 and `N: usize`.
 
 #### Function Literals
-Func literals are function literals. A func literal is a closure so it can reference vairables that have been defined in a surrounding function. It can also share variables between the function literal and the surrounding function. Func literals can also be passed into other functions as parameters.
+In C*, there is very little difference between function declarations
+and function literals (using them as values).
+
+In function declarations, they are written
+```rust
+PUBLICITY fn FUNC_NAME GENERIC_ARGS ARGS = EXPRESSION
+```
+such as
+```rust
+fn foo<T>(t: T): T = { t * t }
+```
+In function literals, there is no more publicity modifier
+and the function name is optional, 
+since it usually specified as the let binding instead if named:
+```rust
+fn<T>(t: T): T = { t * t }
+```
+Furthermore, type inference of function arguments and return type
+is allowed for function literals, since they cannot be public declarations.
+If the types are ambiguous, though, type annotations are still required of course.
+
+The type of a function literal is unique,
+but can be casted to a function pointer like `fn(T): T`.
+
+Note that annotations like `abi("C")` can still be applied
+to function literals just like function declarations.
 
 
 #### Closure Literals
