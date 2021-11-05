@@ -188,7 +188,7 @@ C* keywords:
 | `;`       | semicolon to separate expressions               |
 | `,`       | comma to separate elements and fields           |
 
-### Literals
+### Literals and Their Types
 C* Literals: 
 * [unit](#unit-literals)
 * [bool](#boolean-literals)
@@ -353,12 +353,11 @@ wraps a `*[u8]`.  This is a borrowed slice type and can't change size.
 To have a growable string, there is the `StringBuf` type, 
 but there is no special syntactic support for this owned string. 
 `String`s are made of `char`s, unicode scalar values, when iterating 
-(even though they are stored as `*[u8]`).  `char`s have literals like `c'\n'`.
+(even though they are stored as `*[u8]`).
 
 Then there are byte strings, which are just `*[u8]` and 
 do not have to be UTF-8 encoded. 
-String literals for this are prefixed with `b`, like `b"hello"` 
-(and for char byte literals, a `b` prefix, too: `b'c'`). 
+String literals for this are prefixed with `b`, like `b"hello"`. 
 The owning version of this is just a `Box<[u8]>` 
 (notice the unsized slice use), and 
 the growable owning version is just a `Vec<u8>`.
@@ -370,11 +369,40 @@ which is way more efficient and safe.
 Literal `CString`s have a `c` prefix, like `c"/home"`.
 
 And finally, there are format strings.  Written `f"n + m = {n + m}"`, 
-they can interpolate expressions within `{}`. 
-Types that can be used like this must have a `format` method (might change). 
-Format, or f-strings, don't actually evaluate to a string, 
+they can interpolate expressions within `{}`.
+Format, or `f`-strings, don't actually evaluate to a string, 
 but rather evaluate to an anonymous struct that has methods to 
-convert it all at once into a real string.  Thus, f-strings do not allocate.
+convert it all at once into a real string.  Thus, `f`-strings do not allocate.
+
+
+For the character literals allowed in C* strings,
+that depends on the string type, which are:
+| Prefix |    Name     |             Type              |
+| ------ | ----------- | ----------------------------- |
+| none   | string      | `String`                      |
+| `b`    | byte-string | `*[u8]`                       |
+| `r`    | raw-string  | type without the `r`          |
+| `c`    | c-string    | `CString`                     |
+| `f`    | f-string    | anonymous struct with methods |
+
+All of these string prefixes can be combined with each other,
+except for `r` and `f`, since f-strings require escaping,
+which goes against raw strings.
+
+For `r` raw strings, no escapes are allowed.
+
+For normal UTF-8 strings (which includes the `r`, `c`, and `f` modifiers), 
+the string must contain [character literals](#character-literals), except there are no single `'` quotes anymore, 
+double `"` quotes delimit strings, 
+and double quotes must escaped (`\"`) instead of single quotes (`\'`).
+Obviously the escapes don't apply to raw `r` strings.
+For `f`-strings, braces must also be escaped: `\{` and `\}`,
+since they are used to delimit expressions within the string.
+And for `c`-strings, they must not contains any `\0` null characters.
+
+For byte `b` strings, the string must contains [byte literals](#string-literals).
+The other string modifiers apply in the same way,
+and again, double quotes (`\"`) must be escaped instead of single quotes (`\'`).
 
 #### Struct Literals
 Struct literals are the creation of new struct values by using the keyword "struct" and denoting the values of its fields. 
