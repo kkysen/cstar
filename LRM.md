@@ -11,15 +11,40 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
 
 ## Table of Contents
 - [Overview](#overview)
-- [Lexical Structure](#lexical-structure)
+- [A C* Program](#a-c-program)
+  - [Modules](#modules)
+  - [Identifiers](#identifiers)
+  - [Keywords](#keywords)
   - [Comments](#comments)
     - [`//` Single-Line](#-single-line-comments)
       - [`///` Doc](#-doc-comments)
     - [`/* */` Nested, Multi-Line(#--nested-multi-line-comments)
     - [`/-` Structural](#--structural-comments)
-  - [Identifiers](#identifiers)
+  - [Publicity](#pub-publicity)
+  - [Annotations](#annotations)
+  - [`use` Declarations](#use-declarations)
+  - [`let` Declarations](#let-declarations)
+  - [`fn` Function Declarations](#fn-function-declarations)
+  - [`struct` Declarations](#struct-declarations)
+  - [`enum` Declarations](#enum-declarations)
+  - [`union` Declarations](#union-declarations)
+  - [`impl` Blocks](#impl-blocks)
+- [Type System](#type-system)
+  - [Primitive Types](#primitive-types)
+    - [`()` Unit Type](#-unit-type)
+    - [Integer Types](#integer-types)
+    - [Float Types](#float-types)
+  - [Built-In Compound Types](#built-in-compound-types)
+    - [Pointer Types](#pointer-types)
+    - [Slice Types](#slice-types)
+    - [Array Types](#array-types)
+    - [Tuple Types](#tuple-types)
+  - [User-Defined Compound Types](#user-defined-compound-types)
+    - [`struct` Types](#struct-declarations)
+    - [`enum` Types](#enum-declarations)
+    - [`union` Types](#union-declarations)
+- [Lexical Structure](#lexical-structure)
   - [Operators](#operators)
-  - [Keywords](#keywords)
   - [Separators](#separators)
   - [Literals](#literals-and-their-types)
     - [Unit](#unit-literals)
@@ -35,6 +60,7 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
     - [Function](#function-literals)
     - [Closure](#closure-literals)
     - [Range](#range-literals)
+  - [Declarations](#declarations)
 - [Algebraic Data Types](#algebraic-data-types)
   - [Structs](#structs)
 - [Generics](#generics)
@@ -73,11 +99,99 @@ While a general-purpose language, C* will probably have the most advantages when
 
 [Table of Contents](#table-of-contents)
 
-## Lexical Structure
+## A C* Program
+A C* program is a top-level C* module.
+
+Note that italics will be used here to refer to 
+placeholders for language items, not the items themselves.
+
+### Modules
+Every C* file (by default using a `.cstar` extension)
+is implicitly a module, though modules can also be declared
+inline with the `mod `*`name`*` {}` keyword[*](#unimplemented-features).
+Everything between the braces belongs to the module `name`.
+
+A module is composed of a series of top-level items (aka declarations), which may be one of:
+* [`use`](#use-declarations)
+* [`let`](#let-declarations)
+* [`fn`](#fn-function-declarations)
+* [`struct`](#struct-declarations)
+* [`enum`](#enum-declarations)
+* [`union`](#union-declarations)
+* [`impl`](#impl-blocks)
+
+These items may be proceeded by a single [*`publicity`* modifier](#pub-publicity)
+and any number of [annotations](#annotations).
+
+[Comments](#comments) may also appear anywhere.
+C* is not whitespace sensitive, i.e., 
+any consecutive sequence of whitespace may be replaced by 
+any other consecutive sequence of whitespace 
+without changing the meaning of the program.
+
+[Table of Contents](#table-of-contents)
+
+### Identifiers
+Identifiers in C* may be any UTF-8 string 
+in which the first characters is `_` or belongs to the [XID_Start](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=) character set,
+and the remaining characters belong to the [XID_Continue](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Continue%3A%5D&abb=on&g=&i=) character set.
+
+There are no keywords at the lexer level, but identifiers may not be a C* [keyword](#keywords).
+They may also not be the [boolean literals](#boolean-literals) `true` or `false`.
+
+`_` is a valid C* identifier at the syntactic level,
+but has a special meaning and cannot be used everywhere.
+That is, it can only be assigned to.
+
+Examples:
+```rust
+// valid identifiers
+let validWord: u32 = 2;
+fn get_num() = {}
+enum 小笼包 {}
+
+// invalid identifier
+let 2words = 2;
+struct const {}
+```
+
+[Table of Contents](#table-of-contents)
+
+### Keywords
+Keywords are reserved identifiers that cannot be used as regular identifiers for other purposes.
+
+C* keywords:
+* `use`
+* `let`
+* `mut`
+* `pub`
+* `try`
+* `const`
+* `impl`
+* `fn`
+* `struct`
+* `enum`
+* `union`
+* `return`
+* `break`
+* `continue`
+* `for`
+* `while`
+* `if`
+* `else`
+* `match`
+* `defer`
+* `undefer`
+
+There are also reserved keywords:
+* `trait`
 
 [Table of Contents](#table-of-contents)
 ### Comments
-C* contains single-line, nested multi-line, and structural comments. 
+C* contains multiple types of comments
+* [single-line](#-single-line-comments)
+* [nested multi-line](#--nested-multi-line-comments)
+* [structural comments](#--structural-comments)
 
 [Table of Contents](#table-of-contents)
 
@@ -123,29 +237,391 @@ fn /* and appear in-between things */ bar() = {}
 
 [Table of Contents](#table-of-contents)
 
-### Identifiers
-Identifiers in C* may be any UTF-8 string 
-in which the first characters is `_` or belongs to the [XID_Start](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=) character set,
-and the remaining characters belong to the [XID_Continue](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Continue%3A%5D&abb=on&g=&i=) character set.
+### `pub` Publicity
+All top-level items (except [`impl` blocks](#impl-blocks)) 
+may be prefixed with a publicity modifier.
 
-There are no keywords at the lexer level, but identifiers may not be a C* [keyword](#keywords).
-They may also not be the [boolean literals](#boolean-literals) `true` or `false`.
+The syntax for this is `pub`.
 
-`_` is a valid C* identifier at the syntactic level,
-but has a special meaning and cannot be used everywhere.
-That is, it can only be assigned to.
+Following the `pub`, there may also be a module path 
+within parentheses, like this: `(`*`path`*`)`.
 
-Examples:
+If there is no publicity modifier, i.e. no `pub`,
+then the publicity of the item is private, i.e. `pub(self)`.
+
+Only public items may be [`use`](#use-declarations)d from other modules. 
+Private items may only be used for the current module or its descendants.
+
+[Table of Contents](#table-of-contents)
+
+### Annotations
+All items may be prefixed with any number of annotations,
+which annotate the item with certain metadata.
+
+The syntax for this is `@`*`annotation`*, 
+where *`annotation`* is the name of the annotation.
+Note that annotations may be imported (`use`d) 
+or referred to with their fully-qualified path.
+
+They may also have an *`argument_list`* after the annotation.
+Having no *`argument_list`* is equivalent to having an empty, 0-length *`argument_list`*.
+The *`argument_list`* is a normal C* *`argument_list`*,
+except this one must be a compile-time constant.
+
+The exact annotations available is still being decided,
+but a few of them may be:
+* `@extern`
+* `@abi("`*`abi`*`")`, like `@abi("C")` or the default `@abi("C*")`
+* `@inline`
+* `@noinline`
+* `@derive(`*`type1`*`, `*`...`*`, `*`typeN`*`)`
+* `@align(`*`alignment`*`)`
+* `@packed`
+* `@allow("`*`warning_name`*`")`
+* `@non_exhaustive`
+
+For now, any available annotations will be implemented in the compiler,
+though this could change in the future.
+
+Annotations can also be applied to the current module.
+In this case, they must appear before any other items in the module
+and are prefixed with an extra `@`, like `@@allow("unused_variable")`.
+
+[Table of Contents](#table-of-contents)
+
+### `use` Declarations
+`use` declarations are used to import items/declarations
+from other modules, such as the standard library,
+external libraries, your own defined modules, or certain types.
+
+Their syntax is *`use `*`= use `*`path`*,
+where *`path `*`= `*`identitifier`*`.`*`path`*.
+
+That is, it imports a path to an item to be used
+without path qualification within the current scope.
+
+[Table of Contents](#table-of-contents)
+
+### `let` Declarations
+`let` declarations bind an expression to a name.
+That expression can either be a [value](#value-lets) or a [type](#type-lets-aka-type-aliases).
+
+[Table of Contents](#table-of-contents)
+
+#### Value `let`s
+For values, the syntax of this is `let mut`*`?`*` `*`identifier`*`: `*`type `*`= `*`expr`*`;`*`?`*.
+
+The `mut` is optional.  If there is no `mut`,
+then the variable is an immutable const.
+If there is a `mut`, then it is a mutable global variable.
+
+In normal `let` bindings/declarations, *`expr`* can be any C* expression,
+and the `: `*`type`* may be omitted where inferrable,
+but at the top, global level, the *`expr`* must be constant evaluated
+and the *`type`* must be annotated.
+The way to do the former is by using a `const { ... }` block,
+which evaluates the block to a constant at compile time.
+
+[Table of Contents](#table-of-contents)
+
+#### Type `let`s aka Type Aliases
+For types, the syntax of this is `let `*`identifier generic_parameter_list? `*`= `*`type`*`;`.
+
+The *`type`* here may be any type expression that
+a value would be annotated with.
+For example, this includes named types, tuples, arrays, slices, function pointers.
+
+See [below](#generic-parameters) for info on the optional *`generic_parameter_list`*.
+
+Note that this only creates an alias of the type,
+but does not actually create a new type.
+For example, the type alias cannot be used as a namespace
+for methods or enum variants.
+
+For example, you could have these type aliases:
 ```rust
-// valid identifiers
-let validWord = 2;
-fn get_num() = {}
-enum 小笼包 {}
-
-// invalid identifier
-let 2words = 2;
-struct static {}
+let Option<T> = Result<T, ()>;
+let Bool = Option<()>;
+let Point = (f64, f64);
 ```
+
+[Table of Contents](#table-of-contents)
+
+### `fn` Function Declarations
+`fn` declarations declare functions.
+
+The syntax of this is `fn `*`identifier generic_parameter_list? parameter_list`*`: `*`type `*`= `*`expr`*.
+
+The *`identifier`* is the name of the function, 
+the [*`generic_parameter_list`*](#generic-parameters) optional generic parameters,
+the [*`parameter_list`*](#parameters) required normal (non-generic) parameters,
+the *`type`* the [return type](#return-type) of the function,
+and the *`expr`* the [return value](#return-value) of the function.
+
+#### Generic Parameters
+A *`generic_parameter_list`* is delimited by `<` `>` angle brackets 
+and contains `,` comma-separated generic parameters.
+A trailing comma is allowed.
+
+Each generic parameter is a generic type or a generic constant[*](#unimplemented-features).
+If it is a generic constant, then it requires a `: `*`type`* annotation.
+
+Note that an empty *`generic_parameter_list`* like `<>`
+is semantically distinct from no *`generic_parameter_list`* at all.
+Generic functions are monomorphized (see [generics](#generics) for more).
+
+Also, the `<` `>` angle brackets as used for generics
+has higher precedence than the `<` `>` comparison operators.
+
+#### Parameters
+A *`parameter_list`* is delimited by `(` `)` parentheses
+and contains a `,` comma-separated parameters.
+A trailing comma is allowed.
+Each parameter is a `let` binding except without the `let` keyword.
+However, in function declarations, the parameters must have `: `*`type`* annotations.
+Note that the similar [function literals/values](#function-literals) do not require this.
+
+#### Return Type
+The `: `*`type`* may be omitted if the type is the unit `()` type.
+
+#### Return Value
+The *`expr`* that the function returns may be any expression.
+However, normally it is a `{ ... }` block,
+which is necessary to include multiple statements in a function.
+The block (like any) may also have modifiers, 
+like `try { ... }` or `const { ... }`.
+Returning a `const { ... }` from a function in particular marks
+that function as constant evaluatable[*](#unimplemented-features).
+
+Normally a `;` is required to end the return value,
+except if a block is used as the return value,
+then it does not require the `;`.
+
+A function return block is slightly special in that 
+`return` may be used within it, which is equivalent to a `break` from that top-level function block.
+
+If a function is annotated with `@extern`,
+then it may omit the ` =`*` expr`*.
+In this case, only the function signature is specified
+and the `@extern`ed function must be available as a function symbol at link time or else there will be a compile error.
+Note that `@abi("C")` is usually specified along with `@extern`
+because the default `@abi("C*")` is unstable.
+
+#### Function Examples
+For example, a non-generic function may look like this:
+```rust
+fn foo(_a: i32, b: usize, _c: String): usize = b * b;
+```
+or this:
+```rust
+fn string_len(c: String): usize = {
+    c.len()
+}
+```
+and a generic function may look like this:
+```rust
+fn equals<T>(a: T, b: T): bool = {
+    a.equals(b)
+}
+```
+
+[Table of Contents](#table-of-contents)
+
+### `struct` Declarations
+`struct` declarations declare a `struct` type,
+which is a product type of its field types.
+All fields are always initialized.
+
+The syntax of this is `struct `*`identifier `*`{ `*`fields `*`}`,
+where *`identifier `* is the name of the `struct` type
+and *`fields`* is a `,` comma-separated list of fields.
+A trailing comma is allowed.
+Zero fields is also allowed.
+
+The syntax of each field is a value `let` declaration without the `let` and the ` =`*` expr`*`;`.
+Each field may also be prefixed by a *`publicity`* modifier.
+
+Note that `mut` can be specified for these fields,
+in which case they are have interior mutability,
+i.e., they can be mutated through a non-`mut` pointer to the struct.
+
+By default, `struct`s use `@abi("C*")`,
+which means their layout and alignment is unspecified and unstable.
+This allows for fields to be rearranged for optimizations.
+If `@abi("C")` is specified, however, then the fields are
+layed out in memory in the order they appear in,
+and C alignment and padding rules are used.
+
+[Table of Contents](#table-of-contents)
+
+### `enum` Declarations
+`enum` declarations declare an `enum` type,
+which is a sum type of its variants.
+That is, it is a discriminated union of variants,
+each of which may have a value or not.
+A value of an `enum` type is always one of its variants
+and cannot be anything except those variants.
+The discriminant value is stored.
+
+The syntax of this is `enum `*`identifier `*`{ `*`variants `*`}`,
+where *`identifier `* is the name of the `struct` type
+and *`variants`* is a `,` comma-separated list of variants.
+A trailing comma is allowed.
+Zero variants is also allowed, but note that this means that
+the `enum` can never be instantiated because it has no variants.
+
+Each variant may have a value or not.
+If a variant does not have a value, then the syntax is *`identifier`*.
+By default, the discriminant value of each variant is chosen by the compiler,
+but this may be overridden for each variant 
+if all the variants of the `enum` have no value.
+The syntax for this is *`identifier `*`= `*`expr`*,
+where *`expr`* must be a `const { ... }` block 
+evaluating to the integer to be used for the discriminant.
+
+If a variant does have a value, then the syntax is *`identifier`*`(`*`type`*`)`.
+Note that only one *`type`* is allowed here.
+If you wish to include multiple types,
+simple use a tuple or `struct` instead.
+
+All variants of an `enum` implicity use `pub` as their publicity modifier, which cannot be changed.
+
+By default, `enum`s use `@abi("C*")`,
+which means their layout and alignment is unspecified and unstable.
+This allows for the layout, including the discriminant, to be optimized.
+Generally, though, the size of an `enum` type is the 
+size of the discriminant plus the size of the largest variant data.
+
+If all the variants have no values,
+then `@abi("C")` may be specified.
+In this case, you must also specify the size of the enum
+by adding a `: `*`type`* following the *`identifier`* name,
+where the *`type`* is a primitive integer type.
+In this case, all the variant discriminants must fit within that type.
+
+The `@non_exhaustive` attribute can also be applied to an `enum` type,
+in which case matching all the variants is no longer considered an exhaustive match, 
+and a catch-all `_ => ` match arm is required.
+
+[Table of Contents](#table-of-contents)
+
+### `union` Declarations [*](#unimplemented-features)
+`union` declarations declare a `union` type,
+which is a non-discriminated union similar to C `union`s.
+It is meant for C FFI and thus defaults to `@abi("C")`.
+
+The syntax of a `union` type declaration is 
+the same as a `struct` type declaration,
+except the `struct` keyword is replaced by the `union` keyword.
+
+The difference between the two is semantics.
+The size of a union is the size of its largest field
+and only one field may be active at any time.
+Reading from an inactive field is undefined.
+
+[Table of Contents](#table-of-contents)
+
+### `impl` Blocks
+`impl` blocks define associated items for a type, which includes methods.
+
+The syntax for this is `impl `*`generic_parameter_list? type `*`{ `*`items `*`}`,
+where *`type`* is the type you are defining associated items for,
+*`generic_parameter_list`* is any generic parameters needed for *`type`*, and *`items`* are items like those in a module.
+
+Within an `impl` block, there is an implicit type alias defined:
+`let Self = `*`type`*`;`, where *`type`* is the same type being `impl`emented.
+
+Items defined within an `impl` block are available 
+through the type as if it were a module.
+The exception is methods, which may be called in another way as well.
+A method is a function in an `impl` block whose first parameter
+is `self: Self`.
+The `: Self` may be inferred (an exception for function declarations).
+To call a method, you may also call it using `.` syntax on a value of the `impl` *`type`*.
+That is, *`value`*`.`*`method`*`(`*`args`*`)` is syntactic sugar
+for *`type`*`.`*`method`*`(`*`value`*`, `*`args`*`)` where *`value`*`: `*`type`*.
+
+[Table of Contents](#table-of-contents)
+
+## Type System
+C* types can be split up into three kinds of types:
+* [primitive types](#primitive-types)
+* compound types
+  * [built-in](#built-in-compound-types)
+  * [user-defined](#user-defined-compound-types)
+
+[Table of Contents](#table-of-contents)
+
+### Primitive Types
+The primitive types in C* are:
+* the [`()` unit type](#-unit-type)
+* [integer types](#integer-types)
+* [float types](#float-types)
+
+[Table of Contents](#table-of-contents)
+
+#### `()` Unit Type
+
+[Table of Contents](#table-of-contents)
+
+#### Integer Types
+
+[Table of Contents](#table-of-contents)
+
+
+#### Float Types
+
+[Table of Contents](#table-of-contents)
+
+### Built-In Compound Types
+The built-in compound types in C* are:
+* [pointer types](#pointer-types)
+* [slice types](#slice-types)
+* [array types](#array-types)
+* [tuple types](#tuple-types)
+
+[Table of Contents](#table-of-contents)
+
+#### Pointer Types
+
+[Table of Contents](#table-of-contents)
+
+#### Slice Types
+
+[Table of Contents](#table-of-contents)
+
+### Array Types
+
+[Table of Contents](#table-of-contents)
+
+#### Tuple Types
+
+[Table of Contents](#table-of-contents)
+
+### User-Defined Compound Types
+The user-defined compound types in C* are:
+* [`struct` types](#struct-types)
+* [`enum` types](#enum-types)
+* [`union` types](#union-types)
+
+They correspond to the item declarations of the same name.
+
+[Table of Contents](#table-of-contents)
+
+#### `struct` Types
+
+[Table of Contents](#table-of-contents)
+
+#### `enum` Types
+
+[Table of Contents](#table-of-contents)
+
+
+#### `union` Types
+
+[Table of Contents](#table-of-contents)
+
+## Lexical Structure
 
 [Table of Contents](#table-of-contents)
 
@@ -182,31 +658,6 @@ struct static {}
 | `&=`     | binary | yes      | bitwise    | and                      |                       |
 | `\|=`    | binary | yes      | bitwise    | or                       |                       |
 | `^=`     | binary | yes      | bitwise    | xor                      |                       |
-
-[Table of Contents](#table-of-contents)
-
-### Keywords
-Keywords are reserved identifiers that cannot be used as regular identifiers for other purposes. 
-C* keywords:
-* `let`
-* `mut`
-* `pub`
-* `try`
-* `const`
-* `static`
-* `fn`
-* `struct`
-* `enum`
-* `union`
-* `return`
-* `break`
-* `continue`
-* `for`
-* `while`
-* `if`
-* `else`
-* `match`
-* `defer`
 
 [Table of Contents](#table-of-contents)
 
@@ -655,6 +1106,11 @@ as to what integers the range includes.
 
 [Table of Contents](#table-of-contents)
 
+### Declarations
+
+A C* program
+
+[Table of Contents](#table-of-contents)
 ## Algebraic Data Types
 C* has `struct`s for product types and `enum`s for sum types. 
 This is very powerful combined with [pattern matching](#pattern-matching). 
@@ -1446,3 +1902,11 @@ client_socket_close:
 ```
 
 [Table of Contents](#table-of-contents)
+
+## Unimplemented Features
+* targets other than x86_64-linux-gnu
+* `mod`ules (other than the implicit single file module)
+* `f`-strings
+* type aliases
+* any attributes except for `@extern` and `@abi("C")` for functions (necessary to link with libc)
+* `union`s
