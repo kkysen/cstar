@@ -23,7 +23,7 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
   - [Publicity](#pub-publicity)
   - [Annotations](#annotations)
   - [`use` Declarations](#use-declarations)
-  - [`let` Declarations](#let-declarations)
+  - [`let`s](#let-declarations)
   - [`fn` Function Declarations](#fn-function-declarations)
   - [`struct` Declarations](#struct-declarations)
   - [`enum` Declarations](#enum-declarations)
@@ -34,8 +34,9 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
     - [`()` Unit Type](#-unit-type)
     - [Integer Types](#integer-types)
     - [Float Types](#float-types)
+    - [`char`acter type](#character-type)
   - [Built-In Compound Types](#built-in-compound-types)
-    - [Pointer Types](#pointer-types)
+    - [Reference Types](#reference-types)
     - [Slice Types](#slice-types)
     - [Array Types](#array-types)
     - [Tuple Types](#tuple-types)
@@ -302,9 +303,12 @@ without path qualification within the current scope.
 
 [Table of Contents](#table-of-contents)
 
-### `let` Declarations
-`let` declarations bind an expression to a name.
+### `let`s
+A `let` binds an expression to a name.
 That expression can either be a [value](#value-lets) or a [type](#type-lets-aka-type-aliases).
+
+Normally (in expressions), `let` bindings can be shadowed,
+but they cannot be at the module level.
 
 [Table of Contents](#table-of-contents)
 
@@ -315,12 +319,23 @@ The `mut` is optional.  If there is no `mut`,
 then the variable is an immutable const.
 If there is a `mut`, then it is a mutable global variable.
 
-In normal `let` bindings/declarations, *`expr`* can be any C* expression,
+In normal `let` bindings, *`expr`* can be any C* expression,
 and the `: `*`type`* may be omitted where inferrable,
 but at the top, global level, the *`expr`* must be constant evaluated
 and the *`type`* must be annotated.
 The way to do the former is by using a `const { ... }` block,
 which evaluates the block to a constant at compile time.
+
+A value `let` can also create zero, one, or multiple bindings
+at once through destructuring a pattern.
+If the pattern is tautological, i.e. the pattern always matches,
+then the bindings are always created.
+If the pattern may not match, then the `let` expression is a `bool` and may be used in `if`s or `match`es.
+In this case, the `let` binding(s) are only created if the pattern matches and the `let` expression evaluated to `true`.
+Note that `match`ing a non-tautological `let` is possible
+but very un-idiomatic, since the binding could simply be done in the match itself.  Thus, it is normally used with `if`.
+
+See `match` for more info on patterns and destructuring.
 
 [Table of Contents](#table-of-contents)
 
@@ -438,7 +453,7 @@ and *`fields`* is a `,` comma-separated list of fields.
 A trailing comma is allowed.
 Zero fields is also allowed.
 
-The syntax of each field is a value `let` declaration without the `let` and the ` =`*` expr`*`;`.
+The syntax of each field is a value `let` without the `let` and the ` =`*` expr`*`;`.
 Each field may also be prefixed by a *`publicity`* modifier.
 
 Note that `mut` can be specified for these fields,
@@ -557,6 +572,7 @@ The primitive types in C* are:
 * the [`()` unit type](#-unit-type)
 * [integer types](#integer-types)
 * [float types](#float-types)
+* the [`char`acter type](#character-type)
 
 [Table of Contents](#table-of-contents)
 
@@ -573,20 +589,98 @@ The primitive types in C* are:
 
 [Table of Contents](#table-of-contents)
 
+#### `char`acter Type
+
+[Table of Contents](#table-of-contents)
+
 ### Built-In Compound Types
 The built-in compound types in C* are:
-* [pointer types](#pointer-types)
+* [reference types](#reference-types)
 * [slice types](#slice-types)
 * [array types](#array-types)
 * [tuple types](#tuple-types)
 
 [Table of Contents](#table-of-contents)
 
-#### Pointer Types
+#### Reference Types
+In C*, you can have a reference to any type, 
+i.e., a pointer to a value of that type.
+That reference is either immutable or mutable.
+
+The syntax for an immutable reference is *`type`*`&`,
+and the syntax for a mutable reference is *`type`*`&mut`.
+
+An immutable reference can be created using the postfix
+`.&` reference operator from either an immutable or mutable binding.
+A mutable reference can be created using the postfix
+`.&mut` mutable reference operator, but only from a mutable binding.
+
+Both immutable and mutable references can be dereferenced 
+using the postfix `.*` dereference operator.
+This creates a temporary, unnamed, non-copied, immutable binding.
+A mutable reference can also be dereferenced mutably
+using the postfix `.*mut` mutable dereference operator.
+This is the same as the `.*` deference operator,
+except the resultant temporary is mutable.
+
+Note that references can only be created by referencing an existing value.
+Thus, null references are impossible to create.
+Instead, `Option` should be used, like `Option<T&>`.
 
 [Table of Contents](#table-of-contents)
 
 #### Slice Types
+In C*, you can also have a slice of a type, a contiguous collection of values of the same type.  The number of values is only known at compile time.
+
+The syntax for this is *`type`*`[]`.
+
+A slice `T[]` is similar to the struct
+```rust
+struct SliceT {
+    len: usize,
+    ptr: T&,
+}
+```
+but there are a few important differences.
+Slices store their values inline.  
+They are thus unsized (i.e. dynamically sized) (`.@size_of()` is non-`const` for them).
+However, references to slices are sized.
+They are so-called fat pointers, i.e. the length and raw pointer both constitute the reference.
+
+Slices are the only fundamentally unsized types.
+Other compounds may only contain at most one unsized type,
+and if they do, then they themselves are unsized.
+Like slices, references to any unsized type are fat pointers.
+
+To access the values of a slice,
+the `[]` index operator may be used: *`value`*`[`*`index`*`]`,
+where *`index`* is a value of an unsigned integer type
+and *`value`* is a reference to a value of slice type.
+Note that if you have a slice reference, 
+it must be derefenced before indexing the slice directly.
+
+Indexing a slice reference`T[]&` evaluates to `Result<T&, IndexBoundsError>`,
+and indexing a mutable slice reference `T[]&mut` evaluates to `Result<T&mut, IndexBoundsError>`.
+Thus, it is always bounds checked.
+To [panic](#panicking) on an out-of-bounds index, simply `.unwrap()` 
+the `Result` to get the `T&` or `T&mut`,
+which can then be dereference to access.
+To elimiate bounds checking, the `Result` can instead be `.unwrap_unchecked()` to get the `T&` or `T&mut` 
+without checking if there was an error,
+thus eliminating the bounds check.
+
+Bounds checking can also be eliminated in many other safe ways.
+Bounds checking is usually only a problem when it is done for many elements of a slice when it only needs to be done once.
+For this case, multiple elements can be indexed using a slice pattern (see [patterns](#pattern-matching)),
+or an iterator can be used, which will eliminate redundant bounds checking.
+
+Slices can also be sliced to yield a smaller view of the original slice.
+This is also done by the same `[]` indexing operator,
+except now the syntax is *`value`*`[`*`range`*`]`,
+where *`range`* is a value of [range](#range-literals) type.
+
+Slicing a slice reference `T[]&` evaluates to `Result<T[]&, SliceBoundsError>`,
+and slicing a mutable slice reference `T[]&mut` evaluates to `Result<T[]&mut, SliceBoundsError>`.
 
 [Table of Contents](#table-of-contents)
 
@@ -1910,3 +2004,4 @@ client_socket_close:
 * type aliases
 * any attributes except for `@extern` and `@abi("C")` for functions (necessary to link with libc)
 * `union`s
+* unsized types (slices must be references)
