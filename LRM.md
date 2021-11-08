@@ -55,6 +55,7 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
     - [Closure](#closure-literals)
     - [Range](#range-literals)
   - [Function Calls](#function-calls)
+    - [Method Calls](#method-calls)
   - [Blocks](#blocks)
   - [Control Flow](#control-flow)
     - [Pattern Matching](#pattern-matching)
@@ -98,7 +99,7 @@ placeholders for language items, not the items themselves.
 Every C* file (by default using a `.cstar` extension)
 must be UTF-8.
 Each file is implicitly a module, though modules can also be declared
-inline with the `mod `*`name`*` {}` keyword[*](#unimplemented-features).
+inline with the `mod `*`name`*` {}` keyword[*](#current-restrictions-and-unimplemented-features).
 Everything between the braces belongs to the module `name`.
 
 A module is composed of a series of top-level items (aka declarations), which may be one of:
@@ -375,7 +376,7 @@ A *`generic_parameter_list`* is delimited by `<` `>` angle brackets
 and contains `,` comma-separated generic parameters.
 A trailing comma is allowed.
 
-Each generic parameter is a generic type or a generic constant[*](#unimplemented-features).
+Each generic parameter is a generic type or a generic constant[*](#current-restrictions-and-unimplemented-features).
 If it is a generic constant, then it requires a `: `*`type`* annotation.
 
 Note that an empty *`generic_parameter_list`* like `<>`
@@ -403,7 +404,7 @@ which is necessary to include multiple statements in a function.
 The block (like any) may also have modifiers, 
 like `try { ... }` or `const { ... }`.
 Returning a `const { ... }` from a function in particular marks
-that function as constant evaluatable[*](#unimplemented-features).
+that function as constant evaluatable[*](#current-restrictions-and-unimplemented-features).
 
 Normally a `;` is required to end the return value,
 except if a block is used as the return value,
@@ -522,7 +523,7 @@ and a catch-all `_ => ` match arm is required.
 
 [Table of Contents](#table-of-contents)
 
-### `union` Declarations [*](#unimplemented-features)
+### `union` Declarations [*](#current-restrictions-and-unimplemented-features)
 `union` declarations declare a `union` type,
 which is a non-discriminated union similar to C `union`s.
 It is meant for C FFI and thus defaults to `@abi("C")`.
@@ -776,7 +777,8 @@ TODO
 
 
 ## Expressions
-TODO
+Almost everything that is not a type in C* is an expression.
+This includes all control flow constructs.
 
 [Table of Contents](#table-of-contents)
 
@@ -1217,6 +1219,11 @@ TODO
 
 [Table of Contents](#table-of-contents)
 
+#### Method Calls
+TODO
+
+[Table of Contents](#table-of-contents)
+
 ### Blocks
 TODO
 
@@ -1243,12 +1250,27 @@ patterns
 
 [Table of Contents](#table-of-contents)
 ##### `if`
-TODO
+`if` evaluates a block conditionally.
+
+The syntax for this is *`expr`*`.if `*`block`*.
+It is syntax sugar for a `match`: 
+
+*`expr`*`.match { true => `*`block`*`, false => (), } `
 
 [Table of Contents](#table-of-contents)
 
 ##### `else`
-TODO
+An `else` may immediately follow an `if` expression,
+in which case the whole thing becomes an if-else expression.
+
+The syntax for this is *`expr`*`.if `*`block `*`else`*` block`*.
+It is syntax sugar for a `match`:
+
+*`expr`*`.match { true => `*`block`*`, false => `*`block`*`, } `,
+where the *`block`* are in the same order as in the if-else expression.
+
+Normally the *`expr`* following an `else` must be a *`block`*,
+but it can also be another if expression.
 
 [Table of Contents](#table-of-contents)
 
@@ -1268,7 +1290,20 @@ TODO
 [Table of Contents](#table-of-contents)
 
 ##### `for`
-TODO
+A `for` loop allows you to iterate through an iterator.
+An iterator is just a type `Iter` that has 
+a `fn next(self: Self) -> Option<T>` method, 
+where `T` is the element type we are iterating over.
+
+The syntax for this is *`expr`*`.for`*` binding block`*,
+where the *`expr`* is a value that has 
+a `.into_iter()` method returning the iterator,
+the *`binding`* is the binding for the element name,
+and *`block`* is the block of the `for` loop.
+
+It is syntax sugar for:
+
+`{ let iter = `*`expr`*`.into_iter(); (true).while { let `*`binding `*`= iter.next().?; `*` block`*` } }`
 
 [Table of Contents](#table-of-contents)
 
