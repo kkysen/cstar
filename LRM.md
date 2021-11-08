@@ -1,12 +1,5 @@
 # C* - Language Reference Manual
 
-| Name        | UNI     |       Role       |
-| ----------- | ------- | ---------------- |
-| Shannon Jin | sj2802  | Manager          |
-| Khyber Sen  | ks3343  | Language Guru    |
-| Ryan Lee    | dbl2127 | System Architect |
-| Joanne Wang | jyw2118 | Tester           |
-
 Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
 
 ## Table of Contents
