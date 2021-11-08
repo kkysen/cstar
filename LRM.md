@@ -1386,7 +1386,8 @@ TODO
 
 ## Current Restrictions and Unimplemented Features
 The following features are currently unimplemented:
-* targets other than `x86_64-linux-gnu`.
+* non ASCII source code (normally UTF-8 is allowed)
+* targets other than `x86_64-linux-gnu`
 * user-defined `mod`ules, except for: 
   * the implicit single-file module 
   * those defined by the compiler or in the standard library
