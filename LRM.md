@@ -685,10 +685,41 @@ and slicing a mutable slice reference `T[]&mut` evaluates to `Result<T[]&mut, Sl
 [Table of Contents](#table-of-contents)
 
 ### Array Types
+In C*, there also arrays of a type,
+which, like slices, are a contiguous collection of values of the same type,
+but unlike slices, have a length known at compile time and not stored at runtime.
+Thus, they are sized unliked slices.
+
+The syntax for this type is *`type`*`[`*`size`*`]`,
+where *`size`* is a const of an unsized integer type.
+
+Arrays can also be indexed and sliced,
+but since the length is known at compile time,
+if the index or range is also known at compile time,
+then indexing and slicing always succeeds at runtime 
+(i.e. there is no `Result`) yielding another array, 
+or else is a compile error.
+The same syntax is used for indexing and slicing as is for slices.
+
+To explicitly turn an array into a slice reference,
+`.@cast<T[]>()` can be used.
 
 [Table of Contents](#table-of-contents)
 
 #### Tuple Types
+In C*, you can also have a contiguous collection values of different types, i.e. a heterogenous array of sorts.
+This is called a tuple and its length must be known at compile time.
+
+The syntax for this type is `(`*`types`*`)`,
+where *`types`* is a list of `,` comma-separated *`type`* s.
+A trailing `,` comma is allowed.
+
+The elements of a tuple can be accessed as fields like in a `struct`.
+In fact, a tuple is syntax sugar for an anonymous `struct` 
+with all public fields, though there is one caveat.
+The fields of a tuple are decimal integer literals (the index),
+which would not otherwise be allowed as an identifier for a field name.
+Note that like `struct`s, tuple elements may be not layed out in memory in order.
 
 [Table of Contents](#table-of-contents)
 

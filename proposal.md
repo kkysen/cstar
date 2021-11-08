@@ -74,7 +74,7 @@ Most unary operators and keywords can be used postfix as well.
 * `.&mut` for mutable reference to
 * `.!` for negation
 * `.@()` for builtins, like as (casting), size_of, etc.
-    * `.@cast(T)`: convert to `T`, like an int to float cast, or an int widening cast
+    * `.@cast<T>()`: convert to `T`, like an int to float cast, or an int widening cast
     * `.@ptr_cast<T>()`: cast a pointer like `*T` to `*U`
     * `.@bit_cast<T>()`: reinterpret the bits, like from `u32` to `f32`
     * `.@size_of()`: size of a type
