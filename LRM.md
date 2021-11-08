@@ -854,10 +854,11 @@ The type of number may be:
 * `i`: signed integer
 * `f`: floating-point number
 
-The bit size is usually a literal power of 2 number,
-but may also be a word whose bit size is architecture-dependent.
+The bit size is usually a literal power of 2 number, 
+but may be any positive integer for integer types.
+It may also be a word whose bit size is architecture-dependent.
 
-For integers (`u` and `i`), the bit size may be:
+For integers (`u` and `i`), the common bit sizes are:
 * `8`
 * `16`
 * `32`
@@ -867,7 +868,7 @@ For integers (`u` and `i`), the bit size may be:
 * `ptr` (bit size necessary to store a pointer 
          or the difference between them)
 
-For floats (`f`), the bit size may be:
+For floats (`f`), the bit sizes are:
 * `16`
 * `32`
 * `64`
