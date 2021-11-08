@@ -447,8 +447,9 @@ fn equals<T>(a: T, b: T): bool = {
 which is a product type of its field types.
 All fields are always initialized.
 
-The syntax of this is `struct `*`identifier `*`{ `*`fields `*`}`,
-where *`identifier `* is the name of the `struct` type
+The syntax of this is `struct `*`identifier generic_parameter_list?`*`{ `*`fields `*`}`,
+where *`identifier`* is the name of the `struct` type,
+*`generic_parameter_list`* are its generic parameters,
 and *`fields`* is a `,` comma-separated list of fields.
 A trailing comma is allowed.
 Zero fields is also allowed.
@@ -478,8 +479,9 @@ A value of an `enum` type is always one of its variants
 and cannot be anything except those variants.
 The discriminant value is stored.
 
-The syntax of this is `enum `*`identifier `*`{ `*`variants `*`}`,
-where *`identifier `* is the name of the `struct` type
+The syntax of this is `enum `*`identifier generic_parameter_list?`*`{ `*`variants `*`}`,
+where *`identifier`* is the name of the `struct` type,
+*`generic_parameter_list`* its generic parameters,
 and *`variants`* is a `,` comma-separated list of variants.
 A trailing comma is allowed.
 Zero variants is also allowed, but note that this means that
