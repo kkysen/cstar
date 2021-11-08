@@ -417,8 +417,15 @@ If a function is annotated with `@extern`,
 then it must omit the ` =`*` expr`* and end with a `;`.
 In this case, only the function signature is specified
 and the `@extern`ed function must be available as a function symbol at link time or else there will be a compile error.
+
 Note that `@abi("C")` is usually specified along with `@extern`
 because the default `@abi("C*")` is unstable.
+
+In an `@extern @abi("C")` function, 
+the last (but not only) parameter may also be `...`,
+which is a C varargs parameter and may be called with multiple arguments.
+This is only for C FFI for functions like `syscall`,
+which otherwise we'd need to implement with some assembly.
 
 Note that `@extern` and `@abi("C")` may also be specified for an entire module,
 in which case it applies to all items within that module.
@@ -1433,10 +1440,12 @@ The following features are currently unimplemented:
 * type aliases except for:
   * those implemented by the compiler
 * most attributes except for:
-  * `@extern` and `@abi("C")` for functions
+  * `@extern` and `@abi("C")` for functions (for calling libc)
   * `@impl(Clone)`
   * `@impl(Copy)`
   * all other annotations are allowed but ignored
+* `...` trailing varargs parameter for `@extern @abi("C")` functions 
+  unless it's needed for the standard library (using libc)
 * `union`s
 * non-temporary unsized types (slices must be references)
 * const generics
