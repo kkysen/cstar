@@ -77,6 +77,7 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
 - [Builtin Functions](#builtin-functions)
 - [List of Annotations](#list-of-annotations)
 - [Current Restrictions and Unimplemented Features](#current-restrictions-and-unimplemented-features)
+- [Grammar](#grammar)
 
 [Table of Contents](#table-of-contents)
 
@@ -1453,7 +1454,15 @@ The following features are currently unimplemented:
 
 [Table of Contents](#table-of-contents)
 
+## Grammar
+Much of the grammar is specified above using *`italics`* and in words,
+but here is the `ocamlyacc` grammar:
 
+```ocaml
+TODO
+```
+
+## Old Stuff Below
 _____________________________________
 
 ## Statements and Expressions
