@@ -1351,6 +1351,8 @@ TODO
 | `\|`     | binary | no       | bitwise    | or                       |                       |
 | `^`      | binary | no       | bitwise    | xor                      |                       |
 | `~`      | unary  | no       | bitwise    | not                      |                       |
+| `<<`     | binary | no       | bitwise    | left shift               |                       |
+| `>>`     | binary | no       | bitwise    | right shift              |                       |
 | `[]`     | binary | no       | indexing   | index a slice            | `a[1]`                |
 | `+=`     | binary | yes      | arithmetic | addition                 |                       |
 | `-=`     | binary | yes      | arithmetic | subtraction              |                       |
@@ -1362,10 +1364,38 @@ TODO
 | `&=`     | binary | yes      | bitwise    | and                      |                       |
 | `\|=`    | binary | yes      | bitwise    | or                       |                       |
 | `^=`     | binary | yes      | bitwise    | xor                      |                       |
+| `<<=`    | binary | yes      | bitwise    | left shift               |                       |
+| `>>=`    | binary | yes      | bitwise    | right shift              |                       |
+| `++`     | unary  | yes      | arithmetic | increment                |                       |
+| `--`     | unary  | yes      | arithmetic | decrement                |                       |
+
+Arithmetic operators operate on expressions of the same number type 
+and evaluate to the same number type as well.
+`.@cast<>()` can be used here when the operands are of different type.
+`%`, `++`, and `--` are not allowed for floats.
+
+Relational operators operate on expressions of the same type
+and evaluate to a `bool`.
+
+Logical operators operate on `bool` expressions and evaluate to a `bool`.
+
+Bitwise operators operate on expressions of the same number type
+and evaluate to the same number type as well.
+The except is the shift operators: `<<`, `>>`, `<<=`, and `>>=`,
+whose right operand is the minimum unsigned integer type
+that may be shifted by (i.e. the bit size of the left operand).
+Otherwise it would be UB.
+For example, if the left operand is `u64`, then the right operand is `u6`.
+For signed integer types as the left operand, 
+the sign bit is extended when shifting.
+
+In-place *`operator`*`=`s evalute to `()`.
 
 [Table of Contents](#table-of-contents)
 
 ## Generics
+Generics in C* are always monomorphized.
+
 TODO
 
 [Table of Contents](#table-of-contents)
