@@ -734,15 +734,18 @@ They correspond to the item declarations of the same name.
 [Table of Contents](#table-of-contents)
 
 #### `struct` Types
+See [`struct` declarations](#struct-declarations) for more.
 
 [Table of Contents](#table-of-contents)
 
 #### `enum` Types
+See [`enum` declarations](#enum-declarations) for more.
 
 [Table of Contents](#table-of-contents)
 
 
 #### `union` Types
+See [`union` declarations](#union-declarations) for more.
 
 [Table of Contents](#table-of-contents)
 
