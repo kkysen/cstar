@@ -1389,6 +1389,9 @@ For example, if the left operand is `u64`, then the right operand is `u6`.
 For signed integer types as the left operand, 
 the sign bit is extended when shifting.
 
+For indexing operators, see [slices](#slice-types) 
+and [arrays](#array-types), which may be indexed.
+
 In-place *`operator`*`=`s evalute to `()`.
 
 [Table of Contents](#table-of-contents)
