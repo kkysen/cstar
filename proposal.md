@@ -73,13 +73,13 @@ Most unary operators and keywords can be used postfix as well.
 * `.&` for reference to
 * `.&mut` for mutable reference to
 * `.!` for negation
-* `.@()` for builtins, like as (casting), size_of, etc.
-    * `.@cast<T>()`: convert to `T`, like an int to float cast, or an int widening cast
-    * `.@ptr_cast<T>()`: cast a pointer like `*T` to `*U`
-    * `.@bit_cast<T>()`: reinterpret the bits, like from `u32` to `f32`
-    * `.@size_of()`: size of a type
-    * `.@align_of()`: alignment of a type
-    * `.@call(func)`: call a function or closure in a unified syntax
+* `.$...()` for builtins, such as:
+    * `.$cast<T>()`: convert to `T`, like an int to float cast, or an int widening cast
+    * `.$ptr_cast<T>()`: cast a pointer like `*T` to `*U`
+    * `.$bit_cast<T>()`: reinterpret the bits, like from `u32` to `f32`
+    * `.$size_of()`: size of a type or value
+    * `.$align_of()`: alignment of a type or value
+    * `.$call(args)`: call a function or closure in a unified syntax
 
 Combined with everything [being an expression](#expression-oriented), 
 [`match`](#pattern-matching), and having [methods](#methods), 
@@ -178,7 +178,7 @@ enum ShortVec<T, N: u8> {
 
 fn short_vec_len<T, N: u8>(v: ShortVec<T, N>&): usize = {
     v.match {
-        Inline(InlineVec {len, _}) => len.@cast(),
+        Inline(InlineVec {len, _}) => len.$cast(),
         Allocated(AllocatedVec {len, _}) => len,
     }.*
 }
@@ -369,10 +369,10 @@ for something a bit more low-level and wordy:
 fn open_two_files(path1: u8[]&, path2: u8[]&): Result<FilePair, String> = try {
     let fd1 = open_file_in_dir(b"", path1).?;
     let close1 = fn {fd1}() = { close(fd1); }
-    let close1 = close1.@defer();
+    let close1 = close1.$defer();
     let fd2 = open_file_in_dir(b"", path2).?;
     let close2 = fn {fd1}() = { close(fd1); }
-    let close2 = close2.@defer();
+    let close2 = close2.$defer();
     println(f"opened {fd1} and {fd2}");
     let close = [close2, close1].&[..];
     close.undo();
@@ -380,7 +380,7 @@ fn open_two_files(path1: u8[]&, path2: u8[]&): Result<FilePair, String> = try {
 }
 ```
 
-That is, `.@defer()` places the closure on the stack and 
+That is, `.$defer()` places the closure on the stack and 
 returns a `Defer` struct, which can be undone with `Defer.undo()` 
 (`Defer[]&.undo()` just maps `Defer.undo()` over the array). 
 `Defer.undo()` sets a bit in the `Defer` struct that it's been undone. 
@@ -486,7 +486,7 @@ impl <T, F> Option<T> {
     fn map(self: Self, f: F): F(T) = {
         match self {
             None => None,
-            Some(t) => Some(f.@call(t)),
+            Some(t) => Some(f.$call(t)),
         }
     }
 }
@@ -513,10 +513,10 @@ In particular:
   (this is because closure type depend on what they capture). 
   You can also apply a type to a function type to get its return type, 
   like `F(T)`.
-* We can call a closure using the unified calling syntax: `.@call()`. 
+* We can call a closure using the unified calling syntax: `.$call()`. 
   Normal function calls are `()`, and we want to be explicit 
-  when we're actually calling a closure, so `.@call()` is needed. 
-  `.@call()` also works on normal functions, though, 
+  when we're actually calling a closure, so `.$call()` is needed. 
+  `.$call()` also works on normal functions, though, 
   since all functions can be implicitly converted to non-capturing closures.
 * The closure syntax is very similar to function syntax, 
   with a few differences:
@@ -538,7 +538,7 @@ The way closures are implemented is by
 creating an anonymous struct of the captured closure context. 
 Then there is a method on that struct that takes the closure arguments and 
 returns the closure body with the context struct destructured inside 
-(so its variables are in scope).  This is what is called by `.@call()`. 
+(so its variables are in scope).  This is what is called by `.$call()`. 
 Note that there are no indirect function calls, boxing, 
 or allocations involved in this, but it requires the use of generics. 
 If nothing is captured by a closure, though, 
@@ -675,7 +675,7 @@ fn gcd(a: i64, b: i64): i64 = {
             0 => b,
             _ => gcd(b, a % b),
         }
-    })(a.abs(), b.abs()).@cast(i64)
+    })(a.abs(), b.abs()).$cast(i64)
 }
 ```
 

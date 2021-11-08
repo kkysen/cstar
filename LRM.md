@@ -32,6 +32,7 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
 - [Type System](#type-system)
   - [Primitive Types](#primitive-types)
     - [`()` Unit Type](#-unit-type)
+    - [`bool` Type](#bool-type)
     - [Integer Types](#integer-types)
     - [Float Types](#float-types)
     - [`char`acter type](#character-type)
@@ -44,10 +45,9 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
     - [`struct` Types](#struct-declarations)
     - [`enum` Types](#enum-declarations)
     - [`union` Types](#union-declarations)
-- [Lexical Structure](#lexical-structure)
-  - [Operators](#operators)
-  - [Separators](#separators)
-  - [Literals](#literals-and-their-types)
+- [Destructive Moves](#destructive-moves)
+- [Expressions](#expressions)
+  - [Literals](#literals)
     - [Unit](#unit-literals)
     - [Boolean](#boolean-literals)
     - [Number](#number-literals)
@@ -61,33 +61,28 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
     - [Function](#function-literals)
     - [Closure](#closure-literals)
     - [Range](#range-literals)
-  - [Declarations](#declarations)
-- [Algebraic Data Types](#algebraic-data-types)
-  - [Structs](#structs)
+  - [Function Calls](#function-calls)
+  - [Blocks](#blocks)
+  - [Control Flow](#control-flow)
+    - [Pattern Matching](#pattern-matching)
+    - [Conditionals](#conditionals)
+      - [`match`](#match)
+      - [`if`](#if)
+      - [`else`](#else)
+    - [Labels](#labels)
+    - [Loops](#loops)
+      - [`while`](#while)
+      - [`for`](#for)
+    - [`defer`](#defer)
+    - [Error Handling](#error-handling)
+      - [`try`](#try)
+      - [Panicking](#panicking)
+  - [Operators](#operators)
 - [Generics](#generics)
-- [Statements and Expressions](#statements-and-expressions)
-  - [Statements](#statements)
-    - [If-Else Statements](#if-else-statements)
-    - [For Statements](#for-statements)
-    - [While Statements](#while-statements)
-    - [Defer](#defer)
-  - [Expressions and Operators](#expressions-and-operators)
-    - [Unary Operators](#unary-operators)
-    - [Binary Operators](#binary-operators)
-      - [Assignment operator](#assignment-operator)
-      - [Arithmetic Operator](#arithmetic-operator)
-      - [Relational Operators](#relational-operators)
-  - [Functions](#functions)
-  - [Pattern Matching](#pattern-matching)
-  - [Methods](#methods)
-  - [Postfix](#postfix)
-- [Slices](#slices)
-- [Monadic Error-Handling](#monadic-error-handling)
-  - [Uncatchable Panics](#uncatchable-panics)
-- [Operator Precedence](#operator-precedence)
-- [Examples](#examples)
-  - [GCD](#gcd)
-  - [Systems Programming](#systems-programming)
+- [Constant Evaluation](#constant-evaluation)
+- [Builtin Functions](#builtin-functions)
+- [List of Annotations](#list-of-annotations)
+- [Current Restrictions and Unimplemented Features](#current-restrictions-and-unimplemented-features)
 
 [Table of Contents](#table-of-contents)
 
@@ -108,7 +103,8 @@ placeholders for language items, not the items themselves.
 
 ### Modules
 Every C* file (by default using a `.cstar` extension)
-is implicitly a module, though modules can also be declared
+must be UTF-8.
+Each file is implicitly a module, though modules can also be declared
 inline with the `mod `*`name`*` {}` keyword[*](#unimplemented-features).
 Everything between the braces belongs to the module `name`.
 
@@ -125,17 +121,22 @@ These items may be proceeded by a single [*`publicity`* modifier](#pub-publicity
 and any number of [annotations](#annotations).
 
 [Comments](#comments) may also appear anywhere.
+
 C* is not whitespace sensitive, i.e., 
 any consecutive sequence of whitespace may be replaced by 
 any other consecutive sequence of whitespace 
 without changing the meaning of the program.
+A unicode character is considered whitespace if it matches the [`\p{Pattern_White_Space}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B:Pattern_White_Space:%5D&abb=on&g=&i=) unicode property.
 
 [Table of Contents](#table-of-contents)
 
 ### Identifiers
 Identifiers in C* may be any UTF-8 string 
-in which the first characters is `_` or belongs to the [XID_Start](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=) character set,
-and the remaining characters belong to the [XID_Continue](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Continue%3A%5D&abb=on&g=&i=) character set.
+in which the first characters is `_`, `$`, or matches the [`\p{XID_Start}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=) unicode property,
+and the remaining characters match the [`\p{XID_Continue}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Continue%3A%5D&abb=on&g=&i=) unicode property,
+except for the following exceptions:
+
+Identifiers may begin with `$` but are only definable by the compiler as intrinsics. 
 
 There are no keywords at the lexer level, but identifiers may not be a C* [keyword](#keywords).
 They may also not be the [boolean literals](#boolean-literals) `true` or `false`.
@@ -275,7 +276,7 @@ but a few of them may be:
 * `@abi("`*`abi`*`")`, like `@abi("C")` or the default `@abi("C*")`
 * `@inline`
 * `@noinline`
-* `@derive(`*`type1`*`, `*`...`*`, `*`typeN`*`)`
+* `@impl(`*`type1`*`, `*`...`*`, `*`typeN`*`)`
 * `@align(`*`alignment`*`)`
 * `@packed`
 * `@allow("`*`warning_name`*`")`
@@ -300,6 +301,9 @@ where *`path `*`= `*`identitifier`*`.`*`path`*.
 
 That is, it imports a path to an item to be used
 without path qualification within the current scope.
+
+*`path`* can also end in `.*`. The `*` indicates all items, 
+so this imports all items from the parent path.
 
 [Table of Contents](#table-of-contents)
 
@@ -335,7 +339,7 @@ In this case, the `let` binding(s) are only created if the pattern matches and t
 Note that `match`ing a non-tautological `let` is possible
 but very un-idiomatic, since the binding could simply be done in the match itself.  Thus, it is normally used with `if`.
 
-See `match` for more info on patterns and destructuring.
+See [pattern matching](#pattern-matching) for more info on patterns and destructuring.
 
 [Table of Contents](#table-of-contents)
 
@@ -416,11 +420,14 @@ A function return block is slightly special in that
 `return` may be used within it, which is equivalent to a `break` from that top-level function block.
 
 If a function is annotated with `@extern`,
-then it may omit the ` =`*` expr`*.
+then it must omit the ` =`*` expr`* and end with a `;`.
 In this case, only the function signature is specified
 and the `@extern`ed function must be available as a function symbol at link time or else there will be a compile error.
 Note that `@abi("C")` is usually specified along with `@extern`
 because the default `@abi("C*")` is unstable.
+
+Note that `@extern` and `@abi("C")` may also be specified for an entire module,
+in which case it applies to all items within that module.
 
 #### Function Examples
 For example, a non-generic function may look like this:
@@ -582,6 +589,23 @@ The primitive types in C* are:
 
 [Table of Contents](#table-of-contents)
 
+#### `bool` Type
+`bool` is the boolean type in C*,
+except it is actually defined as an enum:
+```rust
+@allow("non_title_case_types")
+enum bool {
+    false = const { 0 },
+    true = const { 1 },
+}
+```
+
+Normally operator overloading is not allowed in C*.
+The exception is `bool`, which defines the normal boolean operators.
+See [operators](#operators) for details on them.
+
+[Table of Contents](#table-of-contents)
+
 #### Integer Types
 
 [Table of Contents](#table-of-contents)
@@ -645,7 +669,7 @@ struct SliceT {
 ```
 but there are a few important differences.
 Slices store their values inline.  
-They are thus unsized (i.e. dynamically sized) (`.@size_of()` is non-`const` for them).
+They are thus unsized (i.e. dynamically sized) (`.$size_of()` is non-`const` for them).
 However, references to slices are sized.
 They are so-called fat pointers, i.e. the length and raw pointer both constitute the reference.
 
@@ -704,7 +728,7 @@ or else is a compile error.
 The same syntax is used for indexing and slicing as is for slices.
 
 To explicitly turn an array into a slice reference,
-`.@cast<T[]>()` can be used.
+`.$cast<T[]>()` can be used.
 
 [Table of Contents](#table-of-contents)
 
@@ -751,61 +775,19 @@ See [`union` declarations](#union-declarations) for more.
 
 [Table of Contents](#table-of-contents)
 
-## Lexical Structure
+
+## Destructive Moves
+TODO
 
 [Table of Contents](#table-of-contents)
 
-### Operators
-| Operator | Arity  | In-Place |    Type    |       Description        |     Example      |
-| -------- | -----  | -------- | ---------- | ------------------------ | ---------------- |
-| `+`      | binary | no       | arithmetic | addition                 | `2 + 2 `, `4.0 + 2.0`  |
-| `-`      | binary | no       | arithmetic | subtraction              | `2 - 2`, `4.2 - 2.2`  |
-| `*`      | binary | no       | arithmetic | multiplication           | `2 * 2`, `4.0 * 2.0`  |
-| `/`      | binary | no       | arithmetic | division                 |  `2 / 2`, `4.0 / 2.0` |
-| `%`      | binary | no       | arithmetic | modulus                  |  `2 % 2`              |
-| `-`      | unary  | no       | arithmetic | negation                 |  `-a`                 |
-| `==`     | binary | no       | relational | equal to                 |  `a == 2`             |
-| `!=`     | binary | no       | relational | not equal to             |  `a != 2`             |
-| `>`      | binary | no       | relational | greater than             |  `a > 2`              |
-| `<`      | binary | no       | relational | less than                |  `a < 2`              |
-| `>=`     | binary | no       | relational | greater than or equal to |  `a >= 2`             |
-| `<=`     | binary | no       | relational | less than or equal to    |  `a <= 2`             |
-| `&&`     | binary | no       | logical    | and                      |  `a && b`             |
-| `\|\|`   | binary | no       | logical    | or                       |  `a \|\| b`           |
-| `!`      | unary  | no       | logical    | not                      |  `!a`                 |
-| `&`      | binary | no       | bitwise    | and                      |                       |
-| `\|`     | binary | no       | bitwise    | or                       |                       |
-| `^`      | binary | no       | bitwise    | xor                      |                       |
-| `~`      | unary  | no       | bitwise    | not                      |                       |
-| `[]`     | binary | no       | indexing   | index a slice            | `a[1]`                |
-| `+=`     | binary | yes      | arithmetic | addition                 |                       |
-| `-=`     | binary | yes      | arithmetic | subtraction              |                       |
-| `*=`     | binary | yes      | arithmetic | multiplication           |                       |
-| `/=`     | binary | yes      | arithmetic | division                 |                       |
-| `%=`     | binary | yes      | arithmetic | modulus                  |                       |
-| `&&=`    | binary | yes      | logical    | and                      |                       |
-| `\|\|=`  | binary | yes      | logical    | or                       |                       |
-| `&=`     | binary | yes      | bitwise    | and                      |                       |
-| `\|=`    | binary | yes      | bitwise    | or                       |                       |
-| `^=`     | binary | yes      | bitwise    | xor                      |                       |
+
+## Expressions
+TODO
 
 [Table of Contents](#table-of-contents)
 
-### Separators
-| Separator |                Description                      | 
-| --------- | ----------------------------------------------- |
-| `(`       | left parenthesis for expressions and arguments  |
-| `)`       | right parenthesis for expressions and arguments |
-| `{`       | left brace for blocks                           |
-| `}`       | right brace for blocks                          |
-| `<`       | left arrow for generics                         |
-| `>`       | right arrow for generics                        |
-| `;`       | semicolon to separate expressions               |
-| `,`       | comma to separate elements and fields           |
-
-[Table of Contents](#table-of-contents)
-
-### Literals and Their Types
+### Literals
 C* Literals: 
 * [unit](#unit-literals)
 * [bool](#boolean-literals)
@@ -833,7 +815,8 @@ The type of this unit literal is also called unit and written `()` as well.
 
 #### Boolean Literals
 There are two boolean literals of type `bool`: `true` and `false`.
-Note that identifiers cannot be named `true` or `false`.
+These are actually enum variants of the `enum bool`.
+See the [`bool` Type](#bool-type).
 
 [Table of Contents](#table-of-contents)
 
@@ -1236,106 +1219,170 @@ as to what integers the range includes.
 
 [Table of Contents](#table-of-contents)
 
-### Declarations
-
-A C* program
-
-[Table of Contents](#table-of-contents)
-## Algebraic Data Types
-C* has `struct`s for product types and `enum`s for sum types. 
-This is very powerful combined with [pattern matching](#pattern-matching). 
-`enum`s in particular, which are like tagged unions, 
-are much safer and correct compared to C unions. 
-These data types are also fully zero-cost; there is no automatic boxing, 
-and the same performance as C can be easily be achieved. 
-Sometimes even better, because the layout of compound types 
-is unspecified in C*.
-
-For example, you can do this to make a copy-on-write string.
-```rust
-struct String {
-    ptr: *u8,
-    len: usize,
-}
-
-struct StringBuf {
-    ptr: *u8,
-    len: usize,
-    cap: usize,
-}
-
-enum CowString {
-    Borrowed(String),
-    Owned(StringBuf),
-}
-```
+### Function Calls
+TODO
 
 [Table of Contents](#table-of-contents)
 
-### Structs
-C* has `struct`s for product types and `enum`s for sum types. 
-This is very powerful combined with [pattern matching](#pattern-matching). 
-`enum`s in particular, which are like tagged unions, 
-are much safer and correct compared to C unions. 
-These data types are also fully zero-cost; there is no automatic boxing, 
-and the same performance as C can be easily be achieved. 
-Sometimes even better, because the layout of compound types 
-is unspecified in C*.
+### Blocks
+TODO
 
-For example, you can do this to make a copy-on-write string.
-```rust
-struct String {
-    ptr: *u8,
-    len: usize,
-}
+[Table of Contents](#table-of-contents)
 
-struct StringBuf {
-    ptr: *u8,
-    len: usize,
-    cap: usize,
-}
+### Control Flow
+TODO
 
-enum CowString {
-    Borrowed(String),
-    Owned(StringBuf),
-}
-```
+[Table of Contents](#table-of-contents)
+
+#### Pattern Matching
+TODO
+
+[Table of Contents](#table-of-contents)
+
+#### Conditionals
+TODO
+
+[Table of Contents](#table-of-contents)
+
+##### `match`
+TODO
+patterns
+
+[Table of Contents](#table-of-contents)
+##### `if`
+TODO
+
+[Table of Contents](#table-of-contents)
+
+##### `else`
+TODO
+
+[Table of Contents](#table-of-contents)
+
+#### Labels
+TODO
+
+[Table of Contents](#table-of-contents)
+
+#### Loops
+TODO
+
+[Table of Contents](#table-of-contents)
+
+##### `while`
+TODO
+
+[Table of Contents](#table-of-contents)
+
+##### `for`
+TODO
+
+[Table of Contents](#table-of-contents)
+
+#### `defer`
+TODO
+
+[Table of Contents](#table-of-contents)
+
+#### Error Handling
+TODO
+
+[Table of Contents](#table-of-contents)
+
+##### `try`
+TODO
+error handling
+
+[Table of Contents](#table-of-contents)
+
+##### Panicking
+TODO
+
+[Table of Contents](#table-of-contents)
+
+### Operators
+| Operator | Arity  | In-Place |    Type    |       Description        |     Example      |
+| -------- | -----  | -------- | ---------- | ------------------------ | ---------------- |
+| `+`      | binary | no       | arithmetic | addition                 | `2 + 2 `, `4.0 + 2.0`  |
+| `-`      | binary | no       | arithmetic | subtraction              | `2 - 2`, `4.2 - 2.2`  |
+| `*`      | binary | no       | arithmetic | multiplication           | `2 * 2`, `4.0 * 2.0`  |
+| `/`      | binary | no       | arithmetic | division                 |  `2 / 2`, `4.0 / 2.0` |
+| `%`      | binary | no       | arithmetic | modulus                  |  `2 % 2`              |
+| `-`      | unary  | no       | arithmetic | negation                 |  `-a`                 |
+| `==`     | binary | no       | relational | equal to                 |  `a == 2`             |
+| `!=`     | binary | no       | relational | not equal to             |  `a != 2`             |
+| `>`      | binary | no       | relational | greater than             |  `a > 2`              |
+| `<`      | binary | no       | relational | less than                |  `a < 2`              |
+| `>=`     | binary | no       | relational | greater than or equal to |  `a >= 2`             |
+| `<=`     | binary | no       | relational | less than or equal to    |  `a <= 2`             |
+| `&&`     | binary | no       | logical    | and                      |  `a && b`             |
+| `\|\|`   | binary | no       | logical    | or                       |  `a \|\| b`           |
+| `!`      | unary  | no       | logical    | not                      |  `!a`                 |
+| `&`      | binary | no       | bitwise    | and                      |                       |
+| `\|`     | binary | no       | bitwise    | or                       |                       |
+| `^`      | binary | no       | bitwise    | xor                      |                       |
+| `~`      | unary  | no       | bitwise    | not                      |                       |
+| `[]`     | binary | no       | indexing   | index a slice            | `a[1]`                |
+| `+=`     | binary | yes      | arithmetic | addition                 |                       |
+| `-=`     | binary | yes      | arithmetic | subtraction              |                       |
+| `*=`     | binary | yes      | arithmetic | multiplication           |                       |
+| `/=`     | binary | yes      | arithmetic | division                 |                       |
+| `%=`     | binary | yes      | arithmetic | modulus                  |                       |
+| `&&=`    | binary | yes      | logical    | and                      |                       |
+| `\|\|=`  | binary | yes      | logical    | or                       |                       |
+| `&=`     | binary | yes      | bitwise    | and                      |                       |
+| `\|=`    | binary | yes      | bitwise    | or                       |                       |
+| `^=`     | binary | yes      | bitwise    | xor                      |                       |
 
 [Table of Contents](#table-of-contents)
 
 ## Generics
-C* supports generic types and values, 
-but they are at this point unconstrained. 
-That is, they are like C++'s concept-less templates. 
-They are always monomorphic, except when the exact same code can be shared (no boxing ever). They are not currently higher-kinded. 
-Types and functions can be generic over both types and values, like this:
-```rust
-enum Option<T> {
-    None,
-    Some(T),
-}
-
-enum ShortVec<T, N: u8> {
-    Inline {
-        array: [T; N],
-        len: u8,
-    },
-    Allocated {
-        ptr: Option<*T>,
-        len: usize,
-        cap: usize,
-    },
-}
-
-fn short_vec_len<T, N: u8>(v: *ShortVec<T, N>): usize = {
-    v.match {
-        Inline {len, _} => len.@cast(),
-        Allocated {len, _} => len,
-    }
-}
-```
+TODO
 
 [Table of Contents](#table-of-contents)
+
+## Constant Evaluation
+TODO
+
+[Table of Contents](#table-of-contents)
+
+## Builtin Functions
+TODO
+
+[Table of Contents](#table-of-contents)
+
+## List of Annotations
+TODO
+
+[Table of Contents](#table-of-contents)
+
+## Current Restrictions and Unimplemented Features
+The following features are currently unimplemented:
+* targets other than `x86_64-linux-gnu`.
+* user-defined `mod`ules, except for: 
+  * the implicit single-file module 
+  * those defined by the compiler or in the standard library
+* `use` declarations except for the standard prelude, 
+  which is implicitly `use`d
+* strings and characters except for byte ones, i.e.:
+  * `b`yte string literals
+  * `b`yte literals
+* type aliases except for:
+  * those implemented by the compiler
+* most attributes except for:
+  * `@extern` and `@abi("C")` for functions
+  * `@impl(Clone)`
+  * `@impl(Copy)`
+  * all other annotations are allowed but ignored
+* `union`s
+* non-temporary unsized types (slices must be references)
+* const generics
+* const evaluation other than constant literals
+
+[Table of Contents](#table-of-contents)
+
+
+_____________________________________
 
 ## Statements and Expressions
 
@@ -2033,11 +2080,4 @@ client_socket_close:
 
 [Table of Contents](#table-of-contents)
 
-## Unimplemented Features
-* targets other than x86_64-linux-gnu
-* `mod`ules (other than the implicit single file module)
-* `f`-strings
-* type aliases
-* any attributes except for `@extern` and `@abi("C")` for functions (necessary to link with libc)
-* `union`s
-* unsized types (slices must be references)
+
