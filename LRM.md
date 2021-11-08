@@ -630,7 +630,7 @@ Instead, `Option` should be used, like `Option<T&>`.
 [Table of Contents](#table-of-contents)
 
 #### Slice Types
-In C*, you can also have a slice of a type, a contiguous collection of values of the same type.  The number of values is only known at compile time.
+In C*, you can also have a slice of a type, a contiguous collection of values of the same type.  The number of values is only known at runtime.
 
 The syntax for this is *`type`*`[]`.
 
