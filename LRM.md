@@ -1442,31 +1442,9 @@ The following features are currently unimplemented:
 * user-defined `mod`ules, except for: 
   * the implicit single-file module 
   * those defined by the compiler or in the standard library
-* `boolean` type will just be an enum
-* `publicity` modifiers for structs
+* `pub` publicity modifiers (everything will be public for now)
 * any and all generic programming
-* `enum`s will have at most one type of data associated with each variant 
-  * we are skipping explicit declaration of the variant's integer discriminant
-* eliminating `union`s -- if we have time we will consider building `union`s in
-* `impl` blocks. If we have time later in December this will be implemented
-* having the unit type for empty tuples
-* bare `slices` -- we will implement `slice` references at a minimum 
-  * eliminating the ability to type-cast an array to a slice
-* skipping `tuple`s -- we be built on top of anonymous structs if time permits
-* We are simplifying how parameters are passed to functions all types fall in 1/2 categories:
-  * references/primitives are passed as copies
-  * all other data types are moved
-* drastically scaling back our string types:
-  *  no CStrings, FStrings etc. see below for allowed strings
-* syntax sugar around structs
-  * if we have time we will make structs more flexible
-* no closures -- if we have time we will implement this in December
-* Range literals at first will only support integer ranges
-  * time permitting we will add in ranges defined by expressions
-* if/else syntax sugar is cut -- will just use `match`
-* `for` loop syntax sugar is cut -- will just us `while`
-* cutting out `defer`   
-* using `let` as a type alias
+* explicit `enum` discriminants set to user-decided constants 
 * `use` declarations except for the standard prelude, 
   which is implicitly `use`d
 * strings and characters except for byte ones, i.e.:
@@ -1479,10 +1457,22 @@ The following features are currently unimplemented:
   * all other annotations are allowed but ignored
 * `...` trailing varargs parameter for `@extern @abi("C")` functions 
   unless it's needed for the standard library (using libc)
-* `union`s
+* `union`s since they're only for C FFI
+* tuples since they're just sugar for structs [[2]](#2)
+* `if`, `else`, `for`, which are just sugar for `match` and `while` [[2]](#2)
 * non-temporary unsized types (slices must be references)
 * const generics
 * const evaluation other than constant literals
+* `mut` fields for interior mutability
+* `struct` spread `..` syntax and `field: field` => `field` sugar [[2]](#2)
+
+The following features we hope to implement but will come at the end:
+* generics except for `Option` and `Result` (which will definitely be done)
+* `defer` and `undefer` (`undefer` more likely to skip)
+* closures and function pointers
+
+##### 2
+may add this back if we have time since it's just sugar
 
 [Table of Contents](#table-of-contents)
 
