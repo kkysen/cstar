@@ -1216,16 +1216,19 @@ Range literals denote an integer range.
 There are a few different forms of ranges,
 which we will define in terms of set interval notation
 as to what integers the range includes.
+Here, `n` refers to the parent length that the range applies to.
 
 |  Range  |   Interval   |
 | ------- | ------------ |
 | `a..b`  | `[a, b)`     |
-| `a..`   | `[a, ∞)`     |
-| `..b`   | `(-∞, b)`    |
-| `..`    | `(-∞, ∞)`    |
+| `a..`   | `[a, n)`     |
+| `..b`   | `[0, b)`     |
+| `..`    | `[0, n)`     |
 | `a..=b` | `[a, b]`     |
 | `a..+b` | `[a, a + b)` |
-| `..=b`  | `(-∞, b]`    |
+| `..=b`  | `[0, b]`     |
+| `a..-b` | `[a, n - b]` |
+| `..-b`  | `[0, n - b]` |
 
 [Table of Contents](#table-of-contents)
 
