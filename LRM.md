@@ -1466,6 +1466,7 @@ The following features are currently unimplemented:
 * const evaluation other than constant literals
 * `mut` fields for interior mutability
 * `struct` spread `..` syntax and `field: field` => `field` sugar [[2]](#2)
+* the only `Copy` types are primitive types
 
 The following features we hope to implement but will come at the end:
 * generics except for `Option` and `Result` (which will definitely be done)
