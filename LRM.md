@@ -1463,6 +1463,7 @@ The following features are currently unimplemented:
 * strings and characters except for byte ones, i.e.:
   * `b`yte string literals
   * `b`yte literals
+* strings will not be mutable (for now)
 * type aliases except for:
   * those implemented by the compiler
 * most attributes except for:
