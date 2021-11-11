@@ -1428,11 +1428,36 @@ TODO
 
 ## Current Restrictions and Unimplemented Features
 The following features are currently unimplemented:
-* non ASCII source code (normally UTF-8 is allowed)
+* non ASCII source code (normally UTF-8 is allowed) -- this will be super low priority for us
 * targets other than `x86_64-linux-gnu`
 * user-defined `mod`ules, except for: 
   * the implicit single-file module 
   * those defined by the compiler or in the standard library
+* `boolean` type will just be an enum
+* `publicity` modifiers for structs
+* any and all generic programming
+* `enum`s will have at most one type of data associated with each variant 
+  * we are skipping explicit declaration of the variant's integer discreminant
+* eliminating `union`s -- if we have time we will consider building `union`s in
+* `impl` blocks. If we have time later in December this will be implemented
+* having the unit type for empty tuples
+* bare `slices` -- we will implement `slice` refernces at a minimum 
+  * eliminating the ability to type-cast an array to a slice
+* skipping `tuple`s -- we be built on top of anonymous structs if time permits
+* We are simplifiying how paramaters are passed to functions all types fall in 1/2 catagories:
+  * references/primitives are passed as copies
+  * all other data types are moved
+* darastically scaling back our string types:
+  *  no CStrings, FStrings etc. see below for allowed strings
+* syntax sugar around structs
+  * if we have time we will make structs more flexible
+* no closures -- if we have time we will implement this in December
+* Range literals at first will only support integer ranges
+  * time permitting we will add in ranges defined by expressions
+* if/else syntax sugar is cut -- will just use `match`
+* `for` loop syntax sugar is cut -- will just us `while`
+* cutting out `defer`   
+* using `let` as a type alias
 * `use` declarations except for the standard prelude, 
   which is implicitly `use`d
 * strings and characters except for byte ones, i.e.:
@@ -1442,8 +1467,6 @@ The following features are currently unimplemented:
   * those implemented by the compiler
 * most attributes except for:
   * `@extern` and `@abi("C")` for functions (for calling libc)
-  * `@impl(Clone)`
-  * `@impl(Copy)`
   * all other annotations are allowed but ignored
 * `...` trailing varargs parameter for `@extern @abi("C")` functions 
   unless it's needed for the standard library (using libc)
