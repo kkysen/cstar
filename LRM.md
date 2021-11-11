@@ -779,7 +779,13 @@ See [`union` declarations](#union-declarations) for more.
 
 
 ## Destructive Moves
-TODO
+Passing a variable (to a function, to another variable, etc.)
+are done by moving destructively.
+That is, a simple `memcpy` to the new location.
+There are no move constructors or anything like that.
+Clones must be explicit with a `.clone()` call for `Clone` types (`@impl(Clone)`).
+The exception is `Copy` types (`@impl(Copy)`),
+for which clones are implicit.
 
 [Table of Contents](#table-of-contents)
 
