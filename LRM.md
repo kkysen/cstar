@@ -1357,7 +1357,7 @@ out of the `Option` or `Result`.
 This can be done by panicking on a `None` or `Err`.
 
 Panicking in C* means the program will immediately print out an error message
-and then `abort`s, i.e., calls the libc function `abort`.
+and then `abort`, i.e., calls the libc function `abort`.
 No cleanup or unwinding is done in this case.
 In particular, `defer`s on the stack are not run because the stack is not unwound.
 Because of this, panicking should only be done under extreme circumstances,
