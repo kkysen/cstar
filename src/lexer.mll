@@ -64,8 +64,8 @@ rule token = parse
    * This also has the added benefit of allowing you to switch bases between the integral and floating parts.
    *)
   (*Number Data Types*)
-  | "integral" { Literal Number }
-  | "float" { Literal Number }
+  (* | "integral" { Literal Number }
+  | "float" { Literal Number } *)
 
 
 (* https://stackoverflow.com/questions/7117975/how-to-deal-with-nested-comments-in-fslex

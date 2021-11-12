@@ -8,8 +8,11 @@ install-opam:
     opam init
 
 # install tools needed/nice for development
-install-tooling:
-    BOOTSTRAP=1 bash install-tooling.sh
+install-build-tooling:
+    ./install-tooling.sh build
+
+install-dev-tooling:
+    ./install-tooling.sh dev
 
 filter-exec:
     #!/usr/bin/env node
@@ -148,7 +151,7 @@ trace-exec *args:
 
 # run dune, but through mold
 dune *args:
-    mold -run dune {{args}}
+    dune {{args}}
 
 build *args: (dune "build" "./src/cstar.exe" args)
 

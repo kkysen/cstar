@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 is-command() {
     command -v "$1" > /dev/null
@@ -12,28 +12,6 @@ install-ccache() {
     for compiler in cc c++ gcc g++ clang clang++; do
         ln --symbolic --force "$(which "${compiler}")" ~/.local/bin/ccache
     done
-}
-
-install-mold() {
-    is-command mold && return
-    sudo apt install git build-essential cmake ninja clang
-    cd ~
-    git clone https://github.com/rui314/mold.git
-    cd mold
-    git checkout "$(git describe --tags --abbrev=0)"
-    make -j$(nproc)
-    sudo make install
-}
-
-install-mold-ld() {
-    install-mold
-    local mold_path="$(which mold)"
-    local mold_parent_dir="$(dirname "${mold_path}")"
-    local mold_dir="${mold_parent_dir}/mold-ld"
-    local mold_ld_path="${mold_dir}/ld"
-    [[ -x "$mold_ld_path" ]] && return
-    [[ -d "$mold_dir" ]] || test -w "$mold_parent_dir" && mkdir "$mold_dir" || sudo mkdir "$mold_dir"
-    [[ -f "$mold_ld_path" ]] || test -w "$mold_dir" && ln --symbolic "$mold_path" "$mold_ld_path" || sudo ln --symbolic "$mold_path" "$mold_ld_path"
 }
 
 install-opam() {
@@ -106,29 +84,35 @@ install-from-npm() {
     npm-install esy
 }
 
-install-all() {
+install-build() {
     install-ccache &
     install-from-opam &
-    install-from-cargo &
-    install-from-vscode &
     install-from-npm &
     wait
     esy
 }
 
-install-bootstrap() {
-    # `ccache` and `mold` can make building things much faster, 
-    # including the things we're about to install in `install-all`
-    install-ccache
-    install-mold
-    install-mold-ld
-
-    unset BOOTSTRAP
-    mold -run bash "$0"
+install-dev-only() {
+    install-from-cargo &
+    install-from-vscode &
+    wait
 }
 
-if [[ ${BOOTSTRAP} ]]; then
-    install-bootstrap
-else
-    install-all
-fi
+install-dev() {
+    install-build &
+    install-dev-only &
+    wait
+}
+
+case "${1:-}" in
+    "build")
+        install-build
+        ;;
+    "dev")
+        install-dev
+        ;;
+    *)
+        echo >&2 "usage: ${0} [build|dev]"
+        exit 1
+        ;;
+esac
