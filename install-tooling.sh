@@ -107,6 +107,7 @@ install-from-npm() {
 }
 
 install-all() {
+    install-ccache &
     install-from-opam &
     install-from-cargo &
     install-from-vscode &
