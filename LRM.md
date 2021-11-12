@@ -75,6 +75,9 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
 - [Generics](#generics)
 - [Constant Evaluation](#constant-evaluation)
 - [Builtin Functions](#builtin-functions)
+- [Lang Types](#lang-types)
+  - [`Option`](#option)
+  - [`Result`](#result)
 - [List of Annotations](#list-of-annotations)
 - [Current Restrictions and Unimplemented Features](#current-restrictions-and-unimplemented-features)
 - [Grammar](#grammar)
@@ -1431,6 +1434,24 @@ TODO
 [Table of Contents](#table-of-contents)
 
 ## Builtin Functions
+TODO
+
+[Table of Contents](#table-of-contents)
+
+## Lang Types
+Lang types are standard library types that the compiler knows about and may use.
+They are:
+* [`Option`](#option)
+* [`Result`](#result)
+
+[Table of Contents](#table-of-contents)
+
+### `Option`
+TODO
+
+[Table of Contents](#table-of-contents)
+
+### `Result`
 TODO
 
 [Table of Contents](#table-of-contents)
