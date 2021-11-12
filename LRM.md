@@ -638,6 +638,10 @@ In C*, you can have a reference to any type,
 i.e., a pointer to a value of that type.
 That reference is either immutable or mutable.
 
+There is one exception to this. 
+*`type`*`.$bit_size_of()` must be a multiple of 8.
+That is, bit fields like `u1` or `i5` may not be referenced.
+
 The syntax for an immutable reference is *`type`*`&`,
 and the syntax for a mutable reference is *`type`*`&mut`.
 
