@@ -1324,7 +1324,7 @@ and *`block`* is the block of the `for` loop.
 
 It is syntax sugar for:
 
-`{ let iter = `*`expr`*`.into_iter(); (true).while { let `*`binding `*`= iter.next().?; `*` block`*` } }`
+`{ let iter = `*`expr`*`.into_iter(); true.while { let `*`binding `*`= iter.next().?; `*` block`*` } }`
 
 [Table of Contents](#table-of-contents)
 
@@ -1482,15 +1482,27 @@ They are:
 * [`Option`](#option)
 * [`Result`](#result)
 
+For example, they are used for the `.?` try operator.
+
 [Table of Contents](#table-of-contents)
 
 ### `Option`
-TODO
+```rust
+enum Option<T> {
+    Some(T),
+    None,
+}
+```
 
 [Table of Contents](#table-of-contents)
 
 ### `Result`
-TODO
+```rust
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
 
 [Table of Contents](#table-of-contents)
 
@@ -2011,12 +2023,12 @@ But C* has much better support for this using the `Option` and `Result` types.
 
 The definitions of these types are:
 ```rust
-struct Option<T> {
+enum Option<T> {
     None,
     Some(T),
 }
 
-struct Result<T, E> {
+enum Result<T, E> {
     Ok(T),
     Err(E),
 }
