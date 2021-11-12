@@ -1347,44 +1347,49 @@ TODO
 [Table of Contents](#table-of-contents)
 
 ### Operators
-| Operator | Arity  | In-Place |    Type    |       Description        |     Example      |
-| -------- | -----  | -------- | ---------- | ------------------------ | ---------------- |
-| `+`      | binary | no       | arithmetic | addition                 | `2 + 2 `, `4.0 + 2.0`  |
-| `-`      | binary | no       | arithmetic | subtraction              | `2 - 2`, `4.2 - 2.2`  |
-| `*`      | binary | no       | arithmetic | multiplication           | `2 * 2`, `4.0 * 2.0`  |
-| `/`      | binary | no       | arithmetic | division                 |  `2 / 2`, `4.0 / 2.0` |
-| `%`      | binary | no       | arithmetic | modulus                  |  `2 % 2`              |
-| `-`      | unary  | no       | arithmetic | negation                 |  `-a`                 |
-| `==`     | binary | no       | relational | equal to                 |  `a == 2`             |
-| `!=`     | binary | no       | relational | not equal to             |  `a != 2`             |
-| `>`      | binary | no       | relational | greater than             |  `a > 2`              |
-| `<`      | binary | no       | relational | less than                |  `a < 2`              |
-| `>=`     | binary | no       | relational | greater than or equal to |  `a >= 2`             |
-| `<=`     | binary | no       | relational | less than or equal to    |  `a <= 2`             |
-| `&&`     | binary | no       | logical    | and                      |  `a && b`             |
-| `\|\|`   | binary | no       | logical    | or                       |  `a \|\| b`           |
-| `!`      | unary  | no       | logical    | not                      |  `!a`                 |
-| `&`      | binary | no       | bitwise    | and                      |                       |
-| `\|`     | binary | no       | bitwise    | or                       |                       |
-| `^`      | binary | no       | bitwise    | xor                      |                       |
-| `~`      | unary  | no       | bitwise    | not                      |                       |
-| `<<`     | binary | no       | bitwise    | left shift               |                       |
-| `>>`     | binary | no       | bitwise    | right shift              |                       |
-| `[]`     | binary | no       | indexing   | index a slice            | `a[1]`                |
-| `+=`     | binary | yes      | arithmetic | addition                 |                       |
-| `-=`     | binary | yes      | arithmetic | subtraction              |                       |
-| `*=`     | binary | yes      | arithmetic | multiplication           |                       |
-| `/=`     | binary | yes      | arithmetic | division                 |                       |
-| `%=`     | binary | yes      | arithmetic | modulus                  |                       |
-| `&&=`    | binary | yes      | logical    | and                      |                       |
-| `\|\|=`  | binary | yes      | logical    | or                       |                       |
-| `&=`     | binary | yes      | bitwise    | and                      |                       |
-| `\|=`    | binary | yes      | bitwise    | or                       |                       |
-| `^=`     | binary | yes      | bitwise    | xor                      |                       |
-| `<<=`    | binary | yes      | bitwise    | left shift               |                       |
-| `>>=`    | binary | yes      | bitwise    | right shift              |                       |
-| `++`     | unary  | yes      | arithmetic | increment                |                       |
-| `--`     | unary  | yes      | arithmetic | decrement                |                       |
+| Operator | Arity  | In-Place |     Type     |       Description        |        Example        |
+| -------- | -----  | -------- | ------------ | ------------------------ | --------------------- |
+| `+`      | binary | no       | arithmetic   | addition                 | `2 + 2 `, `4.0 + 2.0` |
+| `-`      | binary | no       | arithmetic   | subtraction              | `2 - 2`, `4.2 - 2.2`  |
+| `*`      | binary | no       | arithmetic   | multiplication           | `2 * 2`, `4.0 * 2.0`  |
+| `/`      | binary | no       | arithmetic   | division                 |  `2 / 2`, `4.0 / 2.0` |
+| `%`      | binary | no       | arithmetic   | modulus                  |  `2 % 2`              |
+| `-`      | unary  | no       | arithmetic   | negation                 |  `-a`                 |
+| `==`     | binary | no       | relational   | equal to                 |  `a == 2`             |
+| `!=`     | binary | no       | relational   | not equal to             |  `a != 2`             |
+| `>`      | binary | no       | relational   | greater than             |  `a > 2`              |
+| `<`      | binary | no       | relational   | less than                |  `a < 2`              |
+| `>=`     | binary | no       | relational   | greater than or equal to |  `a >= 2`             |
+| `<=`     | binary | no       | relational   | less than or equal to    |  `a <= 2`             |
+| `&&`     | binary | no       | logical      | and                      |  `a && b`             |
+| `\|\|`   | binary | no       | logical      | or                       |  `a \|\| b`           |
+| `!`,`.!` | unary  | no       | logical      | not                      |  `!a`                 |
+| `&`      | binary | no       | bitwise      | and                      |                       |
+| `\|`     | binary | no       | bitwise      | or                       |                       |
+| `^`      | binary | no       | bitwise      | xor                      |                       |
+| `~`,`.~` | unary  | no       | bitwise      | not                      |                       |
+| `<<`     | binary | no       | bitwise      | left shift               |                       |
+| `>>`     | binary | no       | bitwise      | right shift              |                       |
+| `[]`     | binary | no       | indexing     | index a slice            | `a[1]`                |
+| `+=`     | binary | yes      | arithmetic   | addition                 |                       |
+| `-=`     | binary | yes      | arithmetic   | subtraction              |                       |
+| `*=`     | binary | yes      | arithmetic   | multiplication           |                       |
+| `/=`     | binary | yes      | arithmetic   | division                 |                       |
+| `%=`     | binary | yes      | arithmetic   | modulus                  |                       |
+| `&&=`    | binary | yes      | logical      | and                      |                       |
+| `\|\|=`  | binary | yes      | logical      | or                       |                       |
+| `&=`     | binary | yes      | bitwise      | and                      |                       |
+| `\|=`    | binary | yes      | bitwise      | or                       |                       |
+| `^=`     | binary | yes      | bitwise      | xor                      |                       |
+| `<<=`    | binary | yes      | bitwise      | left shift               |                       |
+| `>>=`    | binary | yes      | bitwise      | right shift              |                       |
+| `++`     | unary  | yes      | arithmetic   | increment                |                       |
+| `--`     | unary  | yes      | arithmetic   | decrement                |                       |
+| `.&`     | unary  | no       | reference    | reference                |                       |
+| `.&mut`  | unary  | no       | reference    | mutable reference        |                       |
+| `.*`     | unary  | no       | reference    | dereference              |                       |
+| `.*mut`  | unary  | no       | reference    | mutable dereference      |                       |
+| `.?`     | unary  | no       | control flow | try                      |                       |
 
 Arithmetic operators operate on expressions of the same number type 
 and evaluate to the same number type as well.
