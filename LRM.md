@@ -1345,7 +1345,45 @@ error handling
 [Table of Contents](#table-of-contents)
 
 ##### Panicking
-TODO
+In C*, all fallible functions and operations return either 
+`Result` or `Option` to indicate an error or exceptional case. 
+Normally errors are handled by bubbling up the error with `.?`
+or handling the error directly in a `match` or other `Option`/`Result` methods.
+However, in certain cases you either don't care about 
+handling the exceptional case or you can determine that 
+the error case is statically impossible but the compiler cannot.
+In this case, you may wish to simply get the `Some` or `Ok` value 
+out of the `Option` or `Result`.
+This can be done by panicking on a `None` or `Err`.
+
+Panicking in C* means the program will immediately print out an error message
+and then `abort`s, i.e., calls the libc function `abort`.
+No cleanup or unwinding is done in this case.
+In particular, `defer`s on the stack are not run because the stack is not unwound.
+Because of this, panicking should only be done under extreme circumstances,
+such as statically determining the error case is impossible.
+If you want unwinding and `defer`s to run, 
+simply use `.?` to bubble up the errors.
+
+The way to panic is to call `.unwrap()` on a `Result`.
+This is the only fundamental way to panic in C*.
+All other functions that panic or may panic ultimately call `Result.unwrap`.
+For example, `Option.unwrap` converts the `Option` 
+into a `Result` and then calls `.unwrap()` on it.
+The same is true for `Option.expect` and `Result.expect`,
+which allow you to set an error message to be printed.
+
+The error message that `Result.unwrap` prints to `stderr` is implementation defined,
+but it calls `E.error_message` to obtain the error message of the `e: E` in `Err(e)`.
+Thus, to `.unwrap()` a `Result<T, E>`, `E` must have such a `.error_message()` method.
+It may also print a (function call) stack trace or error return trace, 
+but that is not guaranteed.
+
+There is one other option as well besides panicking.
+If you know for certain that the error case is impossible,
+you may call `Result.unwrap_unchecked()`.
+This does not panic if the `Result` is `Err`,
+but it is undefined behavior.
 
 [Table of Contents](#table-of-contents)
 
