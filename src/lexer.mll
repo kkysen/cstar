@@ -68,7 +68,6 @@ rule token = parse
   | "float" { Literal Number }
 
 
-
 (* https://stackoverflow.com/questions/7117975/how-to-deal-with-nested-comments-in-fslex
    How do I get the comment value, or do I even need to?
 *)
