@@ -167,9 +167,68 @@ let test () : unit =
 
 open Core
 
-let compile_file src_path out_path : unit =
-  Printf.printf "%s => %s" src_path (Option.value out_path ~default:"?");
-  Printf.printf "exe = %s" Sys.executable_name
+type emit_type =
+  | Exe
+  | Asm
+  | Bc
+  | Ir
+  | Ast
+
+let emit_type_all : emit_type list = [Exe; Asm; Bc; Ir; Ast]
+
+let emit_type_to_string (this : emit_type) =
+  match this with
+  | Exe -> "exe"
+  | Asm -> "asm"
+  | Bc -> "bc"
+  | Ir -> "ir"
+  | Ast -> "ast"
+;;
+
+let emit_type_of_string (s : string) : emit_type =
+  emit_type_all
+  |> List.find ~f:(fun it : bool -> String.equal s (emit_type_to_string it))
+  |> Option.value_exn ?message:(Some "invalid emit type")
+;;
+
+let emit_type_extension (emit : emit_type) : string =
+  match emit with
+  | Exe -> ""
+  | Asm -> ".s"
+  | Bc -> ".bc"
+  | Ir -> ".ll"
+  | Ast -> ".ast.json"
+;;
+
+let emit_arg =
+  emit_type_all
+  |> List.map ~f:(fun it -> (emit_type_to_string it, it))
+  |> String.Map.of_alist_exn
+  |> Command.Arg_type.of_map
+;;
+
+(* https://github.com/janestreet/base/blob/master/src/option.ml#L108 Like
+   https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else *)
+let value_or_thunk o ~default =
+  match o with
+  | Some x -> x
+  | None -> default ()
+;;
+
+let compile_file
+    ~(src_path : string)
+    ~(out_path : string option)
+    ~(emitting : emit_type)
+    : unit
+  =
+  let out_path =
+    out_path
+    |> value_or_thunk ~default:(fun () ->
+           let base = Filename.chop_extension src_path in
+           let ext = emit_type_extension emitting in
+           base ^ ext)
+  in
+  Printf.printf "%s => %s" src_path out_path;
 ;;
 
 let generate_completions (shell : string option) : unit =
@@ -184,7 +243,12 @@ let generate_completions (shell : string option) : unit =
   let env_var = "COMMAND_OUTPUT_INSTALLATION_" ^ String.uppercase shell in
   let env = `Extend [(env_var, "1")] in
   let (_ : never_returns) =
-    Unix.exec ~prog:own_exe ~argv:["cstar"] ?use_path:(Some true) ?env:(Some env) ()
+    Unix.exec
+      ~prog:own_exe
+      ~argv:["cstar"]
+      ?use_path:(Some true)
+      ?env:(Some env)
+      ()
   in
   ()
 ;;
@@ -201,14 +265,20 @@ let make_cmd () : Core.Command.t =
     Command.basic
       ~summary:"compile a C* source file"
       Command.Let_syntax.(
-        let%map_open out_path =
+        let%map_open src_path = anon ("source_file" %: Filename.arg_type)
+        and out_path =
           flag
             ?aliases:(Some ["-o"])
             "--output"
             (optional Filename.arg_type)
             ~doc:"output output file"
-        and src_path = anon ("source_file" %: Filename.arg_type) in
-        fun () -> compile_file src_path out_path)
+        and emitting =
+          flag
+            "--emit"
+            (optional_with_default Exe emit_arg)
+            ~doc:"emit emit what"
+        in
+        fun () -> compile_file ~src_path ~out_path ~emitting)
   in
   Command.group
     ~summary:"the C* compiler"
