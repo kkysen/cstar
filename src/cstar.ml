@@ -184,21 +184,23 @@ let range_inclusive ~(min : int) ~(max : int) : int list =
   range ~min ~max:(max + 1)
 ;;
 
-let compile_cstar ~(src : string) ~(path : string) : string = 
+let compile_cstar ~(src : string) ~(path : string) : string =
   ignore src;
   [
-    "; ModuleID = '" ^ path ^ "'";
-    "source_filename = \"" ^ path ^ "\"";
-    "target triple = \"x86_64-pc-linux-gnu\"";
-    "@.str = constant [14 x i8] c\"Hello, World!\\00\"";
-    "define i32 @main() {";
-    "  %1 = alloca i32, align 4";
-    "  store i32 0, i32* %1, align 4";
-    "  %2 = call i32 @puts(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str, i64 0, i64 0))";
-    "  ret i32 0";
-    "}";
-    "declare i32 @puts(i8*)"
-  ] |> String.concat ?sep:(Some "\n")
+    "; ModuleID = '" ^ path ^ "'"
+  ; "source_filename = \"" ^ path ^ "\""
+  ; "target triple = \"x86_64-pc-linux-gnu\""
+  ; "@.str = constant [14 x i8] c\"Hello, World!\\00\""
+  ; "define i32 @main() {"
+  ; "  %1 = alloca i32, align 4"
+  ; "  store i32 0, i32* %1, align 4"
+  ; "  %2 = call i32 @puts(i8* getelementptr inbounds ([14 x i8], [14 x i8]* \
+     @.str, i64 0, i64 0))"
+  ; "  ret i32 0"
+  ; "}"
+  ; "declare i32 @puts(i8*)"
+  ]
+  |> String.concat ?sep:(Some "\n")
 ;;
 
 type emit_type =
@@ -384,8 +386,13 @@ let compile_file
       Unix.fork_exec ~prog:Sys.executable_name ~argv ?use_path:(Some false) ()
     in
     let (_, status) = Unix.wait ?restart:(Some true) (`Pid pid) in
-    let _status = Result.ok status in
-    ()
+    status
+    |> Result.map_error ~f:(fun e ->
+           let cmd = argv |> argv_to_string in
+           let exit_message = Error e |> Unix.Exit_or_signal.to_string_hum in
+           let message = cmd ^ ": " ^ exit_message in
+           failwith message)
+    |> Result.ok_exn
   in
 
   let subcommand_fun =
