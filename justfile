@@ -142,7 +142,10 @@ filter-exec:
     fs.writeFileSync("/dev/stdout", output);
 
 trace-exec *args:
-    -strace -etrace=execve -f --string-limit 10000 -qq --output strace.$PPID.out {{args}}
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    cd "{{invocation_directory()}}"
+    strace -etrace=execve -f --string-limit 10000 -qq --output strace.$PPID.out {{args}} || true
     just filter-exec < strace.$PPID.out
     rm strace.$PPID.out
 
