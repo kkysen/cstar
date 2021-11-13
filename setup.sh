@@ -142,6 +142,7 @@ install-dev() {
     install-build &
     install-dev-only &
     wait
+    just build
 }
 
 "install-${1}"
