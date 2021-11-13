@@ -184,6 +184,23 @@ let range_inclusive ~(min : int) ~(max : int) : int list =
   range ~min ~max:(max + 1)
 ;;
 
+let compile_cstar ~(src : string) ~(path : string) : string = 
+  ignore src;
+  [
+    "; ModuleID = '" ^ path ^ "'";
+    "source_filename = \"" ^ path ^ "\"";
+    "target triple = \"x86_64-pc-linux-gnu\"";
+    "@.str = constant [14 x i8] c\"Hello, World!\\00\"";
+    "define i32 @main() {";
+    "  %1 = alloca i32, align 4";
+    "  store i32 0, i32* %1, align 4";
+    "  %2 = call i32 @puts(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str, i64 0, i64 0))";
+    "  ret i32 0";
+    "}";
+    "declare i32 @puts(i8*)"
+  ] |> String.concat ?sep:(Some "\n")
+;;
+
 type emit_type =
   | Src
   (* | Ast *)
@@ -408,8 +425,11 @@ let compile_file_raw
       in
       ()
   | None ->
-      ();
-
+      assert (equal_emit_type src_type Src);
+      assert (equal_emit_type out_type Ir);
+      let src = In_channel.read_all src_path in
+      let ir = compile_cstar ~src ~path:src_path in
+      Out_channel.write_all out_path ~data:ir;
       ()
 ;;
 
