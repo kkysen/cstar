@@ -181,9 +181,10 @@ type emit_type =
   | Ir
   | Bc
   | Asm
+  | Obj
   | Exe
 
-let emit_type_all : emit_type list = [Src; Ast; Ir; Bc; Asm; Exe]
+let emit_type_all : emit_type list = [Src; Ast; Ir; Bc; Asm; Obj; Exe]
 
 let emit_type_to_string (this : emit_type) =
   match this with
@@ -192,6 +193,7 @@ let emit_type_to_string (this : emit_type) =
   | Ir -> "ir"
   | Bc -> "bc"
   | Asm -> "asm"
+  | Obj -> "obj"
   | Exe -> "exe"
 ;;
 
@@ -208,6 +210,7 @@ let emit_type_extension (this : emit_type) : string =
   | Ir -> ".ll"
   | Bc -> ".bc"
   | Asm -> ".s"
+  | Obj -> ".o"
   | Exe -> ""
 ;;
 
