@@ -1,5 +1,12 @@
 {
-  "esy": { "build": "dune build" },
+  "esy": {
+    "build": "dune build -p cstar",
+    "release": {
+      "releasedBinaries": [
+        "cstar"
+      ]
+    }
+  },
   "dependencies": {
     "@opam/dune": "2.9.1",
     "@opam/merlin": "4.3.1-412",

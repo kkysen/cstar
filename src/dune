@@ -7,4 +7,5 @@
   (pps ppx_deriving.std)
   ; (staged_pps ppx_import ppx_deriving.show)
   )
- (name cstar))
+ (name cstar)
+ (public_name cstar))
