@@ -13,7 +13,11 @@ See the [proposal](./proposal.md) for an overview of the language.
 See the [language reference manual](./LRM.md) for a detailed reference manual for the language.
 
 ## Building
-Run `./install-tooling.sh` and then `esy` to build.
+Run `./setup.sh build`.
+Run `export PATH="${PWD}/bin:${PWD}/bin/llvm:${PATH}"`.
+Then `esy` can be run to build.
 
 ## Development
-Run `./install-tooling.sh dev` and then `esy` to build.
+Run `./setup.sh dev`.
+Run `export PATH="${PWD}/bin:${PWD}/bin/llvm:${PATH}"`.
+Then `esy` can be run to build.

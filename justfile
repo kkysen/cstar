@@ -8,11 +8,8 @@ install-opam:
     opam init
 
 # install tools needed/nice for development
-install-build-tooling:
-    ./install-tooling.sh build
-
-install-dev-tooling:
-    ./install-tooling.sh dev
+setup what:
+    ./setup.sh {{what}}
 
 filter-exec:
     #!/usr/bin/env node
