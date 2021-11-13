@@ -127,13 +127,13 @@ install-build() {
     install-ccache &
     install-from-opam &
     install-from-npm &
+    install-from-cargo &
     install-llvm &
     wait
     esy
 }
 
 install-dev-only() {
-    install-from-cargo &
     install-from-vscode &
     wait
 }
