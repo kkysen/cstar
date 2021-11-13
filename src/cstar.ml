@@ -167,37 +167,81 @@ let test () : unit =
 
 open Core
 
-type emit_type =
-  | Exe
-  | Asm
-  | Bc
-  | Ir
-  | Ast
+(* https://github.com/janestreet/base/blob/master/src/option.ml#L108 Like
+   https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else *)
+let value_or_thunk o ~default =
+  match o with
+  | Some x -> x
+  | None -> default ()
+;;
 
-let emit_type_all : emit_type list = [Exe; Asm; Bc; Ir; Ast]
+type emit_type =
+  | Src
+  | Ast
+  | Ir
+  | Bc
+  | Asm
+  | Exe
+
+let emit_type_all : emit_type list = [Src; Ast; Ir; Bc; Asm; Exe]
 
 let emit_type_to_string (this : emit_type) =
   match this with
-  | Exe -> "exe"
-  | Asm -> "asm"
-  | Bc -> "bc"
-  | Ir -> "ir"
+  | Src -> "src"
   | Ast -> "ast"
+  | Ir -> "ir"
+  | Bc -> "bc"
+  | Asm -> "asm"
+  | Exe -> "exe"
 ;;
 
 let emit_type_of_string (s : string) : emit_type =
   emit_type_all
-  |> List.find ~f:(fun it : bool -> String.equal s (emit_type_to_string it))
+  |> List.find ~f:(fun it -> String.equal s (emit_type_to_string it))
   |> Option.value_exn ?message:(Some "invalid emit type")
 ;;
 
-let emit_type_extension (emit : emit_type) : string =
-  match emit with
-  | Exe -> ""
-  | Asm -> ".s"
-  | Bc -> ".bc"
-  | Ir -> ".ll"
+let emit_type_extension (this : emit_type) : string =
+  match this with
+  | Src -> ".cstar"
   | Ast -> ".ast.json"
+  | Ir -> ".ll"
+  | Bc -> ".bc"
+  | Asm -> ".s"
+  | Exe -> ""
+;;
+
+let emit_type_detect_by_extension (path : string) : emit_type option =
+  let ext =
+    path
+    |> Filename.split_extension
+    |> snd
+    |> Option.map ~f:(fun ext -> "." ^ ext)
+    |> Option.value ~default:""
+  in
+  emit_type_all
+  |> List.find ~f:(fun it -> String.equal ext (emit_type_extension it))
+;;
+
+(* TODO For example, llvm bitcode starts with `BC\OxCO\OxD\OxE` (`BCOxC0DE`). *)
+let emit_type_detect_by_magic (_path : string) : emit_type option = None
+
+let emit_type_detect (path : string) : emit_type option =
+  [emit_type_detect_by_extension; emit_type_detect_by_magic]
+  |> List.fold ~init:(Ok ()) ~f:(fun acc f ->
+         match acc with
+         | Ok () -> (
+             match f path with
+             | Some emit -> Error emit
+             | None -> Ok ())
+         | Error emit -> Error emit)
+  |> Result.error
+;;
+
+let emit_type_detect_exn (path : string) : emit_type =
+  path
+  |> emit_type_detect
+  |> Option.value_exn ?message:(Some "couldn't detect file type")
 ;;
 
 let emit_arg =
@@ -207,28 +251,42 @@ let emit_arg =
   |> Command.Arg_type.of_map
 ;;
 
-(* https://github.com/janestreet/base/blob/master/src/option.ml#L108 Like
-   https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else *)
-let value_or_thunk o ~default =
-  match o with
-  | Some x -> x
-  | None -> default ()
-;;
-
 let compile_file
     ~(src_path : string)
+    ~(src_type : emit_type option)
     ~(out_path : string option)
-    ~(emitting : emit_type)
+    ~(out_type : emit_type option)
+    ~(save_temps : bool)
     : unit
   =
+  let src_type =
+    src_type
+    |> value_or_thunk ~default:(fun () -> emit_type_detect_exn src_path)
+  in
+  let out_type =
+    out_type
+    |> value_or_thunk ~default:(fun () ->
+           match out_path with
+           | Some out_path -> emit_type_detect_exn out_path
+           | None -> Exe)
+  in
   let out_path =
     out_path
     |> value_or_thunk ~default:(fun () ->
            let base = Filename.chop_extension src_path in
-           let ext = emit_type_extension emitting in
+           let ext = emit_type_extension out_type in
            base ^ ext)
   in
+  let temps_dir =
+    match save_temps with
+    | true -> Filename.dirname out_path
+    | false -> Filename.temp_dir (Filename.basename src_path) ".cstar"
+  in
+  ignore src_type;
+  ignore temps_dir;
   Printf.printf "%s => %s" src_path out_path;
+  (* TODO: clean up temp dir *)
+  ()
 ;;
 
 let generate_completions (shell : string option) : unit =
@@ -266,19 +324,28 @@ let make_cmd () : Core.Command.t =
       ~summary:"compile a C* source file"
       Command.Let_syntax.(
         let%map_open src_path = anon ("source_file" %: Filename.arg_type)
+        and src_type =
+          flag
+            "--src-type"
+            (optional emit_arg)
+            ~doc:"src-type type of source if not inferred"
         and out_path =
           flag
             ?aliases:(Some ["-o"])
             "--output"
             (optional Filename.arg_type)
             ~doc:"output output file"
-        and emitting =
+        and out_type =
           flag
-            "--emit"
-            (optional_with_default Exe emit_arg)
-            ~doc:"emit emit what"
+            ?aliases:(Some ["--emit"])
+            "--out-type"
+            (optional emit_arg)
+            ~doc:"out-type what to output/emit"
+        and save_temps =
+          flag "--save-temps" no_arg ~doc:"save-temps save all temporaries"
         in
-        fun () -> compile_file ~src_path ~out_path ~emitting)
+        fun () ->
+          compile_file ~src_path ~src_type ~out_path ~out_type ~save_temps)
   in
   Command.group
     ~summary:"the C* compiler"
