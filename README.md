@@ -13,11 +13,8 @@ See the [proposal](./proposal.md) for an overview of the language.
 See the [language reference manual](./LRM.md) for a detailed reference manual for the language.
 
 ## Building
-Run `./setup.sh build`.
-Run `export PATH="${PWD}/bin:${PWD}/bin/llvm:${PATH}"`.
-Then `esy` can be run to build.
-
-## Development
-Run `./setup.sh dev`.
-Run `export PATH="${PWD}/bin:${PWD}/bin/llvm:${PATH}"`.
-Then `esy` can be run to build.
+Run `./setup.sh <mode>`, where `mode` is either `build` or `dev`.  
+Run `export PATH="${PWD}/bin:${PWD}/bin/llvm:${PATH}"`.  
+Then run `just build` to build and 
+install `cstar` to your `$PATH`, i.e, to `./bin/cstar`.  
+To add shell autocompletions, run `eval "$(cstar completions)"`.

@@ -14,7 +14,7 @@ let read_tokens (lexbuf : Lexing.lexbuf) : Token.token list =
       | token -> Some token)
 ;;
 
-let () =
+let test () : unit =
   (* let lexbuf = Lexing.from_string "fn main() {}" in *)
   (* let tokens = read_tokens lexbuf in *)
   (* tokens |> List.map Token.show_token |> List.iter print_endline in *)
@@ -164,3 +164,56 @@ let () =
   ast |> Ast.show_ast |> print_endline;
   ()
 ;;
+
+open Core
+
+let compile_file src_path out_path : unit =
+  Printf.printf "%s => %s" src_path (Option.value out_path ~default:"?");
+  Printf.printf "exe = %s" Sys.executable_name
+;;
+
+let generate_completions (shell : string option) : unit =
+  let shell =
+    shell
+    |> Option.bind ~f:(fun _ ->
+           Sys.getenv "SHELL" |> Option.map ~f:Filename.basename)
+    |> Option.value ~default:"bash"
+  in
+  Printf.printf "shell = %s" shell;
+  let own_exe = Sys.executable_name in
+  let env_var = "COMMAND_OUTPUT_INSTALLATION_" ^ String.uppercase shell in
+  let env = `Extend [(env_var, "1")] in
+  let (_ : never_returns) =
+    Unix.exec ~prog:own_exe ~argv:["cstar"] ?use_path:(Some true) ?env:(Some env) ()
+  in
+  ()
+;;
+
+let make_cmd () : Core.Command.t =
+  let completions =
+    Command.basic
+      ~summary:"generate autocompletions"
+      Command.Let_syntax.(
+        let%map_open shell = anon (maybe ("shell" %: string)) in
+        fun () -> generate_completions shell)
+  in
+  let compile =
+    Command.basic
+      ~summary:"compile a C* source file"
+      Command.Let_syntax.(
+        let%map_open out_path =
+          flag
+            ?aliases:(Some ["-o"])
+            "--output"
+            (optional Filename.arg_type)
+            ~doc:"output output file"
+        and src_path = anon ("source_file" %: Filename.arg_type) in
+        fun () -> compile_file src_path out_path)
+  in
+  Command.group
+    ~summary:"the C* compiler"
+    ~readme:(fun () -> "See README.md")
+    [("completions", completions); ("compile", compile)]
+;;
+
+let () = make_cmd () |> Command.run ~version:"0.1" ~build_info:""

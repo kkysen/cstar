@@ -3,9 +3,10 @@
 (ocamlyacc parser)
 
 (executable
- (preprocess
-  (pps ppx_deriving.std)
-  ; (staged_pps ppx_import ppx_deriving.show)
-  )
  (name cstar)
- (public_name cstar))
+ (public_name cstar)
+ (libraries core)
+ (preprocess
+  (pps ppx_deriving.std ppx_jane)
+  ; (staged_pps ppx_import ppx_deriving.show)
+  ))

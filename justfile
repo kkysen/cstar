@@ -174,3 +174,8 @@ clean *args: (dune "clean" args)
     rm -rf esy.lock _esy/ node_modules/
 
 alias c := clean
+
+add +dependencies:
+    esy add $(printf "@opam/%s " {{dependencies}})
+
+repl dir="src": (dune "utop" dir)
