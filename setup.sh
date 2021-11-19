@@ -257,8 +257,13 @@ install-dev() {
     just build
 }
 
+install-path() {
+    echo "export PATH=\""\${PWD}/${bin_dir}:\${PWD}/${bin_dir}/llvm":\${PATH}\""
+    exit 0
+}
+
 "install-${1}"
 echo
 echo "run this or add it to your ~/.bashrc:"
 echo
-echo "export PATH=\"${local_path}:\${PATH}\""
+install-path
