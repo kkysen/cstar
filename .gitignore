@@ -5,8 +5,9 @@ _esy/
 esy.lock/
 /*.install
 node_modules/
+/bin
+llvm.sh
 *.diff
 *.err
 *.out
 runtests.log
-/bin
