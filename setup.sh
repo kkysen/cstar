@@ -17,7 +17,7 @@ is-command() {
 link() {
     local from="${1}"
     local to="${2}"
-    ln --symbolic --force "${from}" "${bin_dir}/${to}"
+    ln -s -f "${from}" "${bin_dir}/${to}"
 }
 
 install-ccache() {
@@ -25,7 +25,7 @@ install-ccache() {
     ccache --max-files 0 --max-size 0
     [[ -f "${bin_dir}/ccache" ]] || link "$(which ccache)" ccache
     for compiler in cc c++ gcc g++ clang clang++; do
-        ln --symbolic --force ./ccache "./${bin_dir}/${compiler}"
+        link ./ccache "./${bin_dir}/${compiler}"
     done
 }
 
@@ -115,7 +115,7 @@ install-llvm() {
             return
         fi
     fi
-    sudo apt install -y lsb-release wget software-properties-common
+    sudo apt install -y lsb-release wget software-properties-common || true
     wget https://apt.llvm.org/llvm.sh
     chmod +x llvm.sh
     sudo ./llvm.sh "${llvm_version}"

@@ -157,7 +157,7 @@ cstar-path:
     fd --type executable '^cstar\.exe$' _esy
 
 build *args: (dune "build" "./src/cstar.exe" args)
-    ln --symbolic --force "../$(just cstar-path)" ./bin/cstar
+    ln -s -f "../$(just cstar-path)" ./bin/cstar
 
 alias b := build
 
