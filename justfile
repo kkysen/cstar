@@ -82,7 +82,7 @@ filter-exec:
     };
 
     function quote(s) {
-        return s.includes(" ") ? `"${s}"` : s;
+        return s === "" ? "''" : s.includes(" ") ? `"${s}"` : s;
     }
 
     function colorPath(path, dirColor, nameColor) {
