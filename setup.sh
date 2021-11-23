@@ -237,9 +237,21 @@ install-build-deps() {
     install-in-parallel install-from-opam install-from-npm install-from-cargo
 }
 
+patch-esy-llvm() {
+    fd --full-path 'llvm.*install.sh$' ~/.esy/source/ \
+        --exec patch --input patches/llvm-install.sh.patch --unified --backup --forward \
+        || true # allow error from already applied patch
+}
+
+esy-install() {
+    esy install
+    patch-esy-llvm
+    esy
+}
+
 install-build() {
     install-build-deps
-    esy
+    esy-install
 }
 
 install-dev-only() {
@@ -253,7 +265,7 @@ install-dev-deps() {
 
 install-dev() {
     install-dev-deps
-    esy
+    esy-install
     just build
 }
 
