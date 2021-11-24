@@ -348,6 +348,11 @@ let compile_file
     |> value_or_thunk ~default:(fun () ->
            Filename.temp_dir (Filename.basename src_path) ".cstar")
   in
+  let temps_dir =
+    match temps_dir with
+    | "" -> Filename.dirname out_path
+    | _ -> temps_dir
+  in
   let out_name =
     let base = Filename.basename out_path in
     let (stem, _) = Filename.split_extension base in
