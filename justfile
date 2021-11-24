@@ -154,10 +154,12 @@ dune *args:
     esy build dune {{args}}
 
 cstar-path:
-    fd --type executable '^cstar\.exe$' _esy
+    fd --type executable '^cstar\.exe$' _esy --exec-batch exa --sort modified | tail -n 1
 
-build *args: (dune "build" "./src/cstar.exe" args)
+link-cstar:
     ln -s -f "../$(just cstar-path)" ./bin/cstar
+
+build *args: (dune "build" "./src/cstar.exe" args) link-cstar
 
 alias b := build
 
