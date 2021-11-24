@@ -5,7 +5,7 @@
 (executable
  (name cstar)
  (public_name cstar)
- (libraries core)
+ (libraries core llvm llvm.analysis llvm.target)
  (preprocess
   (pps ppx_deriving.std ppx_jane)
   ; (staged_pps ppx_import ppx_deriving.show)
