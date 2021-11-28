@@ -17,101 +17,6 @@ let _range_inclusive ~(min : int) ~(max : int) : int list =
   range ~min ~max:(max + 1)
 ;;
 
-type emit_type =
-  | Src
-  (* | Ast *)
-  | Ir
-  | Bc
-  | Asm
-  | Obj
-  | Exe
-[@@deriving show, eq, ord, enum]
-
-let emit_type_of_enum_exn (i : int) : emit_type =
-  i |> emit_type_of_enum |> Option.value_exn
-;;
-
-let emit_type_all : emit_type list = [Src; (* Ast; *) Ir; Bc; Asm; Obj; Exe]
-
-let emit_type_to_string (this : emit_type) =
-  match this with
-  | Src -> "src"
-  (* | Ast -> "ast" *)
-  | Ir -> "ir"
-  | Bc -> "bc"
-  | Asm -> "asm"
-  | Obj -> "obj"
-  | Exe -> "exe"
-;;
-
-let _emit_type_of_string (s : string) : emit_type =
-  emit_type_all
-  |> List.find ~f:(fun it -> String.equal s (emit_type_to_string it))
-  |> Option.value_exn ?message:(Some "invalid emit type")
-;;
-
-let emit_type_extension (this : emit_type) : string =
-  match this with
-  | Src -> ".cstar"
-  (* | Ast -> ".ast.json" *)
-  | Ir -> ".ll"
-  | Bc -> ".bc"
-  | Asm -> ".s"
-  | Obj -> ".o"
-  | Exe -> ""
-;;
-
-let emit_type_detect_by_extension (path : string) : emit_type option =
-  let ext =
-    path
-    |> Filename.split_extension
-    |> snd
-    |> Option.map ~f:(fun ext -> "." ^ ext)
-    |> Option.value ~default:""
-  in
-  emit_type_all
-  |> List.find ~f:(fun it -> String.equal ext (emit_type_extension it))
-;;
-
-(* TODO For example, llvm bitcode starts with `BC\OxCO\OxD\OxE` (`BCOxC0DE`). *)
-let emit_type_detect_by_magic (_path : string) : emit_type option = None
-
-let emit_type_detect (path : string) : emit_type option =
-  [emit_type_detect_by_extension; emit_type_detect_by_magic]
-  |> List.fold ~init:(Ok ()) ~f:(fun acc f ->
-         match acc with
-         | Ok () -> (
-             match f path with
-             | Some emit -> Error emit
-             | None -> Ok ())
-         | Error emit -> Error emit)
-  |> Result.error
-;;
-
-let emit_type_detect_exn (path : string) : emit_type =
-  path
-  |> emit_type_detect
-  |> Option.value_exn ?message:(Some "couldn't detect file type")
-;;
-
-let emit_arg =
-  emit_type_all
-  |> List.map ~f:(fun it -> (emit_type_to_string it, it))
-  |> String.Map.of_alist_exn
-  |> Command.Arg_type.of_map
-;;
-
-let _emit_type_is_llvm (this : emit_type) : bool =
-  match this with
-  | Src -> false
-  (* | Ast -> false *)
-  | Ir -> true
-  | Bc -> true
-  | Asm -> true
-  | Obj -> true
-  | Exe -> true
-;;
-
 let quote_arg (arg : string) : string =
   if String.contains arg ' ' then "\"" ^ arg ^ "\"" else arg
 ;;
@@ -122,29 +27,29 @@ let argv_to_string (argv : string list) : string =
 
 let compile_file
     ~(src_path : string)
-    ~(src_type : emit_type option)
+    ~(src_type : EmitType.t option)
     ~(out_path : string option)
-    ~(out_type : emit_type option)
+    ~(out_type : EmitType.t option)
     ~(temps_dir : string option)
     ~(print_driver_commands : bool)
     : unit
   =
   let src_type =
     src_type
-    |> value_or_thunk ~default:(fun () -> emit_type_detect_exn src_path)
+    |> value_or_thunk ~default:(fun () -> EmitType.detect_exn ~path:src_path)
   in
   let out_type =
     out_type
     |> value_or_thunk ~default:(fun () ->
            match out_path with
-           | Some out_path -> emit_type_detect_exn out_path
+           | Some out_path -> EmitType.detect_exn ~path:out_path
            | None -> Exe)
   in
   let out_path =
     out_path
     |> value_or_thunk ~default:(fun () ->
            let (dir_and_stem, _) = Filename.split_extension src_path in
-           let ext = emit_type_extension out_type in
+           let ext = EmitType.extension out_type in
            dir_and_stem ^ ext)
   in
 
@@ -173,25 +78,25 @@ let compile_file
     stem
   in
   let temp_path emit_type =
-    Filename.concat temps_dir (out_name ^ emit_type_extension emit_type)
+    Filename.concat temps_dir (out_name ^ EmitType.extension emit_type)
   in
 
   let subcommands =
-    range ~min:(emit_type_to_enum src_type) ~max:(emit_type_to_enum out_type)
+    range ~min:(EmitType.to_enum src_type) ~max:(EmitType.to_enum out_type)
     |> List.map ~f:(fun i ->
-           (emit_type_of_enum_exn i, emit_type_of_enum_exn (i + 1)))
+           (EmitType.of_enum_exn i, EmitType.of_enum_exn (i + 1)))
     |> List.map ~f:(fun (src, out) ->
            [
              "cstar"
            ; "compile-raw"
            ; "--src"
-           ; (if equal_emit_type src src_type then src_path else temp_path src)
+           ; (if EmitType.equal src src_type then src_path else temp_path src)
            ; "--src-type"
-           ; emit_type_to_string src
+           ; EmitType.to_string src
            ; "--output"
-           ; (if equal_emit_type out out_type then out_path else temp_path out)
+           ; (if EmitType.equal out out_type then out_path else temp_path out)
            ; "--out-type"
-           ; emit_type_to_string out
+           ; EmitType.to_string out
            ])
   in
 
@@ -226,9 +131,9 @@ let compile_file
 
 let compile_file_raw
     ~(src_path : string)
-    ~(src_type : emit_type)
+    ~(src_type : EmitType.t)
     ~(out_path : string)
-    ~(out_type : emit_type)
+    ~(out_type : EmitType.t)
     : unit
   =
   let llvm_command =
@@ -251,8 +156,8 @@ let compile_file_raw
       in
       ()
   | None ->
-      assert (equal_emit_type src_type Src);
-      assert (equal_emit_type out_type Ir);
+      assert (EmitType.equal src_type Src);
+      assert (EmitType.equal out_type Ir);
       Compiler.compile_file ~src_path ~out_path;
       ()
 ;;
@@ -294,7 +199,7 @@ let make_cmd () : Core.Command.t =
         and src_type =
           flag
             "--src-type"
-            (optional emit_arg)
+            (optional EmitType.arg)
             ~doc:"src-type type of source if not inferred"
         and out_path =
           flag
@@ -306,7 +211,7 @@ let make_cmd () : Core.Command.t =
           flag
             ?aliases:(Some ["--emit"])
             "--out-type"
-            (optional emit_arg)
+            (optional EmitType.arg)
             ~doc:"out-type what to output/emit"
         and temps_dir =
           flag
@@ -337,14 +242,14 @@ let make_cmd () : Core.Command.t =
         and src_type =
           flag
             "--src-type"
-            (required emit_arg)
+            (required EmitType.arg)
             ~doc:"src-type type of source if not inferred"
         and out_path =
           flag "--output" (required Filename.arg_type) ~doc:"output output file"
         and out_type =
           flag
             "--out-type"
-            (required emit_arg)
+            (required EmitType.arg)
             ~doc:"out-type what to output/emit"
         in
         fun () -> compile_file_raw ~src_path ~src_type ~out_path ~out_type)
