@@ -153,11 +153,18 @@ trace-exec *args:
 dune *args:
     esy build dune {{args}}
 
-cstar-path:
-    fd --type executable '^cstar\.exe$' _esy --exec-batch exa --sort modified | tail -n 1
+esy-path path:
+    fd \
+        --type directory \
+        --exact-depth 1 \
+        '^cstar-.*$' \
+        _esy/default/store/b \
+        --exec-batch exa --sort modified \
+        "{{join("{}/default", path)}}" \
+        | tail -n 1
 
 link-cstar:
-    ln -s -f "../$(just cstar-path)" ./bin/cstar
+    ln -s -f "../$(just esy-path "src/cstar.exe")" ./bin/cstar
 
 build *args: (dune "build" "./src/cstar.exe" args) link-cstar
 
