@@ -11,7 +11,8 @@ export PATH="${local_path}:${PATH}"
 mkdir -p "${bin_dir}"
 
 is-command() {
-    command -v "$1" > /dev/null
+    local command="${1}"
+    [[ "${command}" != "" ]] && command -v "${command}" > /dev/null
 }
 
 link() {
@@ -36,10 +37,11 @@ cached-install() {
     if [[ "${exe_name}" == "" ]]; then
         exe_name="${package_name}"
     fi
-    is-command "${exe_name}" && return
-    install_func "${package_name}" "${exe_name}"
+    if ! is-command "${exe_name}"; then
+        "${install_func}" "${package_name}" "${exe_name}"
+    fi
     if [[ "${exe_dir:-}" == "" ]]; then
-        local exe_path=$("${which_prefix}" which "${exe_name}")
+        local exe_path=$(${which_prefix} which "${exe_name}")
     else
         local exe_path="${exe_dir}/${exe_name}"
     fi
@@ -58,16 +60,15 @@ else
 fi
 
 package-install-raw() {
-    local package_name="${1}"
-    "${package_installer[@]}" "${1}"
+    "${package_installer[@]}" install "${@}"
 }
 
 package-install() {
-    cached-install package-install "${@}"
+    cached-install package-install-raw "${@}"
 }
 
 install-ccache() {
-    is-command ccache || install-package ccache
+    is-command ccache || package-install ccache
     [[ -f "${bin_dir}/ccache" ]] || link-on-path ccache
     ccache --max-files 0 --max-size 0
     for compiler in cc c++ gcc g++ clang clang++; do
@@ -76,7 +77,7 @@ install-ccache() {
 }
 
 install-opam-raw() {
-    install-package curl
+    package-install curl
     sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)
     eval "$(opam env)"
 }
@@ -89,7 +90,7 @@ install-opam() {
 cargo_bin="${CARGO_HOME:-${HOME}/.cargo}/bin"
 
 install-cargo-raw() {
-    install-package curl
+    package-install curl
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     export PATH="${cargo_bin}:${PATH}"
 }
@@ -159,7 +160,7 @@ install-from-vscode() {
 }
 
 install-volta-raw() {
-    install-package curl
+    package-install curl
     curl https://get.volta.sh | bash
     export VOLTA_HOME="${HOME}/.volta"
     export PATH="${VOLTA_HOME}/bin:${PATH}"
@@ -194,7 +195,9 @@ install-llvm() {
     fi
     case "${OSTYPE}" in
         linux*)
-            sudo apt install -y lsb-release wget software-properties-common
+            package-install lsb-release lsb_release
+            package-install wget
+            package-install software-properties-common ""
             wget https://apt.llvm.org/llvm.sh
             chmod +x llvm.sh
             sudo ./llvm.sh "${llvm_version}"
