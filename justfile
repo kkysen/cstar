@@ -11,6 +11,8 @@ install-opam:
 setup what:
     ./setup.sh {{what}}
 
+path: (setup "path")
+
 filter-exec:
     #!/usr/bin/env node
     const fs = require("fs");

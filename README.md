@@ -14,6 +14,7 @@ See the [language reference manual](./LRM.md) for a detailed reference manual fo
 
 ## Building
 Run `./setup.sh <mode>`, where `mode` is either `build` or `dev`.  
-Run `eval "$(./setup.sh path)"`.
-Then run `just build` to build and install `cstar` to your `$PATH`, i.e, to `./bin/cstar`.  
+Run `eval "$(./setup.sh path)"`, or if you already have `just`, just `eval "$(just path)"`.
+Then run `just build` to build and install `cstar` to your `$PATH`, i.e, to `./bin/cstar`.
+`just watch` is also useful for watching for changes to build.
 To add shell autocompletions, run `eval "$(cstar completions)"`.
