@@ -187,6 +187,10 @@ clean *args: (dune "clean" args)
 
 alias c := clean
 
+watch *args: (dune "build" "--watch" args)
+
+alias w := watch
+
 add +dependencies:
     esy add $(printf "@opam/%s " {{dependencies}})
 

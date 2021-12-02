@@ -264,6 +264,7 @@ install-dev-only() {
 
 install-dev-deps() {
     install-build-deps
+    package-install inotify-tools inotifywait
     install-from-vscode
 }
 
