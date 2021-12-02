@@ -129,6 +129,7 @@ install-from-cargo() {
     cargo-install ripgrep rg
     cargo-install fd-find fd
     cargo-install sd
+    cargo-install bat
     cargo-install exa
     cargo-install gitui
     cargo-install git-delta delta
