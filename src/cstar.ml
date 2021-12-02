@@ -59,7 +59,7 @@ let test () : unit =
     ; Token.Unknown
     ]
   in
-  tokens |> List.to_seq |> Seq.map Token.show_token |> Seq.iter print_endline;
+  tokens |> List.to_seq |> Seq.map Token.yojson_of_token |> Seq.map Yojson.Safe.to_string |> Seq.iter print_endline;
   let example_type : Ast.type_ =
     Ast.Struct
       {
@@ -161,8 +161,14 @@ let test () : unit =
         }
     }
   in
-  ast |> Ast.show_ast |> print_endline;
+  ast |> Ast.yojson_of_ast |> Yojson.Safe.pretty_to_string |> print_endline;
   ()
 ;;
 
-let () = Driver.run ()
+let main () : unit = 
+  test ();
+  Driver.run ();
+  ()
+;;
+
+let () = main ()
