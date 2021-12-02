@@ -191,3 +191,9 @@ add +dependencies:
     esy add $(printf "@opam/%s " {{dependencies}})
 
 repl dir="src": (dune "utop" dir)
+
+pp-path path: (esy-path replace(path, ".ml", ".pp.ml"))
+
+expand path:
+    esy ocamlc -stop-after parsing -dsource "$(just pp-path "{{path}}")" \
+        |& bat --language ocaml
