@@ -136,30 +136,34 @@ let compile_file_raw
     ~(out_type : EmitType.t)
     : unit
   =
-  let llvm_command =
-    match (src_type, out_type) with
-    | (Src, Ir) -> None
-    (* | (Src, Ast) | (Ast, Ir) -> failwith "C* ast not currently supported" *)
-    (* prefer delegating to clang since it knows how to invoke llvm better *)
-    | (Ir, Bc) -> Some ["clang"; "-x"; "ir"; "-emit-llvm"; "-c"]
-    | (Bc, Asm) -> Some ["llc"; "--filetype=asm"]
-    | (Asm, Obj) -> Some ["clang"; "-c"]
-    | (Obj, Exe) -> Some ["clang"; "-fuse-ld=lld"]
-    | _ -> failwith "invalid src and out types for compile-raw"
-  in
-  match llvm_command with
-  | Some args ->
-      let argv = args @ ["-o"; out_path; src_path] in
-      let prog = args |> List.find ~f:(fun _ -> true) |> Option.value_exn in
-      let (_ : never_returns) =
-        Unix.exec ~prog ~argv ?use_path:(Some true) ()
-      in
-      ()
-  | None ->
-      assert (EmitType.equal src_type Src);
-      assert (EmitType.equal out_type Ir);
-      Compiler.compile_file ~src_path ~out_path;
-      ()
+  if EmitType.is_llvm src_type && EmitType.is_llvm out_type
+  then (
+    let args =
+      match (src_type, out_type) with
+      (* | (Src, Ast) | (Ast, Ir) -> failwith "C* ast not currently supported" *)
+      (* prefer delegating to clang since it knows how to invoke llvm better *)
+      | (Ir, Bc) -> ["clang"; "-x"; "ir"; "-emit-llvm"; "-c"]
+      | (Bc, Asm) -> ["llc"; "--filetype=asm"]
+      | (Asm, Obj) -> ["clang"; "-c"]
+      | (Obj, Exe) -> ["clang"; "-fuse-ld=lld"]
+      | _ -> failwith "invalid src and out llvm types for compile-raw"
+    in
+    let argv = args @ ["-o"; out_path; src_path] in
+    let prog = args |> List.find ~f:(fun _ -> true) |> Option.value_exn in
+    let (_ : never_returns) = Unix.exec ~prog ~argv ?use_path:(Some true) () in
+    ())
+  else (
+    let compile_file =
+      match (src_type, out_type) with
+      | (Src, Tokens) -> Compiler.Lex.compile_file
+      | (Tokens, Ast) -> Compiler.Parse.compile_file
+      | (Ast, DesugaredAst) -> Compiler.Desugar.compile_file
+      | (DesugaredAst, TypedAst) -> Compiler.TypeCheck.compile_file
+      | (TypedAst, Ir) -> Compiler.CodeGen.compile_file
+      | _ -> failwith "invalid src and out cstar types for compile-raw"
+    in
+    compile_file ~input_path:src_path ~output_path:out_path;
+    ())
 ;;
 
 let generate_completions (shell : string option) : unit =

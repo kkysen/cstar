@@ -88,3 +88,9 @@ type token =
   | Unknown
   | STRING of string
 [@@deriving show, yojson]
+
+type tokens = {
+    path : string
+  ; tokens : token list
+}
+[@@deriving show, yojson]

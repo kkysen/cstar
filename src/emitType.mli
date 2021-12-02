@@ -2,7 +2,10 @@ open Core
 
 type t =
   | Src
-  (* | Ast *)
+  | Tokens
+  | Ast
+  | DesugaredAst
+  | TypedAst
   | Ir
   | Bc
   | Asm

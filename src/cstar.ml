@@ -19,51 +19,52 @@ let test () : unit =
   (* let tokens = read_tokens lexbuf in *)
   (* tokens |> List.map Token.show_token |> List.iter print_endline in *)
   let tokens =
-    [
-      Token.EOF
-    ; Token.WhiteSpace (* ' \n\r\t', ... *)
-    ; Token.Comment Token.Structural
-    ; Token.Comment (Token.Line "line comment")
-    ; Token.Comment (Token.Block "block comment")
-      (* ; Token.Literal (Token.Number) *)
-    ; Token.Literal (Token.Char {unescaped = ","; prefix = ""})
-    ; Token.Literal (Token.String {unescaped = "hello\\nworld"; prefix = "b"})
-    ; Token.Identifier "identifier"
-    ; Token.SemiColon (* ; *)
-    ; Token.Colon (* : *)
-    ; Token.Comma (* , *)
-    ; Token.Dot (* . *)
-    ; Token.OpenParen (* ( *)
-    ; Token.CloseParen (* ) *)
-    ; Token.OpenBrace (* { *)
-    ; Token.CloseBrace (* } *)
-    ; Token.OpenBracket (* [ *)
-    ; Token.CloseBracket (* ] *)
-    ; Token.At (* @ *)
-    ; Token.QuestionMark (* ? *)
-    ; Token.ExclamationPoint (* ! *)
-    ; Token.Equal (* = *)
-    ; Token.LessThan (* < *)
-    ; Token.GreaterThan (* > *)
-    ; Token.Plus (* + *)
-    ; Token.Minus (* - *)
-    ; Token.Times (* * *)
-    ; Token.Divide (* / *)
-    ; Token.And (* & *)
-    ; Token.Or (* | *)
-    ; Token.Caret (* ^ *)
-    ; Token.Percent (* % *)
-    ; Token.Tilde (* ~ *)
-    ; Token.Pound (* # *)
-    ; Token.DollarSign (* $ *)
-    ; Token.Unknown
-    ]
+    {
+      Token.path = "?"
+    ; Token.tokens =
+        [
+          Token.EOF
+        ; Token.WhiteSpace (* ' \n\r\t', ... *)
+        ; Token.Comment Token.Structural
+        ; Token.Comment (Token.Line "line comment")
+        ; Token.Comment (Token.Block "block comment")
+          (* ; Token.Literal (Token.Number) *)
+        ; Token.Literal (Token.Char {unescaped = ","; prefix = ""})
+        ; Token.Literal
+            (Token.String {unescaped = "hello\\nworld"; prefix = "b"})
+        ; Token.Identifier "identifier"
+        ; Token.SemiColon (* ; *)
+        ; Token.Colon (* : *)
+        ; Token.Comma (* , *)
+        ; Token.Dot (* . *)
+        ; Token.OpenParen (* ( *)
+        ; Token.CloseParen (* ) *)
+        ; Token.OpenBrace (* { *)
+        ; Token.CloseBrace (* } *)
+        ; Token.OpenBracket (* [ *)
+        ; Token.CloseBracket (* ] *)
+        ; Token.At (* @ *)
+        ; Token.QuestionMark (* ? *)
+        ; Token.ExclamationPoint (* ! *)
+        ; Token.Equal (* = *)
+        ; Token.LessThan (* < *)
+        ; Token.GreaterThan (* > *)
+        ; Token.Plus (* + *)
+        ; Token.Minus (* - *)
+        ; Token.Times (* * *)
+        ; Token.Divide (* / *)
+        ; Token.And (* & *)
+        ; Token.Or (* | *)
+        ; Token.Caret (* ^ *)
+        ; Token.Percent (* % *)
+        ; Token.Tilde (* ~ *)
+        ; Token.Pound (* # *)
+        ; Token.DollarSign (* $ *)
+        ; Token.Unknown
+        ]
+    }
   in
-  tokens
-  |> List.map Token.yojson_of_token
-  |> (fun tokens -> `List tokens)
-  |> Yojson.Safe.to_string
-  |> print_endline;
+  let tokens_json = tokens |> Token.yojson_of_tokens |> Yojson.Safe.to_string in
   let example_type : Ast.type_ =
     Ast.Struct
       {
@@ -137,7 +138,8 @@ let test () : unit =
   in
   let ast =
     {
-      Ast.module_ =
+      Ast.path = "?"
+    ; Ast.module_ =
         {
           Ast.name = "hello"
         ; Ast.items =
@@ -165,7 +167,9 @@ let test () : unit =
         }
     }
   in
-  ast |> Ast.yojson_of_ast |> Yojson.Safe.pretty_to_string |> print_endline;
+  let ast_json = ast |> Ast.yojson_of_ast |> Yojson.Safe.pretty_to_string in
+  ignore tokens_json;
+  ignore ast_json;
   ()
 ;;
 

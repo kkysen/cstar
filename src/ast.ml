@@ -360,4 +360,9 @@ type module_ = {
 }
 [@@deriving show, yojson]
 
-type ast = {module_ : module_} [@@deriving show, yojson]
+type ast = {
+    path : string
+  ; module_ : module_
+}
+[@@deriving show, yojson]
+

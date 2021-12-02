@@ -2,7 +2,10 @@ open Core
 
 type t =
   | Src
-  (* | Ast *)
+  | Tokens
+  | Ast
+  | DesugaredAst
+  | TypedAst
   | Ir
   | Bc
   | Asm
@@ -12,12 +15,17 @@ type t =
 
 let of_enum_exn (i : int) : t = i |> of_enum |> Option.value_exn
 
-let all : t list = [Src; (* Ast; *) Ir; Bc; Asm; Obj; Exe]
+let all : t list =
+  [Src; Tokens; Ast; DesugaredAst; TypedAst; Ir; Bc; Asm; Obj; Exe]
+;;
 
 let to_string (this : t) : string =
   match this with
   | Src -> "src"
-  (* | Ast -> "ast" *)
+  | Tokens -> "tokens"
+  | Ast -> "ast"
+  | DesugaredAst -> "desugared-ast"
+  | TypedAst -> "typed-ast"
   | Ir -> "ir"
   | Bc -> "bc"
   | Asm -> "asm"
@@ -31,26 +39,28 @@ let of_string (s : string) : t =
   |> Option.value_exn ?message:(Some "invalid emit type")
 ;;
 
-let extension (this : t) : string =
+let base_extension = "cstar"
+
+let extensions (this : t) : string list =
   match this with
-  | Src -> ".cstar"
-  (* | Ast -> ".ast.json" *)
-  | Ir -> ".ll"
-  | Bc -> ".bc"
-  | Asm -> ".s"
-  | Obj -> ".o"
-  | Exe -> ""
+  | Src -> [base_extension]
+  | Tokens -> [base_extension; "tokens"; "json"]
+  | Ast -> [base_extension; "raw"; "ast"; "json"]
+  | DesugaredAst -> [base_extension; "desugared"; "ast"; "json"]
+  | TypedAst -> [base_extension; "typed"; "ast"; "json"]
+  | Ir -> [base_extension; "ll"]
+  | Bc -> [base_extension; "bc"]
+  | Asm -> [base_extension; "s"]
+  | Obj -> [base_extension; "o"]
+  | Exe -> [] (* or like Dune: [base_extension; "exe"] *)
+;;
+
+let extension (this : t) : string =
+  this |> extensions |> (fun a -> "" :: a) |> String.concat ?sep:(Some ".")
 ;;
 
 let detect_by_extension (path : string) : t option =
-  let ext =
-    path
-    |> Filename.split_extension
-    |> snd
-    |> Option.map ~f:(fun ext -> "." ^ ext)
-    |> Option.value ~default:""
-  in
-  all |> List.find ~f:(fun it -> String.equal ext (extension it))
+  all |> List.find ~f:(fun t -> String.is_suffix ~suffix:(extension t) path)
 ;;
 
 (* TODO For example, llvm bitcode starts with `BC\OxCO\OxD\OxE` (`BCOxC0DE`). *)
@@ -75,7 +85,10 @@ let detect_exn ~(path : string) : t =
 let is_llvm (this : t) : bool =
   match this with
   | Src -> false
-  (* | Ast -> false *)
+  | Tokens -> false
+  | Ast -> false
+  | DesugaredAst -> false
+  | TypedAst -> false
   | Ir -> true
   | Bc -> true
   | Asm -> true
