@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+if [[ "${debug:-}" != "" ]]; then
+    set -x
+fi
+
 llvm_version=13
 bin_dir=bin
 
