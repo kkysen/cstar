@@ -16,6 +16,7 @@
     "@opam/ppx_import": "1.8.0",
     "@opam/ppx_jane": "v0.14.0",
     "@opam/ppx_tools_versioned": "5.4.0",
+    "@opam/ppx_yojson_conv": "v0.14.0",
     "@opam/ppxlib": "0.23.0",
     "@opam/utop": "2.8.0",
     "ocaml": "^4.12.0"

@@ -7,6 +7,6 @@
  (public_name cstar)
  (libraries core llvm llvm.analysis llvm.target)
  (preprocess
-  (pps ppx_deriving.std ppx_jane)
+  (pps ppx_deriving.std ppx_jane ppx_yojson_conv)
   ; (staged_pps ppx_import ppx_deriving.show)
   ))
