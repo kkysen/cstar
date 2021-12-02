@@ -160,11 +160,11 @@ esy-path path:
         '^cstar-.*$' \
         _esy/default/store/b \
         --exec-batch exa --sort modified \
-        "{{join("{}/default", path)}}" \
+        "{{join("{}/default/src", path)}}" \
         | tail -n 1
 
 link-cstar:
-    ln -s -f "../$(just esy-path "src/cstar.exe")" ./bin/cstar
+    ln -s -f "../$(just esy-path "cstar.exe")" ./bin/cstar
 
 build *args: (dune "build" "./src/cstar.exe" args) link-cstar
 
@@ -198,6 +198,18 @@ repl dir="src": (dune "utop" dir)
 
 pp-path path: (esy-path replace(path, ".ml", ".pp.ml"))
 
+do-expand path:
+    #!/usr/bin/env bash
+    set -euox pipefail
+
+    src_path="$(just esy-path "{{path}}")"
+    pp_path="${src_path/.ml/.pp.ml}"
+    ppx_path="${src_path/.ml/.ppx.ml}"
+    if [[ "${pp_path}" -nt "${ppx_path}" ]]; then
+        esy ocamlc -stop-after parsing -dsource "${pp_path}" >& "${ppx_path}"
+        touch --reference "${pp_path}" "${ppx_path}"
+    fi
+    echo "${ppx_path}"
 expand path:
-    esy ocamlc -stop-after parsing -dsource "$(just pp-path "{{path}}")" \
-        |& bat --language ocaml
+    bat "$(just do-expand "{{path}}")"
+
