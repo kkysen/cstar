@@ -148,6 +148,7 @@ install-from-cargo() {
     cargo-install tokei
     cargo-install skim sk
     cargo-install hyperfine
+    cargo-install procs
 }
 
 vscode-extension-install() {
@@ -265,6 +266,7 @@ patch-esy-llvm() {
 }
 
 esy-install() {
+    package-install cmake
     esy install || (path-esy-llvm && esy install)
     esy
 }
