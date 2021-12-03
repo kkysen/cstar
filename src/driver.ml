@@ -25,117 +25,15 @@ let argv_to_string (argv : string list) : string =
   argv |> List.map ~f:quote_arg |> String.concat ?sep:(Some " ")
 ;;
 
-let compile_file
-    ~(src_path : string)
-    ~(src_type : EmitType.t option)
-    ~(out_path : string option)
-    ~(out_type : EmitType.t option)
-    ~(temps_dir : string option)
-    ~(print_driver_commands : bool)
-    : unit
-  =
-  let src_type =
-    src_type
-    |> value_or_thunk ~default:(fun () -> EmitType.detect_exn ~path:src_path)
-  in
-  let out_type =
-    out_type
-    |> value_or_thunk ~default:(fun () ->
-           match out_path with
-           | Some out_path -> EmitType.detect_exn ~path:out_path
-           | None -> Exe)
-  in
-  let out_path =
-    out_path
-    |> value_or_thunk ~default:(fun () ->
-           let (dir_and_stem, _) = Filename.split_extension src_path in
-           let ext = EmitType.extension out_type in
-           dir_and_stem ^ ext)
-  in
+type raw_compile_args = {
+    src_path : string
+  ; src_type : EmitType.t
+  ; out_path : string
+  ; out_type : EmitType.t
+}
 
-  if String.equal src_path out_path
-  then failwith "src and out path are the same";
-
-  (* match compare_emit_type src_type out_type with | -1 -> () | 0 -> ( (* file
-     can't be the same; just do a simple copy then *)
-
-     ) | 1 -> failwith "can't decompile"; *)
-
-  (* TODO at least match llvm's -save-temps=obj, too*)
-  let temps_dir =
-    temps_dir
-    |> value_or_thunk ~default:(fun () ->
-           Filename.temp_dir (Filename.basename src_path) ".cstar")
-  in
-  let temps_dir =
-    match temps_dir with
-    | "" -> Filename.dirname out_path
-    | _ -> temps_dir
-  in
-  let out_name =
-    let base = Filename.basename out_path in
-    let (stem, _) = Filename.split_extension base in
-    stem
-  in
-  let temp_path emit_type =
-    Filename.concat temps_dir (out_name ^ EmitType.extension emit_type)
-  in
-
-  let subcommands =
-    range ~min:(EmitType.to_enum src_type) ~max:(EmitType.to_enum out_type)
-    |> List.map ~f:(fun i ->
-           (EmitType.of_enum_exn i, EmitType.of_enum_exn (i + 1)))
-    |> List.map ~f:(fun (src, out) ->
-           [
-             "cstar"
-           ; "compile-raw"
-           ; "--src"
-           ; (if EmitType.equal src src_type then src_path else temp_path src)
-           ; "--src-type"
-           ; EmitType.to_string src
-           ; "--output"
-           ; (if EmitType.equal out out_type then out_path else temp_path out)
-           ; "--out-type"
-           ; EmitType.to_string out
-           ])
-  in
-
-  if List.is_empty subcommands
-  then failwith "nothing to compile and cannot decompile";
-
-  let print_subcommand argv = argv |> argv_to_string |> print_endline in
-
-  let run_subcommand argv =
-    let pid =
-      Unix.fork_exec ~prog:Sys.executable_name ~argv ?use_path:(Some false) ()
-    in
-    let (_, status) = Unix.wait ?restart:(Some true) (`Pid pid) in
-    status
-    |> Result.map_error ~f:(fun e ->
-           let cmd = argv |> argv_to_string in
-           let exit_message = Error e |> Unix.Exit_or_signal.to_string_hum in
-           let message = cmd ^ ": " ^ exit_message in
-           failwith message)
-    |> Result.ok_exn
-  in
-
-  let subcommand_fun =
-    if print_driver_commands then print_subcommand else run_subcommand
-  in
-
-  subcommands |> List.iter ~f:subcommand_fun;
-
-  (* TODO: clean up temp dir *)
-  ()
-;;
-
-let compile_file_raw
-    ~(src_path : string)
-    ~(src_type : EmitType.t)
-    ~(out_path : string)
-    ~(out_type : EmitType.t)
-    : unit
-  =
+let compile_file_raw ~(args : raw_compile_args) : unit =
+  let {src_path; src_type; out_path; out_type} = args in
   if EmitType.is_llvm src_type && EmitType.is_llvm out_type
   then (
     let args =
@@ -164,6 +62,140 @@ let compile_file_raw
     in
     compile_file ~input_path:src_path ~output_path:out_path;
     ())
+;;
+
+let run_raw_compile
+    ~(args : raw_compile_args)
+    ~(print : bool)
+    ~(in_new_process : bool)
+    : unit
+  =
+  let print_command argv = argv |> argv_to_string |> print_endline in
+
+  let run_subcommand argv =
+    let pid =
+      Unix.fork_exec ~prog:Sys.executable_name ~argv ?use_path:(Some false) ()
+    in
+    let (_, status) = Unix.wait ?restart:(Some true) (`Pid pid) in
+    status
+    |> Result.map_error ~f:(fun e ->
+           let cmd = argv |> argv_to_string in
+           let exit_message = Error e |> Unix.Exit_or_signal.to_string_hum in
+           let message = cmd ^ ": " ^ exit_message in
+           failwith message)
+    |> Result.ok_exn
+  in
+
+  if print || in_new_process
+  then (
+    let {src_path; src_type; out_path; out_type} = args in
+    let argv =
+      [
+        "cstar"
+      ; "compile-raw"
+      ; "--src"
+      ; src_path
+      ; "--src-type"
+      ; EmitType.to_string src_type
+      ; "--output"
+      ; out_path
+      ; "--out-type"
+      ; EmitType.to_string out_type
+      ]
+    in
+    if print then print_command argv else run_subcommand argv)
+  else compile_file_raw ~args
+;;
+
+let compile_file
+    ~(src_path : string)
+    ~(src_type : EmitType.t option)
+    ~(out_path : string option)
+    ~(out_type : EmitType.t option)
+    ~(temps_dir : string option)
+    ~(print_driver_commands : bool)
+    ~(no_exe_extension : bool)
+    ~(run_driver_commands_in_new_processes : bool)
+    : unit
+  =
+  let src_type =
+    src_type
+    |> value_or_thunk ~default:(fun () ->
+           EmitType.detect_exn ~path:src_path ~no_exe_extension)
+  in
+  let out_type =
+    out_type
+    |> value_or_thunk ~default:(fun () ->
+           match out_path with
+           | Some out_path ->
+               EmitType.detect_exn ~path:out_path ~no_exe_extension
+           | None -> Exe)
+  in
+  let out_path =
+    out_path
+    |> value_or_thunk ~default:(fun () ->
+           let (dir_and_stem, _) = Filename.split_extension src_path in
+           let ext = EmitType.extension out_type ~no_exe_extension in
+           dir_and_stem ^ ext)
+  in
+
+  if String.equal src_path out_path
+  then failwith "src and out path are the same";
+
+  (* match compare_emit_type src_type out_type with | -1 -> () | 0 -> ( (* file
+     can't be the same; just do a simple copy then *)
+
+     ) | 1 -> failwith "can't decompile"; *)
+
+  (* TODO at least match llvm's -save-temps=obj, too*)
+  let temps_dir =
+    temps_dir
+    |> value_or_thunk ~default:(fun () ->
+           Filename.temp_dir (Filename.basename src_path) ".cstar")
+  in
+  let temps_dir =
+    match temps_dir with
+    | "" -> Filename.dirname out_path
+    | _ -> temps_dir
+  in
+  let out_name =
+    let base = Filename.basename out_path in
+    let (stem, _) = Filename.split_extension base in
+    stem
+  in
+  let temp_path emit_type =
+    Filename.concat
+      temps_dir
+      (out_name ^ EmitType.extension emit_type ~no_exe_extension)
+  in
+
+  let raw_compile_args =
+    range ~min:(EmitType.to_enum src_type) ~max:(EmitType.to_enum out_type)
+    |> List.map ~f:(fun i ->
+           (EmitType.of_enum_exn i, EmitType.of_enum_exn (i + 1)))
+    |> List.map ~f:(fun (src, out) ->
+           {
+             src_path =
+               (if EmitType.equal src src_type then src_path else temp_path src)
+           ; src_type = src
+           ; out_path =
+               (if EmitType.equal out out_type then out_path else temp_path out)
+           ; out_type = out
+           })
+  in
+
+  if List.is_empty raw_compile_args
+  then failwith "nothing to compile and cannot decompile";
+
+  raw_compile_args
+  |> List.iter ~f:(fun args ->
+         run_raw_compile
+           ~args
+           ~print:print_driver_commands
+           ~in_new_process:run_driver_commands_in_new_processes);
+
+  (* TODO: clean up temp dir *)
+  ()
 ;;
 
 let generate_completions (shell : string option) : unit =
@@ -227,6 +259,16 @@ let make_cmd () : Core.Command.t =
             "--print-driver-commands"
             no_arg
             ~doc:"print-driver-commands print a dry run of the driver commands"
+        and exe_extension =
+          flag
+            "--exe-extension"
+            no_arg
+            ~doc:"exe-extension use a `.cstar.exe` extension for executables"
+        and run_driver_commands_in_new_processes =
+          flag
+            "--run-driver-commands-in-new-processes"
+            no_arg
+            ~doc:"run-driver-commands-in-new-processes as it says"
         in
         fun () ->
           compile_file
@@ -235,7 +277,9 @@ let make_cmd () : Core.Command.t =
             ~out_path
             ~out_type
             ~temps_dir
-            ~print_driver_commands)
+            ~print_driver_commands
+            ~no_exe_extension:(not exe_extension)
+            ~run_driver_commands_in_new_processes)
   in
   let compile_raw =
     Command.basic
@@ -256,7 +300,8 @@ let make_cmd () : Core.Command.t =
             (required EmitType.arg)
             ~doc:"out-type what to output/emit"
         in
-        fun () -> compile_file_raw ~src_path ~src_type ~out_path ~out_type)
+        fun () ->
+          compile_file_raw ~args:{src_path; src_type; out_path; out_type})
   in
   Command.group
     ~summary:"the C* compiler"

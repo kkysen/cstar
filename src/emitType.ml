@@ -41,7 +41,7 @@ let of_string (s : string) : t =
 
 let base_extension = "cstar"
 
-let extensions (this : t) : string list =
+let extensions (this : t) ~(no_exe_extension : bool) : string list =
   match this with
   | Src -> [base_extension]
   | Tokens -> [base_extension; "tokens"; "json"]
@@ -52,22 +52,30 @@ let extensions (this : t) : string list =
   | Bc -> [base_extension; "bc"]
   | Asm -> [base_extension; "s"]
   | Obj -> [base_extension; "o"]
-  | Exe -> [] (* or like Dune: [base_extension; "exe"] *)
+  | Exe -> (
+      match no_exe_extension with
+      | true -> []
+      | false -> [base_extension; "exe"])
 ;;
 
-let extension (this : t) : string =
-  this |> extensions |> (fun a -> "" :: a) |> String.concat ?sep:(Some ".")
+let extension (this : t) ~(no_exe_extension : bool) : string =
+  this
+  |> extensions ~no_exe_extension
+  |> (fun a -> "" :: a)
+  |> String.concat ?sep:(Some ".")
 ;;
 
-let detect_by_extension (path : string) : t option =
-  all |> List.find ~f:(fun t -> String.is_suffix ~suffix:(extension t) path)
+let detect_by_extension (path : string) ~(no_exe_extension : bool) : t option =
+  all
+  |> List.find ~f:(fun t ->
+         String.is_suffix ~suffix:(extension t ~no_exe_extension) path)
 ;;
 
 (* TODO For example, llvm bitcode starts with `BC\OxCO\OxD\OxE` (`BCOxC0DE`). *)
 let detect_by_magic (_path : string) : t option = None
 
-let detect ~(path : string) : t option =
-  [detect_by_extension; detect_by_magic]
+let detect ~(path : string) ~(no_exe_extension : bool) : t option =
+  [detect_by_extension ~no_exe_extension; detect_by_magic]
   |> List.fold ~init:(Ok ()) ~f:(fun acc f ->
          match acc with
          | Ok () -> (
@@ -78,8 +86,9 @@ let detect ~(path : string) : t option =
   |> Result.error
 ;;
 
-let detect_exn ~(path : string) : t =
-  detect ~path |> Option.value_exn ?message:(Some "couldn't detect file type")
+let detect_exn ~(path : string) ~(no_exe_extension : bool) : t =
+  detect ~path ~no_exe_extension
+  |> Option.value_exn ?message:(Some "couldn't detect file type")
 ;;
 
 let is_llvm (this : t) : bool =

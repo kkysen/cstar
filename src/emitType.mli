@@ -21,11 +21,11 @@ val to_string : t -> string
 
 val of_string : string -> t
 
-val extension : t -> string
+val extension : t -> no_exe_extension:bool -> string
 
-val detect : path:string -> t option
+val detect : path:string -> no_exe_extension:bool -> t option
 
-val detect_exn : path:string -> t
+val detect_exn : path:string -> no_exe_extension:bool -> t
 
 val is_llvm : t -> bool
 
