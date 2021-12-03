@@ -166,6 +166,7 @@ vscode-extension-install() {
 }
 
 install-from-vscode() {
+    package-install wget
     is-command code || return
     link-on-path code
     vscode-extension-install ocamllabs.ocaml-platform
