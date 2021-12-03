@@ -64,7 +64,7 @@ else
 fi
 
 package-install-raw() {
-    "${package_installer[@]}" install "${@}"
+    "${package_installer[@]}" install "${1}"
 }
 
 package-install() {
