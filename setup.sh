@@ -38,8 +38,12 @@ cached-install() {
     local exe_name="${3:-}"
     local exe_dir="${exe_dir:-}"
     local which_prefix="${which_prefix:-}"
-    if [[ "${exe_name}" == "" ]]; then
+    if [[ -z "${3+x}" ]]; then
         exe_name="${package_name}"
+    fi
+    if [[ "${exe_name}" == "" ]]; then
+        "${install_func}" "${package_name}" "${exe_name}"
+        return
     fi
     if ! is-command "${exe_name}"; then
         "${install_func}" "${package_name}" "${exe_name}"
