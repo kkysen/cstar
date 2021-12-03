@@ -22,13 +22,16 @@ is-command() {
 link() {
     local from="${1}"
     local to="${2}"
+    local canonical_from="$(readlink -m "${from}")"
+    local canonical_to="$(readlink -m "${to}")"
+    # don't make recursive links
+    [[ "${canonical_from}" == "${canonical_to}" ]] && return
     # macos `ln` doesn't support full flag names like `--symbolic --force`
     ln -s -f "${from}" "${bin_dir}/${to}"
 }
 
 link-on-path() {
     local exe_name="${1}"
-    [[ -x "${bin_dir}/${exe_name}" ]] && return
     link "$(which "${exe_name}")" "${exe_name}"
 }
 
