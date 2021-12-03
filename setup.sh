@@ -56,12 +56,12 @@ cached-install() {
     link "${exe_path}" "${exe_name}"
 }
 
-if is-command brew; then
-    link-on-path brew
-    package_installer=("brew")
-elif is-command apt; then
+if is-command apt; then
     link-on-path apt
     package_installer=("sudo" "apt")
+elif is-command brew; then
+    link-on-path brew
+    package_installer=("brew")
 else
     echo >&2 "can't find `brew` or `apt`"
     exit 1
