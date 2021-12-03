@@ -255,6 +255,7 @@ install-build-deps() {
     install-from-opam
     install-from-npm
     install-from-cargo
+    install-llvm
 }
 
 patch-esy-llvm() {
