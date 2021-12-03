@@ -252,8 +252,7 @@ patch-esy-llvm() {
 }
 
 esy-install() {
-    esy install
-    patch-esy-llvm
+    esy install || (path-esy-llvm && esy install)
     esy
 }
 
