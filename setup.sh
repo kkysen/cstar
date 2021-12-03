@@ -242,7 +242,9 @@ install-in-parallel() {
 
 install-build-deps() {
     install-ccache
-    install-in-parallel install-from-opam install-from-npm install-from-cargo
+    install-from-opam
+    install-from-npm
+    install-from-cargo
 }
 
 patch-esy-llvm() {
@@ -262,7 +264,7 @@ install-build() {
 }
 
 install-dev-only() {
-    install-in-parallel install-from-vscode
+    install-from-vscode
 }
 
 install-dev-deps() {
