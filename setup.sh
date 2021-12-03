@@ -241,7 +241,7 @@ install-in-parallel() {
 }
 
 install-build-deps() {
-    package-install build-essential
+    package-install build-essential ""
     install-ccache
     install-from-opam
     install-from-npm
