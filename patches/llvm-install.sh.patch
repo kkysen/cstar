@@ -1,0 +1,19 @@
+--- /home/kkysen/.esy/source/i/opam__s__llvm__opam__c__13.0.0__78435359/install.sh.orig	2021-11-23 15:29:34.873090100 -0500
++++ /home/kkysen/.esy/source/i/opam__s__llvm__opam__c__13.0.0__78435359/install.sh	2021-11-23 15:29:38.293090100 -0500
+@@ -5,6 +5,16 @@
+ cmake="$3"
+ make="$4"
+ 
++if [[ "$llvm_config"  == "" ]]; then
++    llvm_config=llvm-config
++fi
++if [[ "$cmake"  == "" ]]; then
++    cmake=cmake
++fi
++if [[ "$make"  == "" ]]; then
++    make=make
++fi
++
+ function filter_experimental_targets {
+     sed 's/AVR//g' | sed 's/M68k//g' | sed 's/Nios2//g' | xargs
+ }

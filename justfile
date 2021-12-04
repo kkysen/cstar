@@ -8,8 +8,10 @@ install-opam:
     opam init
 
 # install tools needed/nice for development
-install-tooling:
-    BOOTSTRAP=1 bash install-tooling.sh
+setup what:
+    ./setup.sh {{what}}
+
+path: (setup "path")
 
 filter-exec:
     #!/usr/bin/env node
@@ -82,7 +84,7 @@ filter-exec:
     };
 
     function quote(s) {
-        return s.includes(" ") ? `"${s}"` : s;
+        return s === "" ? "''" : s.includes(" ") ? `"${s}"` : s;
     }
 
     function colorPath(path, dirColor, nameColor) {
@@ -142,15 +144,31 @@ filter-exec:
     fs.writeFileSync("/dev/stdout", output);
 
 trace-exec *args:
-    -strace -etrace=execve -f --string-limit 10000 -qq --output strace.$PPID.out {{args}}
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    cd "{{invocation_directory()}}"
+    strace -etrace=execve -f --string-limit 10000 -qq --output strace.$PPID.out {{args}} || true
     just filter-exec < strace.$PPID.out
     rm strace.$PPID.out
 
 # run dune, but through mold
 dune *args:
-    mold -run dune {{args}}
+    esy build dune {{args}}
 
-build *args: (dune "build" "./src/cstar.exe" args)
+esy-path path:
+    fd \
+        --type directory \
+        --exact-depth 1 \
+        '^cstar-.*$' \
+        _esy/default/store/b \
+        --exec-batch exa --sort modified \
+        "{{join("{}/default/src", path)}}" \
+        | tail -n 1
+
+link-cstar:
+    ln -s -f "../$(just esy-path "cstar.exe")" ./bin/cstar
+
+build *args: (dune "build" "./src/cstar.exe" args) link-cstar
 
 alias b := build
 
@@ -170,3 +188,30 @@ clean *args: (dune "clean" args)
     rm -rf esy.lock _esy/ node_modules/
 
 alias c := clean
+
+watch *args: (dune "build" "--watch" args)
+
+alias w := watch
+
+add +dependencies:
+    esy add $(printf "@opam/%s " {{dependencies}})
+
+repl dir="src": (dune "utop" dir)
+
+pp-path path: (esy-path replace(path, ".ml", ".pp.ml"))
+
+do-expand path:
+    #!/usr/bin/env bash
+    set -euox pipefail
+
+    src_path="$(just esy-path "{{path}}")"
+    pp_path="${src_path/.ml/.pp.ml}"
+    ppx_path="${src_path/.ml/.ppx.ml}"
+    if [[ "${pp_path}" -nt "${ppx_path}" ]]; then
+        esy ocamlc -stop-after parsing -dsource "${pp_path}" >& "${ppx_path}"
+        touch --reference "${pp_path}" "${ppx_path}"
+    fi
+    echo "${ppx_path}"
+expand path:
+    bat "$(just do-expand "{{path}}")"
+

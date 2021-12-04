@@ -1,5 +1,5 @@
 //generic type mismatch
-enum<T> data{
+enum Data<T> {
 	contents: G,
 	len: usize
 }

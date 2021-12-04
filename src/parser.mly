@@ -33,14 +33,13 @@ defns:
 defn:
       func_def      {$1}
     | var_def SEMI  {$1}
-    | module_           {$1}
+    | mod           {$1}
 
 func_def:
     FN ID LBRACE body RBRACE { }
 var_def:
     LET ID typ_ann_opt EQ expr { }
-module_: 
-    MOD LBRACE defns RBRACE { Mod($1) }
-
+mod: 
+    MOD LBRACE defns RBRACE { Mod $1 }
 
 

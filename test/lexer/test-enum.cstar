@@ -1,0 +1,6 @@
+enum Season {
+	Winter,
+	Summer,
+	Fall,
+	Spring,
+}

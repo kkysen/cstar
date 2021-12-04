@@ -70,16 +70,16 @@ Most unary operators and keywords can be used postfix as well.
 * `.match {}`
 * `.for {}`
 * `.*` for dereference
-* `.&` for pointer to
-* `.&mut` for mutable pointer to
+* `.&` for reference to
+* `.&mut` for mutable reference to
 * `.!` for negation
-* `.@()` for builtins, like as (casting), size_of, etc.
-    * `.@cast(T)`: convert to `T`, like an int to float cast, or an int widening cast
-    * `.@ptr_cast<T>()`: cast a pointer like `*T` to `*U`
-    * `.@bit_cast<T>()`: reinterpret the bits, like from `u32` to `f32`
-    * `.@size_of()`: size of a type
-    * `.@align_of()`: alignment of a type
-    * `.@call(func)`: call a function or closure in a unified syntax
+* `.$...()` for builtins, such as:
+    * `.$cast<T>()`: convert to `T`, like an int to float cast, or an int widening cast
+    * `.$ptr_cast<T>()`: cast a pointer like `*T` to `*U`
+    * `.$bit_cast<T>()`: reinterpret the bits, like from `u32` to `f32`
+    * `.$size_of()`: size of a type or value
+    * `.$align_of()`: alignment of a type or value
+    * `.$call(args)`: call a function or closure in a unified syntax
 
 Combined with everything [being an expression](#expression-oriented), 
 [`match`](#pattern-matching), and having [methods](#methods), 
@@ -106,12 +106,12 @@ is unspecified in C*.
 For example, you can do this to make a copy-on-write string.
 ```rust
 struct String {
-    ptr: *u8,
+    ptr: u8&,
     len: usize,
 }
 
 struct StringBuf {
-    ptr: *u8,
+    ptr: u8&,
     len: usize,
     cap: usize,
 }
@@ -135,7 +135,7 @@ pattern match in a `match` statement, you can also do the same
 as a general statement, like in a `let`.  It's like an unconditional `match`.
 
 ```rust
-let cow = CowString::Borrowed("🐄");
+let cow = CowString.Borrowed("🐄");
 let len = match cow {
     Borrowed(s) => s.len(),
     Owned(s) => s.len(),
@@ -160,33 +160,37 @@ enum Option<T> {
     Some(T),
 }
 
-enum ShortVec<T, N: u8> {
-    Inline {
-        array: [T; N],
-        len: u8,
-    },
-    Allocated {
-        ptr: Option<*T>,
-        len: usize,
-        cap: usize,
-    },
+struct InlineVec<T, N: u8> {
+    array: [T; N],
+    len: u8,
 }
 
-fn short_vec_len<T, N: u8>(v: *ShortVec<T, N>): usize {
+struct AllocatedVec<T> {
+    ptr: Option<T&>,
+    len: usize,
+    cap: usize,
+}
+
+enum ShortVec<T, N: u8> {
+    Inline(InlineVec<T, N>),
+    Allocated(AllocatedVec<T>),
+}
+
+fn short_vec_len<T, N: u8>(v: ShortVec<T, N>&): usize = {
     v.match {
-        Inline {len, _} => len.@cast(),
-        Allocated {len, _} => len,
-    }
+        Inline(InlineVec {len, _}) => len.$cast(),
+        Allocated(AllocatedVec {len, _}) => len,
+    }.*
 }
 ```
 
 
-### Non-Null Pointers
-C* has pointers, `*T` and `*mut T`, 
+### Non-Null References
+C* has references, `T&` and `T&mut`, 
 but they are always non-null valid pointers. 
-To express nullability, use `Option<*T>`, which uses 
+To express nullability, use `Option<T&>`, which uses 
 the `0` pointer representation for the `None` variant. 
-Nullability can also be nested with `Option`, like `Option<Option<*T>>`, 
+Nullability can also be nested with `Option`, like `Option<Option<T&>>`, 
 which can't easily be done in C with nullable pointers.
 
 
@@ -217,31 +221,26 @@ struct IndexError {
     index: usize,
 }
 
-fn get_by_index<T>(a: *[T], i: usize): Result<T, IndexError> {
+fn get_by_index<T>(a: T[]&, i: usize): Result<T&, IndexError> = {
     if (i < a.len()) {
-        Ok(a[i])
+        Ok(a[i].unwrap())
     } else {
         Err(IndexError {index: i})
     }
 }
 
-struct IndexPair {
-    first: usize,
-    second: usize,
-}
-
-fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> try {
+fn get_two_by_index<T>(a: T[]&, i: usize, j: usize): Result<(T&, T&), IndexError> = try {
     let first = try {
         get_by_index(a, i).?
     };
     let second = get_by_index(a, j).?;
-    IndexPair {first, second}
+    (first, second)
 }
 ```
 
 This desugars to
 ```rust
-fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> {
+fn get_two_by_index<T>(a: T[]&, i: usize, j: usize): Result<(T&, T&), IndexError> = {
     let first = try {
         get_by_index(a, i).match {
             Ok(i) => i,
@@ -252,7 +251,7 @@ fn get_two_by_index<T>(a: *[T], i: usize, j: usize): Result<T, IndexError> {
         Ok(i) => i,
         Err(e) => return Err(e),
     }
-    Ok(IndexPair {first, second})
+    Ok((first, second))
 }
 ```
 
@@ -295,12 +294,18 @@ its block exits, but its easier to just think about function blocks first).
 For example, you can use this to ensure 
 you correctly clean up resources in a function:
 ```rust
-extern "C" fn open(path: *u8, flags: i32): i32;
-extern "C" fn close(fd: i32): i32;
+@extern @abi("C")
+fn open(path: u8[]&, flags: i32): i32;
 
-fn open_file_in_dir(dir: *[u8], filename: *[u8]): Result<i32, String> try {
+@extern @abi("C")
+fn close(fd: i32): i32;
+
+let O_RDWR: i32 = const { 2 };
+
+fn open_file_in_dir(dir: u8[]&, filename: u8[]&): Result<i32, String> = try {
     let mut path = Vec.new(Mallocator());
     defer path.free();
+    let path = path.&mut;
     try {
         if (dir.len() > 0) {
             path.extend(dir).?;
@@ -308,9 +313,9 @@ fn open_file_in_dir(dir: *[u8], filename: *[u8]): Result<i32, String> try {
         }
         path.extend(filename).?;
         path.push(0).?;
-    }.map_err(fn(_) "alloc error").?;
+    }.map_err(fn(_) = "alloc error").?;
     
-    let path = path.as_ptr();
+    let path = path.as_slice();
     let fd = open(path, O_RDWR).match {
         -1 => Err("open failed"),
         fd => fd,
@@ -341,13 +346,13 @@ struct FilePair {
     fd2: i32,
 }
 
-fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try {
+fn open_two_files(path1: u8[]&, path2: u8[]&): Result<FilePair, String> = try {
     let fd1 = open_file_in_dir(b"", path1).?;
-    close: defer close(fd1);
+    defer@close close(fd1);
     let fd2 = open_file_in_dir(b"", path2).?;
-    close: defer close(fd2);
+    defer@close close(fd2);
     println(f"opened {fd1} and {fd2}");
-    undefer close;
+    undefer@close;
     FilePair {fd1, fd2}
 }
 ```
@@ -361,23 +366,23 @@ which cancels an earlier labeled `defer`, in this case labeled `close`.
 `defer` and `undefer` are actually syntax sugar 
 for something a bit more low-level and wordy:
 ```rust
-fn open_two_files(path1: *[u8], path2: *[u8]): Result<FilePair, String> try {
+fn open_two_files(path1: u8[]&, path2: u8[]&): Result<FilePair, String> = try {
     let fd1 = open_file_in_dir(b"", path1).?;
-    let close1 = {fd1} fn() close(fd1);
-    let close1 = close1.@defer());
+    let close1 = fn {fd1}() = { close(fd1); }
+    let close1 = close1.$defer();
     let fd2 = open_file_in_dir(b"", path2).?;
-    let close2 = {fd1} fn() close(fd1);
-    let close2 = close2.@defer());
+    let close2 = fn {fd1}() = { close(fd1); }
+    let close2 = close2.$defer();
     println(f"opened {fd1} and {fd2}");
-    let close = [close2, close1];
+    let close = [close2, close1].&[..];
     close.undo();
     FilePair {fd1, fd2}
 }
 ```
 
-That is, `.@defer()` places the closure on the stack and 
+That is, `.$defer()` places the closure on the stack and 
 returns a `Defer` struct, which can be undone with `Defer.undo()` 
-(`[Defer].undo()` just maps `Defer.undo()` over the array). 
+(`Defer[]&.undo()` just maps `Defer.undo()` over the array). 
 `Defer.undo()` sets a bit in the `Defer` struct that it's been undone. 
 Then when the stack unwinds, any none-undone `Defers` on the stack are run.
 
@@ -408,20 +413,20 @@ struct Person {
 
 impl Hello {
 
-    fn new(first_name: String, last_name: String): Self {
+    fn new(first_name: String, last_name: String): Self = {
         Self {first_name, last_name}
     }
     
-    fn say_hi1(self: Self) {
+    fn say_hi1(self: Self) = {
         print(f"Hi {self.first_name} {self.last_name}");
     }
     
-    fn say_hi1(self: *Self) {
-        print(f"Hi {self.last_name}, {self.first_name}");
+    fn say_hi1(self: Self&) = {
+        print(f"Hi {self.*.last_name}, {self.*.first_name}");
     }
     
-    fn remove_last_name(self: *mut Self) {
-        self.last_name = "";
+    fn remove_last_name(self: Self&mut) = {
+        self.*.last_name = "";
     }
     
 }
@@ -460,7 +465,7 @@ Inside an `impl` block, we can also use the `Self` type
 as an alias to the type being implemented. 
 This is especially useful with generics.
 
-Note that the `.&` and `*Self` are explicit, 
+Note that the `.&` and `Self&` are explicit, 
 because we wan't these kinds of possible costs to be noted explicitly. 
 For example, `Person.say_hi1` takes `Self` by value, 
 which means it must copy the `Person` every time. 
@@ -478,20 +483,20 @@ but they can "enclose" over values in the current scope.
 For example,
 ```rust
 impl <T, F> Option<T> {
-    fn map(self: Self, f: F): F(T) {
+    fn map(self: Self, f: F): F(T) = {
         match self {
             None => None,
-            Some(t) => Some(f.@call(t)),
+            Some(t) => Some(f.$call(t)),
         }
     }
 }
 
 fn main() {
     try {
-        let a = Some("hello").map(fn(s) s.len()).?;
-        let b = Some("world").map({a} fn(s) a + s.len()).?;
-        let c = Some("🏳️‍⚧️").map({n: b} fn(s) n + s.len()).?;
-        None.map({a.&, b.&mut, n: &mut c} fn(s) {
+        let a = Some("hello").map(fn(s) = s.len()).?;
+        let b = Some("world").map(fn {a}(s) = a + s.len()).?;
+        let c = Some("🏳️‍⚧️").map(fn {n: b}(s) = n + s.len()).?;
+        None.map(fn {a: a.&, b: b.&mut, n: c.&mut}(s) = {
             print(f"{s}: {a.*}, {b.*}, {n.*}");
             n.*++;
             b.* += n.*;
@@ -508,10 +513,10 @@ In particular:
   (this is because closure type depend on what they capture). 
   You can also apply a type to a function type to get its return type, 
   like `F(T)`.
-* We can call a closure using the unified calling syntax: `.@call()`. 
+* We can call a closure using the unified calling syntax: `.$call()`. 
   Normal function calls are `()`, and we want to be explicit 
-  when we're actually calling a closure, so `.@call()` is needed. 
-  `.@call()` also works on normal functions, though, 
+  when we're actually calling a closure, so `.$call()` is needed. 
+  `.$call()` also works on normal functions, though, 
   since all functions can be implicitly converted to non-capturing closures.
 * The closure syntax is very similar to function syntax, 
   with a few differences:
@@ -533,7 +538,7 @@ The way closures are implemented is by
 creating an anonymous struct of the captured closure context. 
 Then there is a method on that struct that takes the closure arguments and 
 returns the closure body with the context struct destructured inside 
-(so its variables are in scope).  This is what is called by `.@call()`. 
+(so its variables are in scope).  This is what is called by `.$call()`. 
 Note that there are no indirect function calls, boxing, 
 or allocations involved in this, but it requires the use of generics. 
 If nothing is captured by a closure, though, 
@@ -544,21 +549,21 @@ The same is true of normal functions.
 
 ### Slices
 C* also has slices.  These are a pointer and length, 
-and are much preferred to passing the pointer and length separately, 
+and are much preferred to passing the reference and length separately, 
 like you usually have to do in C.
 
 They are implemented like this (not actually, but similarly):
 ```rust
 struct Slice<T> {
-    ptr: *T,
+    ptr: T&,
     len: usize,
 }
 ```
-But they can be written as `*[T]`.  Actually, slices are unsized types, 
-so their type is just `[T]`, but usually `*[T]` is used and that 
+But they can be written as `T[]&`.  Actually, slices are unsized types, 
+so their type is just `T[]`, but usually `T[]&` is used and that 
 is what's equivalent to the above `Slice<T>`.
 
-Unlike pointers like `*T`, slices can be indexed.  By default, 
+Unlike references like `T&`, slices can be indexed.  By default, 
 using the indexing operator, this is bounds checked for safety, 
 but there are also unchecked methods for indexing.  Usually, though, 
 bounds checking can be elided during sequential iteration, 
@@ -573,17 +578,17 @@ Again, this is bounds checked by default.
 There are multiple types of strings in C* owing to 
 the inherent complexity of string-handling without incurring overhead. 
 The default string literal type is `String`, which is UTF-8 encoded and 
-wraps a `*[u8]`.  This is a borrowed slice type and can't change size. 
+wraps a `u8[]&`.  This is a borrowed slice type and can't change size. 
 To have a growable string, there is the `StringBuf` type, 
 but there is no special syntactic support for this owned string. 
 `String`s are made of `char`s, unicode scalar values, when iterating 
-(even though they are stored as `*[u8]`).  `char`s have literals like `c'\n'`.
+(even though they are stored as `u8[]&`).  `char`s have literals like `c'\n'`.
 
-Then there are byte strings, which are just `*[u8]` and 
+Then there are byte strings, which are just `u8[]&` and 
 do not have to be UTF-8 encoded. 
 String literals for this are prefixed with `b`, like `b"hello"` 
 (and for char byte literals, a `b` prefix, too: `b'c'`). 
-The owning version of this is just a `Box<[u8]>` 
+The owning version of this is just a `Box<u8[]>` 
 (notice the unsized slice use), and 
 the growable owning version is just a `Vec<u8>`.
 
@@ -618,6 +623,7 @@ Besides just using `//` for line comments and `///` for doc comments,
 `/-` can be used for a sort of structural comment. 
 That is, it will comment out the next item, 
 whether that be the next expression, the next line, or the next function.
+`/*` and `*/` can also be used for multi-line and nested comments.
 
 
 ### C FFI
@@ -647,11 +653,11 @@ C* constructs are automatically converted to their C equivalents:
 | `f32`         | `float`             |                    |
 | `f64`         | `double`            |                    |
 | `f128`        | `_Float128`         |                    |
-| `*T`          | `*T`                | for argument types |
-| `Option<*T>`  | `*T`                | for return types   |
+| `T&`          | `*T`                | for argument types |
+| `Option<T&>`  | `*T`                | for return types   |
 | `fn(T, U): R` | `R (*)(T, U)`       |                    |
 
-There is also an `extern "C" union {}` type available that 
+There is also a `union {}` type available that 
 is for FFI with C `union`s.  It is unknown which variant is active, 
 unlike `enum`s, which track that.
 
@@ -663,13 +669,13 @@ unlike `enum`s, which track that.
 ### GCD
 Here is how you write simple algorithms like GCD in C*:
 ```rust
-fn gcd(a: i64, b: i64): i64 {
-    (fn gcd(a: u64, b: u64): u64 {
-        match b {
+fn gcd(a: i64, b: i64): i64 = {
+    (fn gcd(a: u64, b: u64): u64 = {
+        b.match {
             0 => b,
             _ => gcd(b, a % b),
         }
-    })(a.abs(), b.abs()).@cast(i64)
+    })(a.abs(), b.abs()).$cast(i64)
 }
 ```
 
@@ -701,13 +707,13 @@ enum Status {
 }
 
 struct RequestLine {
-    method: *[u8],
-    uri: *[u8],
-    version: *[u8],
+    method: u8[]&,
+    uri: u8[]&,
+    version: u8[]&,
 }
 
 impl RequestLine {
-    fn check(self: *Self): Result<(), Status> try {
+    fn check(self: Self&): Result<(), Status> = try {
         let Self {method, uri, version} = self.*;
         match (method, version) {
             (b"GET", b"HTTP/1.0" | b"HTTP/1.1") => {},
@@ -719,45 +725,45 @@ impl RequestLine {
     }
 }
 
-fn main(): Result<(), AnyError> try {
+fn main(): Result<(), AnyError> = try {
     let (port, web_root) = std.env.argv().match {
         [_, port, web_root] => (port.parse<u16>().?, web_root),
         [program, ...] => Err(f"usage: {program} <server_port> <web_root>").?,
     };
     let server_socket = Socket.new(PF_INET, SOCK_STREAM, IPPROTO_TCP).?;
-    defer server_socket.&.close();
-    server_socket.&.bind(SocketAddr {
+    defer server_socket.close();
+    let server_socket = server_socket.&;
+    server_socket.bind(SocketAddr {
         family: AF_INET,
         addr: InetAddr {
-            addr: INADDR_ANY.to_be(),
+            addr: INADDR_ANY.to_big_endian(),
         },
-        port: port.to_be(),
+        port: port.to_big_endian(),
     }).?;
-    server_socket.&.listen(5).?;
+    server_socket.listen(5).?;
     let mut request_line_buf = Vec.new();
     defer request_line_buf.free();
     let mut line_buf = Vec.new();
     defer line_buf.free();
-    loop try {
-        let client_socket = server_socket.&.accept().?;
-client_socket_close:
-        defer client_socket.&.close();
+    true.while try {
+        let client_socket = server_socket.accept().?;
+        defer@client_socket_close client_socket.close();
         let mut client_stream = fdopen(client_socket.fd, c"r").?;
-        undefer client_socket_close; // stream (`FILE *` in C) takes ownership
-        defer client_stream.&.close();
+        undefer@client_socket_close; // stream (`FILE *` in C) takes ownership
+        defer client_stream.close();
         let line_or_status = try {
             // read and parse request line
             let line = client_stream.&mut.read_line(buf.&mut)
-                .map_err(fn(_) Status.BadRequest).?
-                .split(fn(b) " \t\r\n".contains(b)).match {
+                .map_err(fn(_) = Status.BadRequest).?
+                .split(fn(b) = " \t\r\n".contains(b)).match {
                     [method, uri, version] => RequestLine { method, uri, version },
                     _ => Err(Status.NotImplemented).?,
                 };
             line.&.check().?;
             // read headers, skip them
-            loop {
+            true.while {
                 client_stream.&mut.read_line(buf.&mut)
-                    .map_err(fn(_) Status.BadRequest).?
+                    .map_err(fn(_) = Status.BadRequest).?
                     .match {
                         "\n" | "\r\n" => break,
                         _ => {},
@@ -765,12 +771,12 @@ client_socket_close:
             }
             line
         }
-        let (line, status) = match line_or_status {
+        let (line, status) = line_or_status.match {
             Ok(line) => (line, Status.Ok),
             Err(status) => (RequestLine { method: b"", uri: b"", version: b"" }, status),
         };
         client_socket.write(f"HTTP/1.0 {status.code()} {status.reason()}\r\n\r\n").?;
-        match line_or_status {
+        line_or_status.match {
             Ok(_) => handle_request(web_root, line.uri, client_socket).?,
             Err(_) => client_socket.write(f"<html><body>\n<h1>{status.code()} {status.reason()}</h1>\n</body></html>").?;
         }

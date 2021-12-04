@@ -7,6 +7,12 @@ let sign = ['+' '-']? as sign
 let int_base = ('0'(['b' 'o' 'x'] as base) '_'?)?
 let digit = ['0'-'9' 'A'-'F' 'a'-'f']
 let raw_int = int_base digit (digit|'_')*
+let integral = raw_int
+let float = raw_int "." raw_int
+
+let ascii = ([' '-'!' '#'-'[' ']'-'~'])
+let char = ''' (ascii) '''
+
 (* let suffix = 'a-z' *)
 
 rule token = parse
@@ -57,6 +63,10 @@ rule token = parse
    * naively don't follow this rule, which is why we require another `0x` prefix.
    * This also has the added benefit of allowing you to switch bases between the integral and floating parts.
    *)
+  (*Number Data Types*)
+  (* | "integral" { Literal Number }
+  | "float" { Literal Number } *)
+
 
 (* https://stackoverflow.com/questions/7117975/how-to-deal-with-nested-comments-in-fslex
    How do I get the comment value, or do I even need to?

@@ -1,7 +1,12 @@
 {
-  "esy": { "build": "dune build" },
+  "esy": {
+    "build": "dune build -p cstar",
+    "release": { "releasedBinaries": [ "cstar" ] }
+  },
   "dependencies": {
+    "@opam/core": "v0.14.1",
     "@opam/dune": "2.9.1",
+    "@opam/llvm": "13.0.0",
     "@opam/merlin": "4.3.1-412",
     "@opam/ocaml-lsp-server": "1.8.3",
     "@opam/ocaml-migrate-parsetree": "1.8.0",
@@ -9,7 +14,9 @@
     "@opam/ocamlformat-rpc": "0.19.0",
     "@opam/ppx_deriving": "5.2.1",
     "@opam/ppx_import": "1.8.0",
+    "@opam/ppx_jane": "v0.14.0",
     "@opam/ppx_tools_versioned": "5.4.0",
+    "@opam/ppx_yojson_conv": "v0.14.0",
     "@opam/ppxlib": "0.23.0",
     "@opam/utop": "2.8.0",
     "ocaml": "^4.12.0"

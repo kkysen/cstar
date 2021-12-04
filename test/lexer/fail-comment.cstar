@@ -1,0 +1,6 @@
+/*unclosed comment 
+struct Employee {
+	department: String,
+	emp_id: i32,
+	manager: *Employee,
+}
