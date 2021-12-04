@@ -26,15 +26,21 @@
 
 %%
 
-module_:
-    decls EOF { $1 }
+defns: 
+    /* nothing */   { [] }
+    | defns defn    { defns @ [defn]}
 
-decls:
-   /* nothing */ { ([], [])               }
- | decls vdecl { (($2 :: fst $1), snd $1) }
- | decls fdecl { (fst $1, ($2 :: snd $1)) }
+defn:
+      func_def      {$1}
+    | var_def SEMI  {$1}
+    | mod           {$1}
 
+func_def:
+    FN ID LBRACE body RBRACE { }
+var_def:
+    LET ID typ_ann_opt EQ expr { }
+mod: 
+    MOD LBRACE defns RBRACE { Mod $1 }
 
-;
 
 
