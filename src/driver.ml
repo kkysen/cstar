@@ -283,7 +283,7 @@ let make_cmd () : Core.Command.t =
   in
   let compile_raw =
     Command.basic
-      ~summary:"compile a C* source file"
+      ~summary:"compile a single stage of a C* source file; this is what the driver invokes"
       Command.Let_syntax.(
         let%map_open src_path =
           flag "--src" (required Filename.arg_type) ~doc:"src src file"
