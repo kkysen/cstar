@@ -259,15 +259,23 @@ install-build-deps() {
     install-llvm
 }
 
+generate-local-esy-llvm-patch() {
+    cp patches/llvm-install.sh.{,local.}patch
+    sd --string-mode '${PWD}' "${PWD}" patches/llvm-install.sh.local.patch
+}
+
 patch-esy-llvm() {
+    generate-local-esy-llvm-patch
     fd --full-path 'llvm.*install.sh$' ~/.esy/source/ \
-        --exec patch --input patches/llvm-install.sh.patch --unified --backup --forward \
+        --exec patch --input patches/llvm-install.sh.local.patch --unified --backup --forward \
         || true # allow error from already applied patch
 }
 
 esy-install() {
     package-install cmake
-    esy install || (patch-esy-llvm && esy install)
+    esy fetch
+    patch-esy-llvm
+    esy install
     esy
 }
 
