@@ -149,6 +149,7 @@ install-from-cargo() {
     cargo-install skim sk
     cargo-install hyperfine
     cargo-install procs
+    cargo-install watchexec
 }
 
 vscode-extension-install() {

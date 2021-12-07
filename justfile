@@ -193,6 +193,11 @@ watch *args: (dune "build" "--watch" args)
 
 alias w := watch
 
+watch-and-run cmd:
+    watchexec 'just build && {{cmd}}'
+
+alias wr := watch-and-run
+
 add +dependencies:
     esy add $(printf "@opam/%s " {{dependencies}})
 
