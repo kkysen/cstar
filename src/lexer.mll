@@ -15,8 +15,18 @@ let char = ''' (ascii) '''
 
 (* let suffix = 'a-z' *)
 
+(* https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=
+   But only ascii for now
+*)
+let xid_start = ['a'-'z' 'A'-'Z']
+(* https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Continue%3A%5D&abb=on&g=&i=
+   But only ascii for now
+*)
+let xid_continue = xid_start | ['0'-'9' '_']
+
 rule token = parse
   | eof { EOF }
+  (* simple literal tokens *)
   | ';' { SemiColon }
   | ':' { Colon }
   | ',' { Comma }
@@ -44,7 +54,9 @@ rule token = parse
   | '~' { Tilde }
   | '#' { Pound }
   | '$' { DollarSign }
+  (* whitespace *)
   | [' ' '\n' '\r' '\t' '\x0B' '\x0C']+ { WhiteSpace }
+  (* comments *)
   (* Only match the actual structural "slashdash" comment, 
    * since we need to fully parse to know what it comments out. 
    *)
@@ -53,8 +65,10 @@ rule token = parse
   | "//" ([^ '\n' '\r']* as s) { Comment (Line s) }
   (* Need to do this recursively since block comments can be nested. *)
   | "/*" { Comment (Block (block_comment 0 "" lexbuf)) }
+  (* string/char literals *)
   | (['b']? as prefix) '\'' { Literal (Char {prefix; unescaped = unescape_char_literal "" lexbuf}) }
   | (['b' 'c' 'r' 'f']? as prefix) '"' { Literal (String {prefix; unescaped = unescape_string_literal "" lexbuf}) }
+  (* number literals *)
   (* If it ends in a '.', it could be a 
    *   float: 1.1
    *   member (field or method): 1.@sizeof()
@@ -65,9 +79,8 @@ rule token = parse
    * naively don't follow this rule, which is why we require another `0x` prefix.
    * This also has the added benefit of allowing you to switch bases between the integral and floating parts.
    *)
-  (*Number Data Types*)
-  (* | "integral" { Literal Number }
-  | "float" { Literal Number } *)
+  (* identifiers *)
+  | ((['_' '$'] | xid_start) xid_continue*) as s { Identifier s }
   | _ as c { failwith (Printf.sprintf "illegal character: %c" c) }
 
 
