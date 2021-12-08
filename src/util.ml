@@ -12,5 +12,5 @@ let list_from_fn (f : unit -> 'a option) : 'a list =
     | None -> list
     | Some e -> next (e :: list)
   in
-  next []
+  next [] |> List.rev
 ;;

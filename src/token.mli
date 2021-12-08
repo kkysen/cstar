@@ -54,7 +54,7 @@ type literal =
 
 type token =
   | EOF
-  | WhiteSpace (* ' \n\r\t', ... *)
+  | WhiteSpace of string (* ' \n\r\t', ... *)
   | Comment of comment
   | Literal of literal
   | Identifier of string

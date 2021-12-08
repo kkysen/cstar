@@ -24,7 +24,7 @@ let test () : unit =
     ; Token.tokens =
         [
           Token.EOF
-        ; Token.WhiteSpace (* ' \n\r\t', ... *)
+        ; Token.WhiteSpace " " (* ' \n\r\t', ... *)
         ; Token.Comment Token.Structural
         ; Token.Comment (Token.Line "line comment")
         ; Token.Comment (Token.Block "block comment")

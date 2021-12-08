@@ -55,7 +55,7 @@ rule token = parse
   | '#' { Pound }
   | '$' { DollarSign }
   (* whitespace *)
-  | [' ' '\n' '\r' '\t' '\x0B' '\x0C']+ { WhiteSpace }
+  | ([' ' '\n' '\r' '\t' '\x0B' '\x0C']+) as s { WhiteSpace s }
   (* comments *)
   (* Only match the actual structural "slashdash" comment, 
    * since we need to fully parse to know what it comments out. 
