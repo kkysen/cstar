@@ -1,5 +1,5 @@
 @extern @abi("C") fn puts(s: u8[]&): i32;
 
 fn main(): () {
-    puts(c"Hello, World!");
+    puts(c"Hello, World!\n");
 }
