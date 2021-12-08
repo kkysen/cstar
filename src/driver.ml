@@ -1,13 +1,5 @@
 open Core
 
-(* https://github.com/janestreet/base/blob/master/src/option.ml#L108 Like
-   https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else *)
-let value_or_thunk o ~default =
-  match o with
-  | Some x -> x
-  | None -> default ()
-;;
-
 let range ~(min : int) ~(max : int) : int list =
   let n = max - min in
   if n < 0 then [] else List.init n ~f:(fun i -> i + min)
@@ -120,12 +112,12 @@ let compile_file
   =
   let src_type =
     src_type
-    |> value_or_thunk ~default:(fun () ->
+    |> Util.value_or_thunk ~default:(fun () ->
            EmitType.detect_exn ~path:src_path ~no_exe_extension)
   in
   let out_type =
     out_type
-    |> value_or_thunk ~default:(fun () ->
+    |> Util.value_or_thunk ~default:(fun () ->
            match out_path with
            | Some out_path ->
                EmitType.detect_exn ~path:out_path ~no_exe_extension
@@ -133,7 +125,7 @@ let compile_file
   in
   let out_path =
     out_path
-    |> value_or_thunk ~default:(fun () ->
+    |> Util.value_or_thunk ~default:(fun () ->
            let (dir_and_stem, _) = Filename.split_extension src_path in
            let ext = EmitType.extension out_type ~no_exe_extension in
            dir_and_stem ^ ext)
@@ -150,7 +142,7 @@ let compile_file
   (* TODO at least match llvm's -save-temps=obj, too*)
   let temps_dir =
     temps_dir
-    |> value_or_thunk ~default:(fun () ->
+    |> Util.value_or_thunk ~default:(fun () ->
            Filename.temp_dir (Filename.basename src_path) ".cstar")
   in
   let temps_dir =

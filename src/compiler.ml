@@ -77,8 +77,13 @@ module Lex = MakeStage (struct
 
   let compile (src : src) : Token.tokens =
     let {path; code} = src in
-    ignore code;
-    {path; tokens = []}
+    let lexbuf = Lexing.from_string code in
+    let tokens = Util.list_from_fn (fun () -> 
+      match Lexer.token lexbuf with
+      | Token.EOF -> None
+      | token -> Some token
+    ) in
+    {path; tokens}
   ;;
 end)
 

@@ -16,6 +16,7 @@ let char = ''' (ascii) '''
 (* let suffix = 'a-z' *)
 
 rule token = parse
+  | eof { EOF }
   | ';' { SemiColon }
   | ':' { Colon }
   | ',' { Comma }
