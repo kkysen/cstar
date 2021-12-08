@@ -89,7 +89,7 @@ rule token = parse
 *)
 and block_comment depth comment = parse
   | "*/" as s { match depth with
-    | 0 -> s
+    | 0 -> comment
     | _ -> block_comment (depth - 1) (comment ^ s) lexbuf
   }
   | "/*" as s { block_comment (depth + 1) (comment ^ s) lexbuf }
