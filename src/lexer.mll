@@ -1,6 +1,6 @@
-{ 
-open Token
-exception InvalidChar of string 
+{
+  open Core
+  open Token
 }
 
 let sign = ['+' '-']? as sign
@@ -43,7 +43,6 @@ rule token = parse
   | '~' { Tilde }
   | '#' { Pound }
   | '$' { DollarSign }
-  | '"' { read_string (Buffer.create 80) lexbuf }
   | [' ' '\n' '\r' '\t' '\x0B' '\x0C']+ { WhiteSpace }
   (* Only match the actual structural "slashdash" comment, 
    * since we need to fully parse to know what it comments out. 
@@ -52,7 +51,9 @@ rule token = parse
   (* Could also be a doc comment if /// so definitely store the comment string. *)
   | "//" ([^ '\n' '\r']* as s) { Comment (Line s) }
   (* Need to do this recursively since block comments can be nested. *)
-  | "/*" { block_comment 0 lexbuf }
+  | "/*" { Comment (Block (block_comment 0 "" lexbuf)) }
+  | (['b']? as prefix) '\'' { Literal (Char {prefix; unescaped = unescape_char_literal "" lexbuf}) }
+  | (['b' 'c' 'r' 'f']? as prefix) '"' { Literal (String {prefix; unescaped = unescape_string_literal "" lexbuf}) }
   (* If it ends in a '.', it could be a 
    *   float: 1.1
    *   member (field or method): 1.@sizeof()
@@ -66,33 +67,37 @@ rule token = parse
   (*Number Data Types*)
   (* | "integral" { Literal Number }
   | "float" { Literal Number } *)
+  | _ as c { failwith (Printf.sprintf "illegal character: %c" c) }
 
 
 (* https://stackoverflow.com/questions/7117975/how-to-deal-with-nested-comments-in-fslex
    How do I get the comment value, or do I even need to?
 *)
-and block_comment depth = parse
-  | "*/" { match depth with
-             | 0 -> token lexbuf
-             | _ -> block_comment (depth - 1) lexbuf
-         }
-  | "/*" { block_comment (depth + 1) lexbuf }
-  | _ { block_comment depth lexbuf }
-  
-(*Modified: https://github.com/realworldocaml/examples/blob/v1/code/parsing/lexer.mll*)
-and read_string buf = parse
-  | '"' { STRING (Buffer.contents buf) }
-    (*we have to escape '\' so '\\' needed*)
-  | '\\' '/' { Buffer.add_char buf '/'; read_string buf lexbuf } 
-  | '\\' '\\' { Buffer.add_char buf '\\'; read_string buf lexbuf } 
-  | '\\' 'b' { Buffer.add_char buf '\b'; read_string buf lexbuf } 
-  | '\\' 'f' { Buffer.add_char buf '\012'; read_string buf lexbuf } 
-  | '\\' 'n' { Buffer.add_char buf '\n'; read_string buf lexbuf } 
-  | '\\' 'r' { Buffer.add_char buf '\r'; read_string buf lexbuf } 
-  | '\\' 't' { Buffer.add_char buf '\t'; read_string buf lexbuf } 
-  | [^ '"' '\\']+ (*processing any char in the string that is not an escape*)
-{ Buffer.add_string buf (Lexing.lexeme lexbuf); 
-  read_string buf lexbuf
-}
-  (*catch all for any invalid char in our string*)
-  | _ { (raise (InvalidChar("Illegal string character: " ^ Lexing.lexeme lexbuf))) }
+and block_comment depth comment = parse
+  | "*/" as s { match depth with
+    | 0 -> s
+    | _ -> block_comment (depth - 1) (comment ^ s) lexbuf
+  }
+  | "/*" as s { block_comment (depth + 1) (comment ^ s) lexbuf }
+  | _  as c { block_comment depth (comment ^ String.of_char c) lexbuf }
+
+and decode_char_escape = parse
+  | ['\\' '\'' '"'] as c { c }
+  | 'n' { '\n' }
+  | 'r' { '\r' }
+  | 't' { '\t' }
+  | 'b' { '\b' }
+  | 'v' { '\x0B' }
+  | 'f' { '\x0C' }
+  | _ as c { failwith (Printf.sprintf "illegal escape: %c" c) }
+
+and unescape_char_literal s = parse
+  | '\'' { s }
+  | '\\' { unescape_char_literal (s ^ String.of_char (decode_char_escape lexbuf)) lexbuf }
+  | _ as c { unescape_char_literal (s ^ String.of_char c) lexbuf }
+
+(* modified from: https://github.com/realworldocaml/examples/blob/v1/code/parsing/lexer.mll *)
+and unescape_string_literal s = parse
+  | '"' { s }
+  | '\\' { unescape_string_literal (s ^ String.of_char (decode_char_escape lexbuf)) lexbuf }
+  | _ as c { unescape_string_literal (s ^ String.of_char c) lexbuf }

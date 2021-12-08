@@ -60,7 +60,6 @@ let test () : unit =
         ; Token.Tilde (* ~ *)
         ; Token.Pound (* # *)
         ; Token.DollarSign (* $ *)
-        ; Token.Unknown
         ]
     }
   in

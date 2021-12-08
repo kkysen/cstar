@@ -33,14 +33,14 @@ type number_literal = {
 [@@deriving show, yojson]
 
 type char_literal = {
-    unescaped : string
-  ; prefix : string
+    prefix : string
+  ; unescaped : string
 }
 [@@deriving show, yojson]
 
 type string_literal = {
-    unescaped : string
-  ; prefix : string
+    prefix : string
+  ; unescaped : string
 }
 [@@deriving show, yojson]
 
@@ -85,8 +85,6 @@ type token =
   | Tilde (* ~ *)
   | Pound (* # *)
   | DollarSign (* $ *)
-  | Unknown
-  | STRING of string
 [@@deriving show, yojson]
 
 type tokens = {
