@@ -1,6 +1,9 @@
 %{ 
     open Ast
+    open Token
 %}
+
+%token WhiteSpace
 
 %token SEMI LPAREN RPAREN LBRACE RBRACE COMMA PLUS MINUS TIMES DIVIDE ASSIGN
 %token NOT EQ NEQ LT LEQ GT GEQ AND OR
@@ -26,20 +29,23 @@
 
 %%
 
-defns: 
-    /* nothing */   { [] }
-    | defns defn    { defns @ [defn]}
+// defns: 
+//     /* nothing */   { [] }
+//     | defns defn    { defns @ [defn]}
 
-defn:
-      func_def      {$1}
-    | var_def SEMI  {$1}
-    | mod           {$1}
+// defn:
+//       func_def      {$1}
+//     | var_def SEMI  {$1}
+//     | mod           {$1}
 
-func_def:
-    FN ID LBRACE body RBRACE { }
-var_def:
-    LET ID typ_ann_opt EQ expr { }
-mod: 
-    MOD LBRACE defns RBRACE { Mod $1 }
+// func_def:
+//     FN ID LBRACE body RBRACE { }
+// var_def:
+//     LET ID typ_ann_opt EQ expr { }
+// mod: 
+//     MOD LBRACE defns RBRACE { Mod $1 }
 
 
+module_:
+| WhiteSpace { {name = "", items = []} }
+;
