@@ -20,9 +20,15 @@ type sign =
 type raw_int_literal = {
     sign : sign
   ; base : number_base
-  ; number : string
+  ; digits : string
 }
 [@@deriving show, yojson]
+
+(*
+ocamllex is kind of shitty.
+Can't define recursive rules, so have to do the lexing/parsing twice.
+*)
+val parse_raw_int_literal : string -> raw_int_literal
 
 type number_literal = {
     integral : raw_int_literal

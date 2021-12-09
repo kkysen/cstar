@@ -1,19 +1,8 @@
 {
-  open Core
   open Token
+  
+  let of_char = Core.String.of_char
 }
-
-let sign = ['+' '-']? as sign
-let int_base = ('0'(['b' 'o' 'x'] as base) '_'?)?
-let digit = ['0'-'9' 'A'-'F' 'a'-'f']
-let raw_int = int_base digit (digit|'_')*
-let integral = raw_int
-let float = raw_int "." raw_int
-
-let ascii = ([' '-'!' '#'-'[' ']'-'~'])
-let char = ''' (ascii) '''
-
-(* let suffix = 'a-z' *)
 
 (* https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=
    But only ascii for now
@@ -23,6 +12,36 @@ let xid_start = ['a'-'z' 'A'-'Z']
    But only ascii for now
 *)
 let xid_continue = xid_start | ['0'-'9' '_']
+
+let identifier = (['_' '$'] | xid_start) xid_continue*
+
+(* let binary_digit = ['0'-'1']
+let octal_digit = ['0'-'7']
+let decimal_digit = ['0'-'9']
+let hex_digit = ['0'-'9' 'A'-'F' 'a'-'f']
+
+let raw_binary_int = "0b" ((binary_digit | '_')* binary_digit as digits)
+let raw_octal_int = "0o" ((octal_digit | '_')* octal_digit as digits)
+let raw_hex_int = "0x" ((hex_digit | '_')* hex_digit as digits)
+let raw_decimal_int = (decimal_digit | (decimal_digit (decimal_digit | '_')* decimal_digit)) as digits
+
+let sign = ['+' '-']? as sign
+let raw_int = raw_binary_int | raw_octal_int | raw_decimal_int | raw_hex_int
+let num_suffix = identifier? as suffix
+
+let integral = sign raw_int
+let floating = '.' raw_int
+let exponent = ['e' 'E'] sign raw_int
+
+let num = integral floating? exponent? num_suffix *)
+
+let sign = ['+' '-']?
+let digit = ['0'-'9' 'A'-'F']
+let raw_int = ('0' ['b' 'o' 'x'] '_'?)? (digit | (digit (digit | '_')* digit))
+let integral = (sign raw_int as integral)
+let floating = '.' (raw_int as floating)
+let exponent = 'e' (sign raw_int as exponent)
+let num = integral floating? exponent? (identifier as suffix)?
 
 rule token = parse
   | eof { EOF }
@@ -68,19 +87,15 @@ rule token = parse
   (* string/char literals *)
   | (['b']? as prefix) '\'' { Literal (Char {prefix; unescaped = unescape_char_literal "" lexbuf}) }
   | (['b' 'c' 'r' 'f']? as prefix) '"' { Literal (String {prefix; unescaped = unescape_string_literal "" lexbuf}) }
-  (* number literals *)
-  (* If it ends in a '.', it could be a 
-   *   float: 1.1
-   *   member (field or method): 1.@sizeof()
-   *   range: 1..2
-   * If the character following the '.' is another digit,
-   * then it has to be a float.
-   * Note that hex floats, which can include 'a-fA-F',
-   * naively don't follow this rule, which is why we require another `0x` prefix.
-   * This also has the added benefit of allowing you to switch bases between the integral and floating parts.
-   *)
   (* identifiers *)
-  | ((['_' '$'] | xid_start) xid_continue*) as s { Identifier s }
+  | (identifier) as s { Identifier s }
+  (* number literals *)
+  | num { Literal (Number ({
+      integral = integral |> parse_raw_int_literal
+    ; floating = floating |> Option.map parse_raw_int_literal
+    ; exponent = exponent |> Option.map parse_raw_int_literal
+    ; suffix = suffix |> Option.value ~default:""
+  })) }
   | _ as c { failwith (Printf.sprintf "illegal character: %c" c) }
 
 
@@ -93,7 +108,7 @@ and block_comment depth comment = parse
     | _ -> block_comment (depth - 1) (comment ^ s) lexbuf
   }
   | "/*" as s { block_comment (depth + 1) (comment ^ s) lexbuf }
-  | _  as c { block_comment depth (comment ^ String.of_char c) lexbuf }
+  | _  as c { block_comment depth (comment ^ of_char c) lexbuf }
 
 and decode_char_escape = parse
   | ['\\' '\'' '"'] as c { c }
@@ -107,11 +122,11 @@ and decode_char_escape = parse
 
 and unescape_char_literal s = parse
   | '\'' { s }
-  | '\\' { unescape_char_literal (s ^ String.of_char (decode_char_escape lexbuf)) lexbuf }
-  | _ as c { unescape_char_literal (s ^ String.of_char c) lexbuf }
+  | '\\' { unescape_char_literal (s ^ of_char (decode_char_escape lexbuf)) lexbuf }
+  | _ as c { unescape_char_literal (s ^ of_char c) lexbuf }
 
 (* modified from: https://github.com/realworldocaml/examples/blob/v1/code/parsing/lexer.mll *)
 and unescape_string_literal s = parse
   | '"' { s }
-  | '\\' { unescape_string_literal (s ^ String.of_char (decode_char_escape lexbuf)) lexbuf }
-  | _ as c { unescape_string_literal (s ^ String.of_char c) lexbuf }
+  | '\\' { unescape_string_literal (s ^ of_char (decode_char_escape lexbuf)) lexbuf }
+  | _ as c { unescape_string_literal (s ^ of_char c) lexbuf }

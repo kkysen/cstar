@@ -1,5 +1,27 @@
 @extern @abi("C") fn puts(s: u8[]&): i32;
 
 fn main(): () {
+    let _ = 0i32;
+    let _ = 0;
+    let _ = 201_9023;
+    let _ = 0b01;
+    let _ = 0o744;
+    let _ = 0xCAFE_BABE;
+    let _ = 0.0;
+    let _ = 3.14;
+    let _ = 0b11.0xE;
+    let _ = 10e9;
+    let _ = 1.4e-2;
+    let _ = 124uptr;
+    let _ = 14.0o13f128;
     puts(c"Hello, World!\n");
 }
+
+/*
+let sign = ['+' '-']? as sign
+let int_base = ('0'(['b' 'o' 'x'] as base) '_'?)?
+let digit = ['0'-'9' 'A'-'F' 'a'-'f']
+let raw_int = int_base digit (digit | '_')*
+let integral = raw_int
+let float = raw_int "." raw_int
+*/

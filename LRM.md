@@ -856,7 +856,7 @@ The base and corresponding digits may be:
 | none   | decimal     |  10  | `0-9`               |
 | `0b`   | binary      |   2  | `0-1`               |
 | `0o`   | octal       |   8  | `0-8`               |
-| `0x`   | hexadecimal |  16  | `0-9`, `a-f`, `A-F` |
+| `0x`   | hexadecimal |  16  | `0-9`, `A-F`        |
 
 The series of digits may also be separated by
 any number of `_` underscores between the digits.
@@ -866,7 +866,7 @@ If there is a floating part, then a decimal point `.`
 separates it from the preceeding integral part.
 The floating part may not have a sign and is always positive (in itself).
 
-If there is an exponent, then an `e` or `E` precedes it.
+If there is an exponent, then an `e` precedes it.
 
 The (optional) suffix contains the type of number and a bit size.
 
