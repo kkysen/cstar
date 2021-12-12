@@ -68,7 +68,7 @@ rule token = parse
   | '#' { Pound }
   | '$' { DollarSign }
   (* IDENTIFIERS *)
-  | (letter | '_') (letter | digit | '_')* as id { IDENT(id) }
+  | digit as id { IDENT(id) } (* Come back to this *)
   | '"' { read_string (Buffer.create 80) lexbuf }
   | [' ' '\n' '\r' '\t' '\x0B' '\x0C']+ { WhiteSpace }
   (* Only match the actual structural "slashdash" comment, 
