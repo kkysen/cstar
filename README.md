@@ -33,7 +33,10 @@ Then run `just build` to build and install `cstar` to your `$PATH`, i.e, to `./b
 
 To add shell autocompletions (for the `cstar` executable), run `eval "$(cstar completions)"`.
 
-`cstar --help` explains how to run `cstar`.
+`cstar --help` and `cstar compile --help` explain how to run `cstar`.  For the simplest case, run `cstar compile $path.cstar` to produce a `$path` executable.
+
+Make sure `./bin/llvm` is still on your `$PATH` when running this,
+which it is after running `eval "$(just path)"`.
 
 
 ## Set Up with VM 
