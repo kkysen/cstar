@@ -87,8 +87,15 @@ rule token = parse
   (* string/char literals *)
   | (['b']? as prefix) '\'' { Literal (Char {prefix; unescaped = unescape_char_literal "" lexbuf}) }
   | (['b' 'c' 'r' 'f']? as prefix) '"' { Literal (String {prefix; unescaped = unescape_string_literal "" lexbuf}) }
-  (* identifiers *)
-  | (identifier) as s { Identifier s }
+  (* keyword and identifiers
+  ideally keywords would be done in the parser
+  (i.e., they'd all be identifiers here in the lexer)
+  due to context dependencies, but that's harder in ocamlyacc *)
+  | (identifier) as s { 
+    Token.keyword_of_string s 
+    |> Option.map (fun kw -> Keyword kw) 
+    |> Option.value ~default:(Identifier s)
+  }
   (* number literals *)
   | num { Literal (Number ({
       integral = integral |> parse_raw_int_literal

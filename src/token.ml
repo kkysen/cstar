@@ -121,11 +121,66 @@ type literal =
   | String of string_literal
 [@@deriving show, yojson]
 
+type keyword = 
+  | KwUse
+  | KwLet
+  | KwMut
+  | KwPub
+  | KwIn
+  | KwTry
+  | KwConst
+  | KwImpl
+  | KwFn
+  | KwStruct
+  | KwEnum
+  | KwUnion
+  | KwReturn
+  | KwBreak
+  | KwContinue
+  | KwFor
+  | KwWhile
+  | KwIf
+  | KwElse
+  | KwMatch
+  | KwDefer
+  | KwUndefer
+  | KwTrait
+[@@deriving show, yojson]
+
+let keyword_of_string (s : string) : keyword option = 
+  match s with
+  | "use" -> Some KwUse
+  | "let" -> Some KwLet
+  | "mut" -> Some KwMut
+  | "pub" -> Some KwPub
+  | "in" -> Some KwIn
+  | "try" -> Some KwTry
+  | "const" -> Some KwConst
+  | "impl" -> Some KwImpl
+  | "fn" -> Some KwFn
+  | "struct" -> Some KwStruct
+  | "enum" -> Some KwEnum
+  | "union" -> Some KwUnion
+  | "return" -> Some KwReturn
+  | "break" -> Some KwBreak
+  | "continue" -> Some KwContinue
+  | "for" -> Some KwFor
+  | "while" -> Some KwWhile
+  | "if" -> Some KwIf
+  | "else" -> Some KwElse
+  | "match" -> Some KwMatch
+  | "defer" -> Some KwDefer
+  | "undefer" -> Some KwUndefer
+  | "trait" -> Some KwTrait
+  | _ -> None
+;;
+
 type token =
   | EOF
   | WhiteSpace of string (* ' \n\r\t', ... *)
   | Comment of comment
   | Literal of literal
+  | Keyword of keyword
   | Identifier of string
   | SemiColon (* ; *)
   | Colon (* : *)

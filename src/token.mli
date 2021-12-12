@@ -58,11 +58,40 @@ type literal =
   | String of string_literal
 [@@deriving show, yojson]
 
+type keyword = 
+  | KwUse
+  | KwLet
+  | KwMut
+  | KwPub
+  | KwIn (* not always *)
+  | KwTry
+  | KwConst
+  | KwImpl
+  | KwFn
+  | KwStruct
+  | KwEnum
+  | KwUnion
+  | KwReturn
+  | KwBreak
+  | KwContinue
+  | KwFor
+  | KwWhile
+  | KwIf
+  | KwElse
+  | KwMatch
+  | KwDefer
+  | KwUndefer
+  | KwTrait (* reserved for future *)
+[@@deriving show, yojson]
+
+val keyword_of_string : string -> keyword option
+
 type token =
   | EOF
   | WhiteSpace of string (* ' \n\r\t', ... *)
   | Comment of comment
   | Literal of literal
+  | Keyword of keyword
   | Identifier of string
   | SemiColon (* ; *)
   | Colon (* : *)
