@@ -20,31 +20,45 @@ let translate (globals, functions) =
 *                                  TYPES
 *******************************************************************************)
   (*define aliass for LLVM types to use when we match against Cstar types*)
-  let i8_t      = LL.i8_type      context
-  and i32_t     = LL.i32_type     context
-  and i64_t     = LL.i64_type     context
-  and i128_t    = LL.integer_type context 128
-  (*TODO: Add variable bitwidth integer types *)
+  let i8_t      = LL.i8_type      context (*char/8bit ints *)
+  and i32_t     = LL.i32_type     context (*32 bit ints *)
+  and i64_t     = LL.i64_type     context (* 64k bit ints *)
+  and i128_t    = LL.integer_type context 128 (*128 bit ints *)
+  (*TODO: Add variable bitwidth integer types *) 
   (*LLVM is not making a difference between unsinged/signed ints *)
   and f32_t     = LL.float_type   context 
   and f64_t     = LL.double_type  context
-  and f128_t    = LL.fp128_type   context
+  and f128_t    = LL.fp128_type   context in 
+  let str_t     = LL.pointer_type i8_t in
+  let enum_t    = i32_t in 1+1 
+
+(******************************************************************************
+*                                  BUILT-INS FUNCTIONS
+*******************************************************************************)
+(*
+let println_t : LL.lltype = 
+  LL.function_type i32_t [|str_t i32_t|] in 
+  
+*)
 
 
 
+
+(*
 
   let build_function_body fdecl = 
 
 
-  in 
+  in
 
   List.iter build_function_body functions;
   the_module
-
+*)
 
 (******************************************************************************
 *                                  OLD CODE
 *******************************************************************************)
+(*
 let ctx = LL.global_context ()
 let target_triple = LLTarget.Target.default_triple ()
 let i8 = LL.i8_type ctx 
@@ -69,3 +83,4 @@ let puts =
     let zero_i32 = LL.const_int i32 0 in
     let (_ : LL.llvalue) = LL.build_ret zero_i32 irb in
     func ;;
+    *)
