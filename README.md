@@ -45,6 +45,9 @@ https://drive.google.com/file/d/1mU8F33PCl8f9cnk0UJ24SIuVKea9am26/view?usp=shari
 
 ## Building
 (See set up with VM section first)
+Check to see if clang is installed and up to date. If not, `sudo apt install clang`. 
+If `esy` is not installed or up to date, run `esy install`.
+Check to see if llvm is installed and at version `13.0.1`, if not run `sudo apt install llvm`.
 Run `./setup.sh <mode>`, where `mode` is either `build` or `dev`.  
 Run `eval "$(./setup.sh path)"`, or if you already have `just`, just `eval "$(just path)"`.
 Then run `just build` to build and install `cstar` to your `$PATH`, i.e, to `./bin/cstar`.
