@@ -280,9 +280,14 @@ esy-install() {
     esy
 }
 
+build-only() {
+    esy-install
+    just build
+}
+
 install-build() {
     install-build-deps
-    esy-install
+    build-only
 }
 
 install-dev-only() {
@@ -297,8 +302,7 @@ install-dev-deps() {
 
 install-dev() {
     install-dev-deps
-    esy-install
-    just build
+    build-only
 }
 
 install-path() {
