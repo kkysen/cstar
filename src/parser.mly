@@ -8,7 +8,7 @@
 %token <int> LITERAL
 %token <bool> BLIT
 %token <string> ID FLIT
-%token EOF
+%token EOF FN
 
 %start module_
 %type <Ast.module_> module_
