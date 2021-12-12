@@ -1,5 +1,6 @@
 set shell := ["bash", "-c"]
 
+std-lib-dir := "./libcstar"
 default:
     just --list
 
@@ -168,7 +169,11 @@ esy-path path:
 link-cstar:
     ln -s -f "../$(just esy-path "cstar.exe")" ./bin/cstar
 
-build *args: (dune "build" "./src/cstar.exe" args) link-cstar
+build-std-lib:
+    cd {{std-lib-dir}} && make
+    
+
+build *args: (dune "build" "./src/cstar.exe" args) link-cstar build-std-lib
 
 alias b := build
 
