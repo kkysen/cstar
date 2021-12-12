@@ -1,11 +1,51 @@
 open Core 
 module LL = Llvm
+module A = Ast
 module LLAnalysis = Llvm_analysis
 module LLTarget = Llvm_target
 
+(*surely we will need a string map*)
+module StringMap = Map.Make(String)
+(******************************************************************************
+*                                  SETUP
+*******************************************************************************)
+let translate (globals, functions) = 
+  let context = LL.global_context () in 
 
+
+  let the_module = LL.create_module context "Cstar" in 
+
+
+(******************************************************************************
+*                                  TYPES
+*******************************************************************************)
+  (*define aliass for LLVM types to use when we match against Cstar types*)
+  let i8_t      = LL.i8_type      context
+  and i32_t     = LL.i32_type     context
+  and i64_t     = LL.i64_type     context
+  and i128_t    = LL.integer_type context 128
+  (*TODO: Add variable bitwidth integer types *)
+  (*LLVM is not making a difference between unsinged/signed ints *)
+  and f32_t     = LL.float_type   context 
+  and f64_t     = LL.double_type  context
+  and f128_t    = LL.fp128_type   context
+
+
+
+
+  let build_function_body fdecl = 
+
+
+  in 
+
+  List.iter build_function_body functions;
+  the_module
+
+
+(******************************************************************************
+*                                  OLD CODE
+*******************************************************************************)
 let ctx = LL.global_context ()
-let mod_ = LL.create_module ctx "TODO: replace me"
 let target_triple = LLTarget.Target.default_triple ()
 let i8 = LL.i8_type ctx 
 let i32 = LL.i32_type ctx 
