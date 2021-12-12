@@ -12,6 +12,30 @@ See the [proposal](./proposal.md) for an overview of the language.
 ## Language Reference Manual
 See the [language reference manual](./LRM.md) for a detailed reference manual for the language.
 
+
+
+## Building
+Building only currently works on Linux,
+and has been tested on recent Ubuntus and Debians.
+Make sure the below is run on Linux.
+We also include [instructions](#set-up-with-vm) below for 
+downloading and using our VM, which already has things installed.
+
+Run `./setup.sh <mode>`, where `mode` is either `build` or `dev`.
+* `build` installs everything necessary to build
+* `dev` also installs things necessary/useful for developing `cstar`
+
+Then run `eval "$(./setup.sh path)"`, or if you already have `just`, just `eval "$(just path)"`.
+
+Then run `just build` to build and install `cstar` to your `$PATH`, i.e, to `./bin/cstar`.
+
+`just watch` is also useful for watching for changes to build.
+
+To add shell autocompletions (for the `cstar` executable), run `eval "$(cstar completions)"`.
+
+`cstar --help` explains how to run `cstar`.
+
+
 ## Set Up with VM 
 1. Download VirtualBox:
         With Homebrew (MacOS): brew install --cask virtualbox
@@ -42,14 +66,3 @@ https://drive.google.com/file/d/1mU8F33PCl8f9cnk0UJ24SIuVKea9am26/view?usp=shari
 		ii) if it does not select cancel and boot the VM
 
 6. Password for the vm is "lerner"
-
-## Building
-(See set up with VM section first)
-Check to see if clang is installed and up to date. If not, `sudo apt install clang`. 
-If `esy` is not installed or up to date, run `esy install`.
-Check to see if llvm is installed and at version `13.0.1`, if not run `sudo apt install llvm`.
-Run `./setup.sh <mode>`, where `mode` is either `build` or `dev`.  
-Run `eval "$(./setup.sh path)"`, or if you already have `just`, just `eval "$(just path)"`.
-Then run `just build` to build and install `cstar` to your `$PATH`, i.e, to `./bin/cstar`.
-`just watch` is also useful for watching for changes to build.
-To add shell autocompletions, run `eval "$(cstar completions)"`.
