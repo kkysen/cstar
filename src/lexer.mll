@@ -16,16 +16,40 @@ let char = ''' (ascii) '''
 (* let suffix = 'a-z' *)
 
 rule token = parse
+  (* KEYWORDS *)
+  | "use"
+  | "let"
+  | "mut"
+  | "pub"
+  | "try"
+  | "const"
+  | "impl"
+  | "fn"
+  | "struct"
+  | "enum"
+  | "union"
+  | "return"
+  | "break"
+  | "continue"
+  | "for"
+  | "while"
+  | "if"
+  | "else"
+  | "match"
+  | "defer"
+  | "undefer"
   | ';' { SemiColon }
   | ':' { Colon }
   | ',' { Comma }
   | '.' { Dot }
+  (* BRACES *)
   | '(' { OpenParen }
   | ')' { CloseParen }
   | '{' { OpenBrace }
   | '}' { CloseBrace }
   | '[' { OpenBracket }
   | ']' { CloseBracket }
+  (* OPERATORS *)
   | '@' { At }
   | '?' { QuestionMark }
   | '!' { ExclamationPoint }
