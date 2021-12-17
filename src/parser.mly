@@ -10,8 +10,8 @@
 %token <string> ID FLIT
 %token EOF FN
 
-%start module_
-%type <Ast.module_> module_
+%start mod_
+%type <Ast.mod_> mod_
 
 %nonassoc NOELSE
 %nonassoc ELSE
