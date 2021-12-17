@@ -19,6 +19,12 @@ type src = {
   ; code : string
 } [@@deriving show, yojson]
 
+type token_src = {
+    src : src
+  ; tokens : Token.token list
+}
+[@@deriving show, yojson]
+
 type desugared_ast = {path : string} [@@deriving show, yojson]
 
 type typed_ast = {path : string} [@@deriving show, yojson]

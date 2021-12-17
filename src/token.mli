@@ -121,9 +121,3 @@ type token =
   | Pound (* # *)
   | DollarSign (* $ *)
 [@@deriving show, yojson]
-
-type tokens = {
-    path : string
-  ; tokens : token list
-}
-[@@deriving show, yojson]

@@ -18,52 +18,48 @@ let test () : unit =
   (* let lexbuf = Lexing.from_string "fn main() {}" in *)
   (* let tokens = read_tokens lexbuf in *)
   (* tokens |> List.map Token.show_token |> List.iter print_endline in *)
-  let tokens =
-    {
-      Token.path = "?"
-    ; Token.tokens =
-        [
-          Token.EOF
-        ; Token.WhiteSpace " " (* ' \n\r\t', ... *)
-        ; Token.Comment Token.Structural
-        ; Token.Comment (Token.Line "line comment")
-        ; Token.Comment (Token.Block "block comment")
-          (* ; Token.Literal (Token.Number) *)
-        ; Token.Literal (Token.Char {unescaped = ","; prefix = ""})
-        ; Token.Literal
-            (Token.String {unescaped = "hello\\nworld"; prefix = "b"})
-        ; Token.Identifier "identifier"
-        ; Token.SemiColon (* ; *)
-        ; Token.Colon (* : *)
-        ; Token.Comma (* , *)
-        ; Token.Dot (* . *)
-        ; Token.OpenParen (* ( *)
-        ; Token.CloseParen (* ) *)
-        ; Token.OpenBrace (* { *)
-        ; Token.CloseBrace (* } *)
-        ; Token.OpenBracket (* [ *)
-        ; Token.CloseBracket (* ] *)
-        ; Token.At (* @ *)
-        ; Token.QuestionMark (* ? *)
-        ; Token.ExclamationPoint (* ! *)
-        ; Token.Equal (* = *)
-        ; Token.LessThan (* < *)
-        ; Token.GreaterThan (* > *)
-        ; Token.Plus (* + *)
-        ; Token.Minus (* - *)
-        ; Token.Times (* * *)
-        ; Token.Divide (* / *)
-        ; Token.And (* & *)
-        ; Token.Or (* | *)
-        ; Token.Caret (* ^ *)
-        ; Token.Percent (* % *)
-        ; Token.Tilde (* ~ *)
-        ; Token.Pound (* # *)
-        ; Token.DollarSign (* $ *)
-        ]
-    }
+  let tokens = [
+    Token.EOF
+  ; Token.WhiteSpace " " (* ' \n\r\t', ... *)
+  ; Token.Comment Token.Structural
+  ; Token.Comment (Token.Line "line comment")
+  ; Token.Comment (Token.Block "block comment")
+    (* ; Token.Literal (Token.Number) *)
+  ; Token.Literal (Token.Char {unescaped = ","; prefix = ""})
+  ; Token.Literal
+      (Token.String {unescaped = "hello\\nworld"; prefix = "b"})
+  ; Token.Identifier "identifier"
+  ; Token.SemiColon (* ; *)
+  ; Token.Colon (* : *)
+  ; Token.Comma (* , *)
+  ; Token.Dot (* . *)
+  ; Token.OpenParen (* ( *)
+  ; Token.CloseParen (* ) *)
+  ; Token.OpenBrace (* { *)
+  ; Token.CloseBrace (* } *)
+  ; Token.OpenBracket (* [ *)
+  ; Token.CloseBracket (* ] *)
+  ; Token.At (* @ *)
+  ; Token.QuestionMark (* ? *)
+  ; Token.ExclamationPoint (* ! *)
+  ; Token.Equal (* = *)
+  ; Token.LessThan (* < *)
+  ; Token.GreaterThan (* > *)
+  ; Token.Plus (* + *)
+  ; Token.Minus (* - *)
+  ; Token.Times (* * *)
+  ; Token.Divide (* / *)
+  ; Token.And (* & *)
+  ; Token.Or (* | *)
+  ; Token.Caret (* ^ *)
+  ; Token.Percent (* % *)
+  ; Token.Tilde (* ~ *)
+  ; Token.Pound (* # *)
+  ; Token.DollarSign (* $ *)
+  ]
   in
-  let tokens_json = tokens |> Token.yojson_of_tokens |> Yojson.Safe.to_string in
+  ignore tokens;
+  (* let tokens_json = tokens |> Token.yojson_of_tokens |> Yojson.Safe.to_string in *)
   let example_type : Ast.type_ =
     Ast.Struct
       {
@@ -141,33 +137,36 @@ let test () : unit =
     ; Ast.module_ =
         {
           Ast.name = "hello"
-        ; Ast.items =
-            [
-              Ast.Let
-                (Ast.Type
-                   {
-                     Ast.binding =
+        ; Ast.body =
+            {
+              Ast.items =
+                [
+                  Ast.Let
+                    (Ast.Type
                        {
-                         Ast.name = "Example"
-                       ; Ast.publicity = Ast.Private
-                       ; Ast.annotations = []
-                       ; Ast.doc_comment = {Ast.lines = []}
-                       }
-                   ; Ast.value = example_type
-                   })
-            ; Ast.Impl
-                {
-                  Ast.impl_type = example_type
-                ; Ast.impl_funcs =
-                    {map = StringMap.S.singleton "print" print_method}
-                }
-            ; Ast.Let (Ast.Value main_func)
-            ]
+                         Ast.binding =
+                           {
+                             Ast.name = "Example"
+                           ; Ast.publicity = Ast.Private
+                           ; Ast.annotations = []
+                           ; Ast.doc_comment = {Ast.lines = []}
+                           }
+                       ; Ast.value = example_type
+                       })
+                ; Ast.Impl
+                    {
+                      Ast.impl_type = example_type
+                    ; Ast.impl_funcs =
+                        {map = StringMap.S.singleton "print" print_method}
+                    }
+                ; Ast.Let (Ast.Value main_func)
+                ]
+            }
         }
     }
   in
   let ast_json = ast |> Ast.yojson_of_ast |> Yojson.Safe.pretty_to_string in
-  ignore tokens_json;
+  (* ignore tokens_json; *)
   ignore ast_json;
   ()
 ;;

@@ -60,7 +60,14 @@ let json_serializer (serializer : 'a -> Yojson.Safe.t)
 type src = {
     path : string
   ; code : string
-} [@@deriving show, yojson]
+}
+[@@deriving show, yojson]
+
+type token_src = {
+    src : src
+  ; tokens : Token.token list
+}
+[@@deriving show, yojson]
 
 type desugared_ast = {path : string} [@@deriving show, yojson]
 
@@ -69,37 +76,112 @@ type typed_ast = {path : string} [@@deriving show, yojson]
 module Lex = MakeStage (struct
   type input = src
 
-  type output = Token.tokens
+  type output = token_src
 
   let from_file ~(path : string) () = {path; code = In_channel.read_all path}
 
-  let to_file = json_serializer Token.yojson_of_tokens
+  let to_file = json_serializer yojson_of_token_src
 
-  let compile (src : src) : Token.tokens =
-    let {path; code} = src in
-    let lexbuf = Lexing.from_string code in
-    let tokens = Util.list_from_fn (fun () -> 
-      match Lexer.token lexbuf with
-      | Token.EOF -> None
-      | token -> Some token
-    ) in
-    {path; tokens}
+  let compile (src : src) : token_src =
+    let lexbuf = Lexing.from_string src.code in
+    let tokens =
+      Util.list_from_fn (fun () ->
+          match Lexer.token lexbuf with
+          | Token.EOF -> None
+          | token -> Some token)
+    in
+    {src; tokens}
   ;;
 end)
 
 module Parse = MakeStage (struct
-  type input = Token.tokens
+  type input = token_src
 
   type output = Ast.ast
 
-  let from_file = json_deserializer Token.tokens_of_yojson
+  let from_file = json_deserializer token_src_of_yojson
 
   let to_file = json_serializer Ast.yojson_of_ast
 
-  let compile (tokens : Token.tokens) : Ast.ast =
-    let {path; Token.tokens} = tokens in
+  let translate_token (token : Token.token) : Parser.token =
+    match token with
+    | Token.EOF -> Parser.EOF
+    | Token.WhiteSpace s -> Parser.WhiteSpace s
+    | Token.Comment comment -> (
+        match comment with
+        | Token.Structural -> Parser.StructuralComment
+        | Token.Line s -> Parser.LineComment s
+        | Token.Block s -> Parser.BlockComment s)
+    | Token.Literal literal -> Parser.Literal literal
+    | Token.Identifier s -> Parser.Identifier s
+    | Token.Keyword kw -> (
+        match kw with
+        | Token.KwUse -> Parser.KwUse
+        | Token.KwLet -> Parser.KwLet
+        | Token.KwMut -> Parser.KwMut
+        | Token.KwPub -> Parser.KwPub
+        | Token.KwIn -> Parser.KwIn
+        | Token.KwTry -> Parser.KwTry
+        | Token.KwConst -> Parser.KwConst
+        | Token.KwImpl -> Parser.KwImpl
+        | Token.KwFn -> Parser.KwFn
+        | Token.KwStruct -> Parser.KwStruct
+        | Token.KwEnum -> Parser.KwEnum
+        | Token.KwUnion -> Parser.KwUnion
+        | Token.KwReturn -> Parser.KwReturn
+        | Token.KwBreak -> Parser.KwBreak
+        | Token.KwContinue -> Parser.KwContinue
+        | Token.KwFor -> Parser.KwFor
+        | Token.KwWhile -> Parser.KwWhile
+        | Token.KwIf -> Parser.KwIf
+        | Token.KwElse -> Parser.KwElse
+        | Token.KwMatch -> Parser.KwMatch
+        | Token.KwDefer -> Parser.KwDefer
+        | Token.KwUndefer -> Parser.KwUndefer
+        | Token.KwTrait -> Parser.KwTrait)
+    | Token.SemiColon -> Parser.SemiColon
+    | Token.Colon -> Parser.Colon
+    | Token.Comma -> Parser.Comma
+    | Token.Dot -> Parser.Dot
+    | Token.OpenParen -> Parser.OpenParen
+    | Token.CloseParen -> Parser.CloseParen
+    | Token.OpenBrace -> Parser.OpenBrace
+    | Token.CloseBrace -> Parser.CloseBrace
+    | Token.OpenBracket -> Parser.OpenBracket
+    | Token.CloseBracket -> Parser.CloseBracket
+    | Token.At -> Parser.At
+    | Token.QuestionMark -> Parser.QuestionMark
+    | Token.ExclamationPoint -> Parser.ExclamationPoint
+    | Token.Equal -> Parser.Equal
+    | Token.LessThan -> Parser.LessThan
+    | Token.GreaterThan -> Parser.GreaterThan
+    | Token.Plus -> Parser.Plus
+    | Token.Minus -> Parser.Minus
+    | Token.Times -> Parser.Times
+    | Token.Divide -> Parser.Divide
+    | Token.And -> Parser.And
+    | Token.Or -> Parser.Or
+    | Token.Caret -> Parser.Caret
+    | Token.Percent -> Parser.Percent
+    | Token.Tilde -> Parser.Tilde
+    | Token.Pound -> Parser.Pound
+    | Token.DollarSign -> Parser.DollarSign
+  ;;
+
+  let parse_token (lexbuf : Lexing.lexbuf) : Parser.token =
+    lexbuf |> Lexer.token |> translate_token
+  ;;
+
+  let compile (token_src : token_src) : Ast.ast =
+    let {src; tokens} = token_src in
+    let {path; code} = src in
+    let lexbuf = Lexing.from_string code in
+    let body = Parser.module_body parse_token lexbuf in
+    let name = Filename.basename path in
+    let module_ = {Ast.name; Ast.body} in
+    let ast = {Ast.path; Ast.module_} in
     ignore tokens;
-    {path; module_ = {name = "todo"; items = []}}
+    ast
   ;;
 end)
 
@@ -131,7 +213,9 @@ module TypeCheck = MakeStage (struct
   let compile (ast : desugared_ast) : typed_ast = {path = ast.path}
 end)
 
-let compile ~(ast : typed_ast) ~(ctx : LL.llcontext) ~(mod_ : LL.llmodule) : unit =
+let compile ~(ast : typed_ast) ~(ctx : LL.llcontext) ~(mod_ : LL.llmodule)
+    : unit
+  =
   ignore ast;
   let i8 = LL.i8_type ctx in
   let i32 = LL.i32_type ctx in

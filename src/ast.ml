@@ -354,9 +354,14 @@ type item =
   | Impl of impl
 [@@deriving show, yojson]
 
+type module_body = {
+  items : item list
+}
+[@@deriving show, yojson]
+
 type module_ = {
     name : string
-  ; items : item list
+  ; body : module_body
 }
 [@@deriving show, yojson]
 

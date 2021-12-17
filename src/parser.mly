@@ -1,31 +1,69 @@
 %{ 
     open Ast
-    open Token
 %}
 
-%token WhiteSpace
-
-%token SEMI LPAREN RPAREN LBRACE RBRACE COMMA PLUS MINUS TIMES DIVIDE ASSIGN
-%token NOT EQ NEQ LT LEQ GT GEQ AND OR
-%token RETURN IF ELSE FOR WHILE INT BOOL FLOAT VOID
-%token <int> LITERAL
-%token <bool> BLIT
-%token <string> ID FLIT
 %token EOF
+%token <string> WhiteSpace
+%token StructuralComment
+%token <string> LineComment
+%token <string> BlockComment
+%token <Token.literal> Literal
+%token <string> Identifier
+%token KwUse
+%token KwLet
+%token KwMut
+%token KwPub
+%token KwIn
+%token KwTry
+%token KwConst
+%token KwImpl
+%token KwFn
+%token KwStruct
+%token KwEnum
+%token KwUnion
+%token KwReturn
+%token KwBreak
+%token KwContinue
+%token KwFor
+%token KwWhile
+%token KwIf
+%token KwElse
+%token KwMatch
+%token KwDefer
+%token KwUndefer
+%token KwTrait
+%token SemiColon
+%token Colon
+%token Comma
+%token Dot
+%token OpenParen
+%token CloseParen
+%token OpenBrace
+%token CloseBrace
+%token OpenBracket
+%token CloseBracket
+%token At
+%token QuestionMark
+%token ExclamationPoint
+%token Equal
+%token LessThan
+%token GreaterThan
+%token Plus
+%token Minus
+%token Times
+%token Divide
+%token And
+%token Or
+%token Caret
+%token Percent
+%token Tilde
+%token Pound
+%token DollarSign
 
-%start module_
-%type <Ast.module_> module_
+%start module_body
+%type <Ast.module_body> module_body
 
-%nonassoc NOELSE
-%nonassoc ELSE
-%right ASSIGN
-%left OR
-%left AND
-%left EQ NEQ
-%left LT GT LEQ GEQ
-%left PLUS MINUS
-%left TIMES DIVIDE
-%right NOT
+
 
 %%
 
@@ -46,6 +84,6 @@
 //     MOD LBRACE defns RBRACE { Mod $1 }
 
 
-module_:
-| WhiteSpace { {name = "", items = []} }
+module_body:
+| WhiteSpace { {items = []} }
 ;
