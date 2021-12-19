@@ -112,15 +112,17 @@ module Parse = MakeStage (struct
         | Token.Structural -> Parser.StructuralComment
         | Token.Line s -> Parser.LineComment s
         | Token.Block s -> Parser.BlockComment s)
-    | Token.Literal literal -> Parser.Literal literal
     | Token.Identifier s -> Parser.Identifier s
+    | Token.Literal literal -> (match literal with
+      | Token.Number n -> Parser.NumLiteral n
+      | Token.Char c -> Parser.CharLiteral c
+      | Token.String s -> Parser.StringLiteral s)
     | Token.Keyword kw -> (
         match kw with
         | Token.KwUse -> Parser.KwUse
         | Token.KwLet -> Parser.KwLet
         | Token.KwMut -> Parser.KwMut
         | Token.KwPub -> Parser.KwPub
-        | Token.KwIn -> Parser.KwIn
         | Token.KwTry -> Parser.KwTry
         | Token.KwConst -> Parser.KwConst
         | Token.KwImpl -> Parser.KwImpl
@@ -138,6 +140,7 @@ module Parse = MakeStage (struct
         | Token.KwMatch -> Parser.KwMatch
         | Token.KwDefer -> Parser.KwDefer
         | Token.KwUndefer -> Parser.KwUndefer
+        | Token.KwIn -> Parser.KwIn
         | Token.KwTrait -> Parser.KwTrait)
     | Token.SemiColon -> Parser.SemiColon
     | Token.Colon -> Parser.Colon

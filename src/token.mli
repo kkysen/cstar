@@ -59,11 +59,11 @@ type literal =
 [@@deriving show, yojson]
 
 type keyword = 
+  | KwMod  
   | KwUse
   | KwLet
   | KwMut
   | KwPub
-  | KwIn (* not always *)
   | KwTry
   | KwConst
   | KwImpl
@@ -81,6 +81,7 @@ type keyword =
   | KwMatch
   | KwDefer
   | KwUndefer
+  | KwIn (* not always *)
   | KwTrait (* reserved for future *)
 [@@deriving show, yojson]
 
@@ -97,6 +98,7 @@ type token =
   | Colon (* : *)
   | Comma (* , *)
   | Dot (* . *)
+  | DotDot (* .. *)
   | OpenParen (* ( *)
   | CloseParen (* ) *)
   | OpenBrace (* { *)
@@ -107,14 +109,23 @@ type token =
   | QuestionMark (* ? *)
   | ExclamationPoint (* ! *)
   | Equal (* = *)
+  | EqualEqual (* == *)
+  | NotEqual (* != *)
   | LessThan (* < *)
   | GreaterThan (* > *)
+  | LessThanOrEqual (* <= *)
+  | GreaterThanOrEqual (* >= *)
+  | LeftShift (* << *)
+  | RightShift (* >> *)
+  | Arrow (* => *)
   | Plus (* + *)
   | Minus (* - *)
   | Times (* * *)
   | Divide (* / *)
   | And (* & *)
   | Or (* | *)
+  | AndAnd (* && *)
+  | OrOr (* || *)
   | Caret (* ^ *)
   | Percent (* % *)
   | Tilde (* ~ *)

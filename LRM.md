@@ -1,3 +1,79 @@
+
+
+* fn
+* struct
+* enum
+
+# functions
+
+fn f(a: i32, b: String): u32 = {
+
+}
+
+fn identifier( parameters ): type (; | = expr)
+
+parameters = | parameter | parameter , parameters
+
+parameter = identifier : type
+
+type = 
+| ()
+| bool
+| i(8 | 16 | 32 | 64)
+| u(8 | 16 | 32 | 64)
+| f(32 | 64)
+| type *
+
+args = | expr | expr, args
+
+func_call = expr (args)
+
+expr = 
+| identifier
+| func_call
+| string_literal
+
+
+fn puts(s: u8*): ();
+
+fn main(): () = {
+    puts(c"Hello, World")
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # C* - Language Reference Manual
 
 Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
@@ -33,7 +109,9 @@ Github link: https://github.com/kkysen/cstar/blob/main/LRM.md
     - [Reference Types](#reference-types)
     - [Slice Types](#slice-types)
     - [Array Types](#array-types)
+    - [Pointer Types](#pointer-types)
     - [Tuple Types](#tuple-types)
+    - [Function Types](#functions-types)
   - [User-Defined Compound Types](#user-defined-compound-types)
     - [`struct` Types](#struct-declarations)
     - [`enum` Types](#enum-declarations)
@@ -629,13 +707,14 @@ The built-in compound types in C* are:
 * [reference types](#reference-types)
 * [slice types](#slice-types)
 * [array types](#array-types)
+* [pointer types](#pointer-types)
 * [tuple types](#tuple-types)
+* [function types](#function-types)
 
 [Table of Contents](#table-of-contents)
 
 #### Reference Types
-In C*, you can have a reference to any type, 
-i.e., a pointer to a value of that type.
+In C*, you can have a reference to any type.
 That reference is either immutable or mutable.
 
 There is one exception to this. 
@@ -741,6 +820,33 @@ To explicitly turn an array into a slice reference,
 
 [Table of Contents](#table-of-contents)
 
+#### Pointer Types
+In C*, you can have a pointer to any type, 
+That reference is either immutable or mutable.
+
+There is one exception to this. 
+*`type`*`.$bit_size_of()` must be a multiple of 8.
+That is, bit fields like `u1` or `i5` may not be referenced.
+
+The syntax for an immutable reference is *`type`*`*`,
+and the syntax for a mutable reference is *`type`*`*mut`.
+
+A pointer can point to 0, 1, or any number of the pointee type.
+
+A pointer can only be created from
+an explicit cast from a [reference type](#reference-types)
+and through the return type of an `@extern` function.
+It is just meant primarily for FFI.
+
+A pointer cannot be dereferenced directly.
+It must be explicitly cast to one of these types to be dereferenced:
+* a [reference](#reference-types) if it points to 1 pointee type
+* a [slice](#slice-types) if it points to any number of pointee types of runtime-known amount
+* an [array](#array-types) if it points to any number of pointee types of compile-time-known amount
+* `None` if it is a null pointer
+
+[Table of Contents](#table-of-contents)
+
 #### Tuple Types
 In C*, you can also have a contiguous collection values of different types, i.e. a heterogenous array of sorts.
 This is called a tuple and its length must be known at compile time.
@@ -748,6 +854,8 @@ This is called a tuple and its length must be known at compile time.
 The syntax for this type is `(`*`types`*`)`,
 where *`types`* is a list of `,` comma-separated *`type`* s.
 A trailing `,` comma is allowed.
+However, in a single-element tuple, a trailing comma is required
+to differentiate from general parentheses.
 
 The elements of a tuple can be accessed as fields like in a `struct`.
 In fact, a tuple is syntax sugar for an anonymous `struct` 
@@ -757,6 +865,22 @@ which would not otherwise be allowed as an identifier for a field name.
 Note that like `struct`s, tuple elements may be not layed out in memory in order.
 
 [Table of Contents](#table-of-contents)
+
+#### Function Types
+The type of a function `fn(a: A, b: B): C` is `fn(A, B): C`.
+
+The syntax for this is `fn`*`tuple_type`*`: `*`type`*,
+where *`tuple_type`* is a [tuple type](#tuple-types) of the arguments
+and *`type`* is the return type.
+
+Other postfix type modifiers (e.x. `*`, `&`, `[]`)
+applied at the end by default apply to the return type.
+To apply them to the entire function type,
+the function type must be parenthesized,
+like `(fn(A): B)&`.
+
+[Table of Contents](#table-of-contents)
+
 
 ### User-Defined Compound Types
 The user-defined compound types in C* are:
@@ -1225,17 +1349,20 @@ which we will define in terms of set interval notation
 as to what integers the range includes.
 Here, `n` refers to the parent length that the range applies to.
 
-|  Range  |   Interval   |
-| ------- | ------------ |
-| `a..b`  | `[a, b)`     |
-| `a..`   | `[a, n)`     |
-| `..b`   | `[0, b)`     |
-| `..`    | `[0, n)`     |
-| `a..=b` | `[a, b]`     |
-| `a..+b` | `[a, a + b)` |
-| `..=b`  | `[0, b]`     |
-| `a..-b` | `[a, n - b]` |
-| `..-b`  | `[0, n - b]` |
+|  Range   |   Interval   |
+| -------- | ------------ |
+| `a..b`   | `[a, b)`     |
+| `a..`    | `[a, n)`     |
+| `..b`    | `[0, b)`     |
+| `..`     | `[0, n)`     |
+| `a..=b`  | `[a, b]`     |
+| `..=b`   | `[0, b]`     |
+| `a..+b`  | `[a, a + b)` |
+| `a..+=b` | `[a, a + b]` |
+| `a..-b`  | `[a, n - b)` |
+| `a..-=b` | `[a, n - b]` |
+| `..-b`   | `[0, n - b)` |
+| `..-=b`  | `[a, n - b]` |
 
 [Table of Contents](#table-of-contents)
 

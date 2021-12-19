@@ -50,6 +50,7 @@ rule token = parse
   | ':' { Colon }
   | ',' { Comma }
   | '.' { Dot }
+  | ".." { DotDot }
   | '(' { OpenParen }
   | ')' { CloseParen }
   | '{' { OpenBrace }
@@ -60,14 +61,23 @@ rule token = parse
   | '?' { QuestionMark }
   | '!' { ExclamationPoint }
   | '=' { Equal }
+  | "==" { EqualEqual }
+  | "!=" { NotEqual }
   | '<' { LessThan }
   | '>' { GreaterThan }
+  | "<=" { LessThanOrEqual }
+  | ">=" { GreaterThanOrEqual }
+  | "=>" { Arrow }
+  | "<<" { LeftShift }
+  | ">>" { RightShift }
   | '+' { Plus }
   | '-' { Minus }
   | '*' { Times }
   | '/' { Divide }
   | '&' { And }
   | '|' { Or }
+  | "&&" { AndAnd }
+  | "||" { OrOr }
   | '^' { Caret }
   | '%' { Percent }
   | '~' { Tilde }

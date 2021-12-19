@@ -273,7 +273,7 @@ patch-esy-llvm() {
 }
 
 esy-install() {
-    package-install cmake
+    (set -x && package-install cmake)
     esy fetch
     patch-esy-llvm
     esy install

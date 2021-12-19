@@ -122,11 +122,11 @@ type literal =
 [@@deriving show, yojson]
 
 type keyword = 
+  | KwMod
   | KwUse
   | KwLet
   | KwMut
   | KwPub
-  | KwIn
   | KwTry
   | KwConst
   | KwImpl
@@ -144,16 +144,17 @@ type keyword =
   | KwMatch
   | KwDefer
   | KwUndefer
-  | KwTrait
+  | KwIn (* not always *)
+  | KwTrait (* reserved for future *)
 [@@deriving show, yojson]
 
 let keyword_of_string (s : string) : keyword option = 
   match s with
+  | "mod" -> Some KwMod
   | "use" -> Some KwUse
   | "let" -> Some KwLet
   | "mut" -> Some KwMut
   | "pub" -> Some KwPub
-  | "in" -> Some KwIn
   | "try" -> Some KwTry
   | "const" -> Some KwConst
   | "impl" -> Some KwImpl
@@ -171,6 +172,7 @@ let keyword_of_string (s : string) : keyword option =
   | "match" -> Some KwMatch
   | "defer" -> Some KwDefer
   | "undefer" -> Some KwUndefer
+  | "in" -> Some KwIn
   | "trait" -> Some KwTrait
   | _ -> None
 ;;
@@ -186,6 +188,7 @@ type token =
   | Colon (* : *)
   | Comma (* , *)
   | Dot (* . *)
+  | DotDot (* .. *)
   | OpenParen (* ( *)
   | CloseParen (* ) *)
   | OpenBrace (* { *)
@@ -196,14 +199,22 @@ type token =
   | QuestionMark (* ? *)
   | ExclamationPoint (* ! *)
   | Equal (* = *)
+  | EqualEqual (* == *)
+  | NotEqual (* != *)
   | LessThan (* < *)
   | GreaterThan (* > *)
+  | LessThanOrEqual (* <= *)
+  | GreaterThanOrEqual (* >= *)
+  | LeftShift (* << *)
+  | RightShift (* >> *)
   | Plus (* + *)
   | Minus (* - *)
   | Times (* * *)
   | Divide (* / *)
   | And (* & *)
   | Or (* | *)
+  | AndAnd (* && *)
+  | OrOr (* || *)
   | Caret (* ^ *)
   | Percent (* % *)
   | Tilde (* ~ *)

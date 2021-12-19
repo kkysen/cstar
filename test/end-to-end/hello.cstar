@@ -1,6 +1,6 @@
 @extern @abi("C") fn puts(s: u8[]&): i32;
 
-fn main(): () {
+fn main(): () = {
     let _ = 0i32;
     let _ = 0;
     let _ = 201_9023;
