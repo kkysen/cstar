@@ -4,6 +4,7 @@ type raw_compile_args = {
   ; out_path : string
   ; out_type : EmitType.t
 }
+[@@deriving show]
 
 val compile_file_raw : args:raw_compile_args -> unit
 

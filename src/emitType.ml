@@ -43,7 +43,7 @@ let base_extension = "cstar"
 
 let extensions (this : t) ~(no_exe_extension : bool) : string list =
   match this with
-  | Src -> [base_extension]
+  | Src -> []
   | Tokens -> [base_extension; "tokens"; "json"]
   | Ast -> [base_extension; "raw"; "ast"; "json"]
   | DesugaredAst -> [base_extension; "desugared"; "ast"; "json"]

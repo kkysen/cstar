@@ -114,11 +114,12 @@ module Parse = MakeStage (struct
         | Token.Block s -> Parser.BlockComment s)
     | Token.Identifier s -> Parser.Identifier s
     | Token.Literal literal -> (match literal with
-      | Token.Number n -> Parser.NumLiteral n
+      | Token.Number n -> Parser.NumberLiteral n
       | Token.Char c -> Parser.CharLiteral c
       | Token.String s -> Parser.StringLiteral s)
     | Token.Keyword kw -> (
         match kw with
+        | Token.KwMod -> Parser.KwMod
         | Token.KwUse -> Parser.KwUse
         | Token.KwLet -> Parser.KwLet
         | Token.KwMut -> Parser.KwMut
@@ -146,6 +147,7 @@ module Parse = MakeStage (struct
     | Token.Colon -> Parser.Colon
     | Token.Comma -> Parser.Comma
     | Token.Dot -> Parser.Dot
+    | Token.DotDot -> Parser.DotDot
     | Token.OpenParen -> Parser.OpenParen
     | Token.CloseParen -> Parser.CloseParen
     | Token.OpenBrace -> Parser.OpenBrace
@@ -156,14 +158,23 @@ module Parse = MakeStage (struct
     | Token.QuestionMark -> Parser.QuestionMark
     | Token.ExclamationPoint -> Parser.ExclamationPoint
     | Token.Equal -> Parser.Equal
+    | Token.EqualEqual -> Parser.EqualEqual
+    | Token.NotEqual -> Parser.NotEqual
     | Token.LessThan -> Parser.LessThan
     | Token.GreaterThan -> Parser.GreaterThan
+    | Token.LessThanOrEqual -> Parser.LessThanOrEqual
+    | Token.GreaterThanOrEqual -> Parser.GreaterThanOrEqual
+    | Token.LeftShift -> Parser.LeftShift
+    | Token.RightShift -> Parser.RightShift
+    | Token.Arrow -> Parser.Arrow
     | Token.Plus -> Parser.Plus
     | Token.Minus -> Parser.Minus
     | Token.Times -> Parser.Times
     | Token.Divide -> Parser.Divide
     | Token.And -> Parser.And
     | Token.Or -> Parser.Or
+    | Token.AndAnd -> Parser.AndAnd
+    | Token.OrOr -> Parser.OrOr
     | Token.Caret -> Parser.Caret
     | Token.Percent -> Parser.Percent
     | Token.Tilde -> Parser.Tilde
@@ -181,7 +192,7 @@ module Parse = MakeStage (struct
     let lexbuf = Lexing.from_string code in
     let body = Parser.module_body parse_token lexbuf in
     let name = Filename.basename path in
-    let module_ = {Ast.name; Ast.body} in
+    let module_ = {Ast.module_name = name; Ast.module_body = body} in
     let ast = {Ast.path; Ast.module_} in
     ignore tokens;
     ast
@@ -256,7 +267,8 @@ module CodeGen = MakeStage (struct
 
   let to_file ~(path : string) (mod_ : LL.llmodule) : unit =
     LLAnalysis.assert_valid_module mod_;
-    LL.print_module path mod_
+    LL.print_module path mod_;
+    ()
   ;;
 
   let compile (ast : typed_ast) : LL.llmodule =

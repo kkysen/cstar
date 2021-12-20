@@ -23,6 +23,21 @@ type raw_compile_args = {
   ; out_path : string
   ; out_type : EmitType.t
 }
+[@@deriving show]
+
+let run_subprocess ~(program : string) ~(argv : string list) ~(use_path : bool)
+    : unit
+  =
+  let pid = Unix.fork_exec ~prog:program ~argv ?use_path:(Some use_path) () in
+  let (_, status) = Unix.wait ?restart:(Some true) (`Pid pid) in
+  status
+  |> Result.map_error ~f:(fun e ->
+         let cmd = argv |> argv_to_string in
+         let exit_message = Error e |> Unix.Exit_or_signal.to_string_hum in
+         let message = cmd ^ ": " ^ exit_message in
+         failwith message)
+  |> Result.ok_exn
+;;
 
 let compile_file_raw ~(args : raw_compile_args) : unit =
   let {src_path; src_type; out_path; out_type} = args in
@@ -39,8 +54,8 @@ let compile_file_raw ~(args : raw_compile_args) : unit =
       | _ -> failwith "invalid src and out llvm types for compile-raw"
     in
     let argv = args @ ["-o"; out_path; src_path] in
-    let prog = args |> List.find ~f:(fun _ -> true) |> Option.value_exn in
-    let (_ : never_returns) = Unix.exec ~prog ~argv ?use_path:(Some true) () in
+    let program = args |> List.find ~f:(fun _ -> true) |> Option.value_exn in
+    run_subprocess ~program ~argv ~use_path:true;
     ())
   else (
     let compile_file =
@@ -64,20 +79,6 @@ let run_raw_compile
   =
   let print_command argv = argv |> argv_to_string |> print_endline in
 
-  let run_subcommand argv =
-    let pid =
-      Unix.fork_exec ~prog:Sys.executable_name ~argv ?use_path:(Some false) ()
-    in
-    let (_, status) = Unix.wait ?restart:(Some true) (`Pid pid) in
-    status
-    |> Result.map_error ~f:(fun e ->
-           let cmd = argv |> argv_to_string in
-           let exit_message = Error e |> Unix.Exit_or_signal.to_string_hum in
-           let message = cmd ^ ": " ^ exit_message in
-           failwith message)
-    |> Result.ok_exn
-  in
-
   if print || in_new_process
   then (
     let {src_path; src_type; out_path; out_type} = args in
@@ -95,7 +96,9 @@ let run_raw_compile
       ; EmitType.to_string out_type
       ]
     in
-    if print then print_command argv else run_subcommand argv)
+    if print
+    then print_command argv
+    else run_subprocess ~program:Sys.executable_name ~argv ~use_path:false)
   else compile_file_raw ~args
 ;;
 
@@ -150,15 +153,15 @@ let compile_file
     | "" -> Filename.dirname out_path
     | _ -> temps_dir
   in
-  let out_name =
-    let base = Filename.basename out_path in
+  let src_name =
+    let base = Filename.basename src_path in
     let (stem, _) = Filename.split_extension base in
     stem
   in
   let temp_path emit_type =
     Filename.concat
       temps_dir
-      (out_name ^ EmitType.extension emit_type ~no_exe_extension)
+      (src_name ^ EmitType.extension emit_type ~no_exe_extension)
   in
 
   let raw_compile_args =
@@ -197,7 +200,6 @@ let generate_completions (shell : string option) : unit =
            Sys.getenv "SHELL" |> Option.map ~f:Filename.basename)
     |> Option.value ~default:"bash"
   in
-  Printf.printf "shell = %s" shell;
   let env_var = "COMMAND_OUTPUT_INSTALLATION_" ^ String.uppercase shell in
   let env = `Extend [(env_var, "1")] in
   let (_ : never_returns) =
@@ -275,7 +277,9 @@ let make_cmd () : Core.Command.t =
   in
   let compile_raw =
     Command.basic
-      ~summary:"compile a single stage of a C* source file; this is what the driver invokes"
+      ~summary:
+        "compile a single stage of a C* source file; this is what the driver \
+         invokes"
       Command.Let_syntax.(
         let%map_open src_path =
           flag "--src" (required Filename.arg_type) ~doc:"src src file"

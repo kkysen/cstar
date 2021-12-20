@@ -4,122 +4,19 @@ type publicity =
   | Private
 [@@deriving show, yojson]
 
-type field_type = {
-    field_name : string
-  ; field_type : type_
-  ; publicity : publicity
-}
-[@@deriving show, yojson]
+[@@@warning "-39"] (* from yojson *)
+type mutability = {mut : bool} [@@deriving show, yojson]
+[@@@warning "+39"]
 
-(* tuples are just structs with whole number field names *)
-and struct_type = {
-    struct_name : string
-  ; struct_fields : field_type StringMap.t
-}
-[@@deriving show, yojson]
+type doc_comment = {lines : string list} [@@deriving show, yojson]
 
-and element_type = {
-    element_index : int
-  ; element_type : type_
-}
-[@@deriving show, yojson]
+type label = {label_name : string} [@@deriving show, yojson]
 
-and tuple_type = {elements : element_type list} [@@deriving show, yojson]
+type number_literal = Token.number_literal [@@deriving show, yojson]
 
-and variant_type = {
-    variant_name : string
-  ; variant_type : type_
-}
-[@@deriving show, yojson]
+type char_literal = Token.char_literal [@@deriving show, yojson]
 
-and enum_type = {
-    enum_name : string
-  ; enum_variants : variant_type StringMap.t
-}
-[@@deriving show, yojson]
-
-and union_type = {
-    union_name : string
-  ; union_fields : field_type StringMap.t
-}
-[@@deriving show, yojson]
-
-and generic_type = {
-    generic_name : string
-  ; generic_bounds : type_ list
-}
-[@@deriving show, yojson]
-
-and variable = {
-    variable_name : string
-  ; variable_type : type_
-}
-[@@deriving show, yojson]
-
-and named_type = {
-  type_name : string
-}
-[@@deriving show, yojson]
-
-and pointer_type = {
-  pointee : type_
-  ; mutability : mutability
-}
-[@@deriving show, yojson]
-
-and reference_type = {
-  referent : type_
-  ; mutability : mutability
-}
-[@@deriving show, yojson]
-
-and slice_type = {
-  element_type : type_
-}
-[@@deriving show, yojson]
-
-and array_type = {
-  element_type : type_
-  ; array_length : expr
-}
-[@@deriving show, yojson]
-
-and tuple_type = {
-  elements : type_ list
-}
-[@@deriving show, yojson]
-
-and func_type = {
-    args : tuple_type
-  ; return_type : type_
-}
-[@@deriving show, yojson]
-
-and generic_type = {
-    name : string
-  ; args : tuple_type
-}
-[@@deriving show, yojson]
-
-and type_ =
-  | InferredType
-  | NamedType of named_type
-  | PointerType of pointer_type
-  | ReferenceType of reference_type
-  | SliceType of slice_type
-  | ArrayType of array_type
-  | TupleType of tuple_type (* empty () is the unit type *)
-  | FuncType of func_type
-  | GenericType of generic_type
-[@@deriving show, yojson]
-
-type pattern = 
-| IdentifierPattern of string * mutability
-| NumPattern of number_literal
-| CharPattern of char_literal
-| StringPattern of string_literal
-| RestPattern
-[@@deriving show, yojson]
+type string_literal = Token.string_literal [@@deriving show, yojson]
 
 type arithmetic_binary_op =
   | Add
@@ -150,19 +47,104 @@ type binary_op =
   | Assign
 [@@deriving show, yojson]
 
-[@@@warning "-39"] (* from yojson *)
-type mutability = {mut : bool} [@@deriving show, yojson]
-[@@@warning "+39"]
-
-type label = {name : string} [@@deriving show, yojson]
-
 type unary_op =
   | Negate (* - *)
   | Not (* ! *)
   | BitNot (* ~ *)
 [@@deriving show, yojson]
 
-type if_expr = {
+type sign = 
+  | Plus
+  | Minus
+[@@deriving show, yojson]
+
+type range_options = {
+    inclusive : bool
+  ; sign : sign option (* e.x. start..+length *)
+}[@@deriving show, yojson]
+
+type goto_kw =
+  | Return
+  | Break
+  | Continue
+[@@deriving show, yojson]
+
+type path = {
+    path_pars : string list
+}
+[@@deriving show, yojson]
+
+type use = {
+  use_path : path
+}
+[@@deriving show, yojson]
+
+type named_type = {
+  type_name : string
+}
+[@@deriving show, yojson]
+
+and pointer_type = {
+  pointee : type_
+  ; pointer_mutability : mutability
+}
+[@@deriving show, yojson]
+
+and reference_type = {
+  referent : type_
+  ; reference_mutability : mutability
+}
+[@@deriving show, yojson]
+
+and slice_type = {
+  slice_element_type : type_
+}
+[@@deriving show, yojson]
+
+and array_type = {
+  array_element_type : type_
+  ; array_length : expr
+}
+[@@deriving show, yojson]
+
+and tuple_type = {
+  elements : type_ list
+}
+[@@deriving show, yojson]
+
+and func_type = {
+    func_args : tuple_type
+  ; return_type : type_
+}
+[@@deriving show, yojson]
+
+and generic_type = {
+    name : string
+  ; args : tuple_type
+}
+[@@deriving show, yojson]
+
+and type_ =
+  | InferredType
+  | NamedType of named_type
+  | PointerType of pointer_type
+  | ReferenceType of reference_type
+  | SliceType of slice_type
+  | ArrayType of array_type
+  | TupleType of tuple_type (* empty () is the unit type *)
+  | FuncType of func_type
+  | GenericType of generic_type
+[@@deriving show, yojson]
+
+and pattern = 
+| IdentifierPattern of string * mutability
+| NumPattern of number_literal
+| CharPattern of char_literal
+| StringPattern of string_literal
+| RestPattern
+[@@deriving show, yojson]
+
+and if_expr = {
     then_case : block_expr
   ; else_case : block_expr option
 }
@@ -200,20 +182,20 @@ and block_expr = {
 
 and func_call_expr = {
     func : expr
-  ; generic_args : type_ list
-  ; args : expr list
+  ; call_generic_args : type_ list
+  ; call_args : expr list
 }
 [@@deriving show, yojson]
 
 and anon_func_signature = {
-    args : variables
-  ; return_type : type_
+    signature_args : variables
+  ; signature_return_type : type_
 }
 [@@deriving show, yojson]
 
 and func_literal = {
-    anon_signature : func_signature
-  ; func_value : expr
+    anon_signature : anon_func_signature
+  ; func_literal_value : expr
 }
 [@@deriving show, yojson]
 
@@ -223,12 +205,6 @@ and closure_literal = {
 }
 [@@deriving show, yojson]
 
-and number_literal = Token.number_literal
-
-and char_literal = Token.char_literal
-
-and string_literal = Token.string_literal
-
 and struct_literal_field = 
 | Explicit of string * expr
 | Implicit of string
@@ -236,24 +212,19 @@ and struct_literal_field =
 [@@deriving show, yojson]
 
 and struct_literal = {
-    struct_name : string
-  ; struct_fields : struct_field list
+    struct_literal_name : string
+  ; struct_literal_fields : struct_literal_field list
 }
 [@@deriving show, yojson]
 
-and tuple_literal = {elements : expr list} [@@deriving show, yojson]
+and tuple_literal = {
+  tuple_elements : expr list
+} [@@deriving show, yojson]
 
-and sign = 
-  | Plus
-  | Minus
-[@@deriving show, yojson]
+and array_literal = {
+  array_elements : expr list
+} [@@deriving show, yojson]
 
-and range_options = {
-    inclusive : bool
-  ; sign : sign option (* e.x. start..+length *)
-}[@@deriving show, yojson]
-
-(* TODO format_string_literal *)
 and range_literal = {
     start : expr option
   ; stop : expr option
@@ -268,6 +239,7 @@ and literal =
   | Range of range_literal
   | Struct of struct_literal
   | Tuple of tuple_literal
+  | Array of array_literal
   | Func of func_literal
   | Closure of closure_literal
 [@@deriving show, yojson]
@@ -285,17 +257,11 @@ and binary_expr = {
 }
 [@@deriving show, yojson]
 
-and goto_kw =
-  | Return
-  | Break
-  | Continue
-[@@deriving show, yojson]
-
 and postfix_expr =
   | Dereference of mutability (* .* *)
   | Reference of mutability (*.&, .&mut *)
   | Try (* .? *)
-  | BinaryOp of binary_op
+  | PostFixBinaryOp of binary_op
   | FieldAccess of string
   | ElementAccess of number_literal
   | MethodCall of func_call_expr
@@ -319,84 +285,84 @@ and expr =
   | Block of block_expr
 [@@deriving show, yojson]
 
-type annotation = {
-    path : path
-  ; args : tuple_literal
+and annotation = {
+    annotation_path : path
+  ; annotation_args : tuple_literal
 }
 [@@deriving show, yojson]
 
-type doc_comment = {lines : string list} [@@deriving show, yojson]
-
-type variable = {
-    name : string
-  ; mutability : mutability
-  ; type_ : type_
+and metadata = {
+    publicity : publicity
+  ; annotations : annotation list
+  ; doc_comment : doc_comment
 }
 [@@deriving show, yojson]
 
-type variable_with_metadata = {
+and variable = {
+    variable_name : string
+  ; variable_mutability : mutability
+  ; variable_type : type_
+}
+[@@deriving show, yojson]
+
+and variable_with_metadata = {
     variable : variable
   ; metadata : metadata
 }
 [@@deriving show, yojson]
 
-type variables = variable_with_metadata list
+and variables = variable_with_metadata list
 
-type let_ = {
-    variable : variable
-  ; value : expr
+and let_ = {
+    let_variable : variable
+  ; let_value : expr
 }
 [@@deriving show, yojson]
 
-type func_decl_signature = {
-    name : string
-  ; func_type : func_type
+and func_decl_signature = {
+    func_name : string
+  ; func_signature : anon_func_signature
 }
 [@@deriving show, yojson]
 
-type func_decl = {
-    signature : func_decl_signature
+and func_decl = {
+    func_decl_signature : func_decl_signature
   ; func_value : expr option
 }
 [@@deriving show, yojson]
 
-type fields = variables
+and fields = variables
 
-type struct_decl = {
-    name : string
-  ; fields : fields
+and struct_decl = {
+    struct_name : string
+  ; struct_fields : fields
 }
 [@@deriving show, yojson]
 
-type variant_data = 
+and variant_data = 
   | TupleVariant of tuple_type
   | StructVariant of fields
 [@@deriving show, yojson]
 
-type variant = {
-    name : string
-  ; data : variant_data option
+and variant = {
+    variant_name : string
+  ; variant_data : variant_data option
 }
 [@@deriving show, yojson]
 
-type enum_decl = {
-    name : string
-  ; variants : variant list
+and enum_decl = {
+    enum_name : string
+  ; enum_variants : variant list
 }
 [@@deriving show, yojson]
 
-type union_decl = {
-    name : string
-  ; fields : variables
+and union_decl = {
+    union_name : string
+  ; union_fields : variables
 }
 [@@deriving show, yojson]
 
-type use = {
-  use_path : path
-}
-[@@deriving show, yojson]
-
-type inner_item =
+and inner_item =
   | Use of use
   | Let of let_
   | FuncDecl of func_decl
@@ -407,27 +373,20 @@ type inner_item =
   | Mod of module_
 [@@deriving show, yojson]
 
-type metadata = {
-    publicity : publicity
-  ; annotations : annotations
-  ; doc_comment : doc_comment
-}
-[@@deriving show, yojson]
-
-type item = {
-    metadata : metadata
+and item = {
+    item_metadata : metadata
   ; inner_item : inner_item
 }
 [@@deriving show, yojson]
 
-type module_body = {
-  items : item list
+and module_body = {
+  module_items : item list
 }
 [@@deriving show, yojson]
 
-type module_ = {
-    name : string
-  ; body : module_body
+and module_ = {
+    module_name : string
+  ; module_body : module_body
 }
 [@@deriving show, yojson]
 
@@ -436,8 +395,3 @@ type ast = {
   ; module_ : module_
 }
 [@@deriving show, yojson]
-
-(* type tuple = {
-  elements : 
-}
-[@@deriving show, yojson] *)

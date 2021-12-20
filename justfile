@@ -222,6 +222,12 @@ do-expand path:
         touch --reference "${pp_path}" "${ppx_path}"
     fi
     echo "${ppx_path}"
+
 expand path:
     bat "$(just do-expand "{{path}}")"
 
+watch-parser:
+    watchexec --watch src/parser.mly 'esy ocamlyacc -v src/parser.mly && echo success!'
+
+clean-parser:
+    rm -f src/parser.{ml,mli,output}

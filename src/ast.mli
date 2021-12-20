@@ -4,155 +4,149 @@ type publicity =
   | Private
 [@@deriving show, yojson]
 
-type int_bits =
-  | Exact of int
-  | Size
-  | Ptr
-[@@deriving show, yojson]
+[@@@warning "-39"] (* from yojson *)
+type mutability = {mut : bool} [@@deriving show, yojson]
+[@@@warning "+39"]
 
-type int_type = {
-    unsigned : bool
-  ; bits : int_bits
-}
-[@@deriving show, yojson]
+type doc_comment = {lines : string list} [@@deriving show, yojson]
 
-type float_type = {bits : int} [@@deriving show, yojson]
+type label = {label_name : string} [@@deriving show, yojson]
 
-type char_type = {byte : bool} [@@deriving show, yojson]
+type number_literal = Token.number_literal [@@deriving show, yojson]
 
-type string_type = {
-    byte : bool
-  ; raw : bool
-  ; c : bool
-}
-[@@deriving show, yojson]
+type char_literal = Token.char_literal [@@deriving show, yojson]
 
-type primitive_type =
-  | Unit
-  | Int of int_type
-  | Float of float_type
-  | Char of char_type
-  | String of string_type
-[@@deriving show, yojson]
+type string_literal = Token.string_literal [@@deriving show, yojson]
 
-type field_type = {
-    field_name : string
-  ; field_type : type_
-  ; publicity : publicity
-}
-[@@deriving show, yojson]
-
-(* tuples are just structs with whole number field names *)
-and struct_type = {
-    struct_name : string
-  ; struct_fields : field_type StringMap.t
-}
-[@@deriving show, yojson]
-
-and element_type = {
-    element_index : int
-  ; element_type : type_
-}
-[@@deriving show, yojson]
-
-and tuple_type = {elements : element_type list} [@@deriving show, yojson]
-
-and variant_type = {
-    variant_name : string
-  ; variant_type : type_
-}
-[@@deriving show, yojson]
-
-and enum_type = {
-    enum_name : string
-  ; enum_variants : variant_type StringMap.t
-}
-[@@deriving show, yojson]
-
-and union_type = {
-    union_name : string
-  ; union_fields : field_type StringMap.t
-}
-[@@deriving show, yojson]
-
-and generic_type = {
-    generic_name : string
-  ; generic_bounds : type_ list
-}
-[@@deriving show, yojson]
-
-and variable = {
-    variable_name : string
-  ; variable_type : type_
-}
-[@@deriving show, yojson]
-
-and func_type = {
-    func_name : string
-  ; generic_args : generic_type StringMap.t
-  ; args : variable StringMap.t
-  ; return_type : type_
-}
-[@@deriving show, yojson]
-
-and type_ =
-  | Inferred
-  | Primitive of primitive_type
-  | Struct of struct_type
-  | Tuple of tuple_type
-  | Enum of enum_type
-  | Union of union_type
-  | Func of func_type
-  | Pointer of type_
-  | Slice of type_
-  | Self
-[@@deriving show, yojson]
-
-type pattern = unit (* TODO *) [@@deriving show, yojson]
-
-type binary_op =
+type arithmetic_binary_op =
   | Add
   | Subtract
   | Multiply
   | Divide
   | Modulo
+  | And
+  | Or
+  | BitAnd
+  | BitOr
+  | BitXor
+[@@deriving show, yojson]
+
+type comparison_op =
   | Equal
   | NotEqual
   | LessThan
   | LessThanOrEqual
   | GreaterThan
   | GreaterThanOrEqual
-  | And
-  | Or
-  | BitAnd
-  | BitOr
-  | BitXor
-  | Assign
 [@@deriving show, yojson]
 
-type pointer_to = {mut : bool} [@@deriving show, yojson]
-
-and label = {name : string} [@@deriving show, yojson]
+type binary_op =
+  | ArithmeticBinaryOp of arithmetic_binary_op
+  | AssigningArithmeticBinaryOp of arithmetic_binary_op
+  | ComparisonOp of comparison_op
+  | Assign
+[@@deriving show, yojson]
 
 type unary_op =
   | Negate (* - *)
   | Not (* ! *)
   | BitNot (* ~ *)
-  | Dereference (* .* *)
-  | PointerTo of pointer_to (*.&, .&mut *)
-  | Try (* .? *)
 [@@deriving show, yojson]
 
-type if_expr = {
-    if_condition : expr
-  ; if_then_case : block_expr
+type sign = 
+  | Plus
+  | Minus
+[@@deriving show, yojson]
+
+type range_options = {
+    inclusive : bool
+  ; sign : sign option (* e.x. start..+length *)
+}[@@deriving show, yojson]
+
+type goto_kw =
+  | Return
+  | Break
+  | Continue
+[@@deriving show, yojson]
+
+type path = {
+    path_pars : string list
 }
 [@@deriving show, yojson]
 
-and if_else_expr = {
-    if_else_condition : expr
-  ; if_else_then_case : block_expr
-  ; if_else_else_case : block_expr
+type use = {
+  use_path : path
+}
+[@@deriving show, yojson]
+
+type named_type = {
+  type_name : string
+}
+[@@deriving show, yojson]
+
+and pointer_type = {
+  pointee : type_
+  ; pointer_mutability : mutability
+}
+[@@deriving show, yojson]
+
+and reference_type = {
+  referent : type_
+  ; reference_mutability : mutability
+}
+[@@deriving show, yojson]
+
+and slice_type = {
+  slice_element_type : type_
+}
+[@@deriving show, yojson]
+
+and array_type = {
+  array_element_type : type_
+  ; array_length : expr
+}
+[@@deriving show, yojson]
+
+and tuple_type = {
+  elements : type_ list
+}
+[@@deriving show, yojson]
+
+and func_type = {
+    func_args : tuple_type
+  ; return_type : type_
+}
+[@@deriving show, yojson]
+
+and generic_type = {
+    name : string
+  ; args : tuple_type
+}
+[@@deriving show, yojson]
+
+and type_ =
+  | InferredType
+  | NamedType of named_type
+  | PointerType of pointer_type
+  | ReferenceType of reference_type
+  | SliceType of slice_type
+  | ArrayType of array_type
+  | TupleType of tuple_type (* empty () is the unit type *)
+  | FuncType of func_type
+  | GenericType of generic_type
+[@@deriving show, yojson]
+
+and pattern = 
+| IdentifierPattern of string * mutability
+| NumPattern of number_literal
+| CharPattern of char_literal
+| StringPattern of string_literal
+| RestPattern
+[@@deriving show, yojson]
+
+and if_expr = {
+    then_case : block_expr
+  ; else_case : block_expr option
 }
 [@@deriving show, yojson]
 
@@ -164,49 +158,44 @@ and match_arm = {
 [@@deriving show, yojson]
 
 and match_expr = {
-    match_value : expr
-  ; match_arms : match_arm list
+    match_arms : match_arm list
 }
 [@@deriving show, yojson]
 
-(* TODO might change*)
 and for_expr = {
-    for_initializer_ : expr
-  ; for_condition : expr
-  ; for_update : expr
+    for_element : variable
   ; for_block : block_expr
+  ; for_label : label option
 }
 [@@deriving show, yojson]
 
-and while_expr = {
-    while_condition : expr
-  ; while_block : block_expr
-}
+and statement = 
+  | Expr of expr
+  | Item of item
 [@@deriving show, yojson]
 
 and block_expr = {
-    statements : expr list
+    statements : statement list
   ; trailing_semicolon : bool
-}
-[@@deriving show, yojson]
-
-and field_access_expr = {
-    obj : expr option (* None if variable instead of field access *)
-  ; field : string
 }
 [@@deriving show, yojson]
 
 and func_call_expr = {
     func : expr
-  ; generic_args : type_ list
-  ; args : expr list
-  ; self_arg : expr option (* for methods *)
+  ; call_generic_args : type_ list
+  ; call_args : expr list
+}
+[@@deriving show, yojson]
+
+and anon_func_signature = {
+    signature_args : variables
+  ; signature_return_type : type_
 }
 [@@deriving show, yojson]
 
 and func_literal = {
-    func_type : func_type
-  ; func_value : expr
+    anon_signature : anon_func_signature
+  ; func_literal_value : expr
 }
 [@@deriving show, yojson]
 
@@ -216,40 +205,41 @@ and closure_literal = {
 }
 [@@deriving show, yojson]
 
-and number_literal = Token.number_literal
-
-and char_literal = Token.char_literal
-
-and string_literal = Token.string_literal
+and struct_literal_field = 
+| Explicit of string * expr
+| Implicit of string
+| Spread of expr
+[@@deriving show, yojson]
 
 and struct_literal = {
-    struct_name : string
-  ; struct_spread : bool (* .. *)
-  ; struct_fields : expr option StringMap.t
-        (* None if field name is same as expr *)
+    struct_literal_name : string
+  ; struct_literal_fields : struct_literal_field list
 }
 [@@deriving show, yojson]
 
-and tuple_literal = {elements : expr list} [@@deriving show, yojson]
+and tuple_literal = {
+  tuple_elements : expr list
+} [@@deriving show, yojson]
 
-(* TODO format_string_literal *)
+and array_literal = {
+  array_elements : expr list
+} [@@deriving show, yojson]
+
 and range_literal = {
     start : expr option
   ; stop : expr option
-  ; inclusive : bool
-  ; additive : bool (* start..+length *)
+  ; options : range_options
 }
 [@@deriving show, yojson]
 
 and literal =
-  | Unit
-  | Bool of bool
   | Number of number_literal
   | Char of char_literal
   | String of string_literal
   | Range of range_literal
   | Struct of struct_literal
   | Tuple of tuple_literal
+  | Array of array_literal
   | Func of func_literal
   | Closure of closure_literal
 [@@deriving show, yojson]
@@ -267,99 +257,136 @@ and binary_expr = {
 }
 [@@deriving show, yojson]
 
+and postfix_expr =
+  | Dereference of mutability (* .* *)
+  | Reference of mutability (*.&, .&mut *)
+  | Try (* .? *)
+  | PostFixBinaryOp of binary_op
+  | FieldAccess of string
+  | ElementAccess of number_literal
+  | MethodCall of func_call_expr
+  | GoTo of label option * goto_kw
+  | Defer of label option
+  | Match of match_expr
+  | If of if_expr
+  | While of block_expr
+  | For of for_expr
+[@@deriving show, yojson]
+
 and expr =
+  | Variable of string
   | Literal of literal
   | UnaryOp of unary_expr
   | BinaryOp of binary_expr
-  | Return of expr * label
-  | Break of expr * label
-  | Continue of expr * label
-  | Match of match_expr
-  | Defer of expr * label
-  | UnDefer of label
-  | If of if_expr
-  | IfElse of if_else_expr
-  | For of for_expr
-  | While of while_expr
+  | Index of expr
   | FuncCall of func_call_expr
+  | PostFixExpr of expr * postfix_expr
+  | UnDefer of label option
   | Block of block_expr
-  (* includes variables *)
-  | FieldAccess of field_access_expr
 [@@deriving show, yojson]
 
-(* TODO where do labels go?
- * Should they be `'label:` like Rust?
- * Or could they be like this?
- *    for@label
- *    while@label
- *    break@label
- *    continue@label
- *    defer@label
- *    undefer@label
- * No space b/w keyword, @, and label name
- * I think I like that way most.
- *)
-
-type annotation_arg = unit (* TODO *) [@@deriving show, yojson]
-
-type annotation = {
-    name : string
-  ; args : annotation_arg list
+and annotation = {
+    annotation_path : path
+  ; annotation_args : tuple_literal
 }
 [@@deriving show, yojson]
 
-type doc_comment = {lines : string list} [@@deriving show, yojson]
-
-type let_binding = {
-    name : string
-  ; publicity : publicity
+and metadata = {
+    publicity : publicity
   ; annotations : annotation list
   ; doc_comment : doc_comment
 }
 [@@deriving show, yojson]
 
-type value_let = {
-    binding : let_binding
-  ; value : expr
+and variable = {
+    variable_name : string
+  ; variable_mutability : mutability
+  ; variable_type : type_
 }
 [@@deriving show, yojson]
 
-type type_let = {
-    binding : let_binding
-  ; value : type_
+and variable_with_metadata = {
+    variable : variable
+  ; metadata : metadata
 }
 [@@deriving show, yojson]
 
-type func_decl = {
-    binding : let_binding
-  ; func : func_literal
+and variables = variable_with_metadata list
+
+and let_ = {
+    let_variable : variable
+  ; let_value : expr
 }
 [@@deriving show, yojson]
 
-type impl = {
-    impl_type : type_
-  ; impl_funcs : func_decl StringMap.t
+and func_decl_signature = {
+    func_name : string
+  ; func_signature : anon_func_signature
 }
 [@@deriving show, yojson]
 
-type let_ =
-  | Value of value_let
-  | Type of type_let
+and func_decl = {
+    func_decl_signature : func_decl_signature
+  ; func_value : expr option
+}
 [@@deriving show, yojson]
 
-type item =
+and fields = variables
+
+and struct_decl = {
+    struct_name : string
+  ; struct_fields : fields
+}
+[@@deriving show, yojson]
+
+and variant_data = 
+  | TupleVariant of tuple_type
+  | StructVariant of fields
+[@@deriving show, yojson]
+
+and variant = {
+    variant_name : string
+  ; variant_data : variant_data option
+}
+[@@deriving show, yojson]
+
+and enum_decl = {
+    enum_name : string
+  ; enum_variants : variant list
+}
+[@@deriving show, yojson]
+
+and union_decl = {
+    union_name : string
+  ; union_fields : variables
+}
+[@@deriving show, yojson]
+
+and inner_item =
+  | Use of use
   | Let of let_
-  | Impl of impl
+  | FuncDecl of func_decl
+  | StructDecl of struct_decl
+  | EnumDecl of enum_decl
+  | UnionDecl of union_decl
+  | Impl of module_
+  | Mod of module_
 [@@deriving show, yojson]
 
-type module_body = {
-  items : item list
+and item = {
+    item_metadata : metadata
+  ; inner_item : inner_item
 }
 [@@deriving show, yojson]
 
-type module_ = {
-    name : string
-  ; body : module_body
+and module_body = {
+  module_items : item list
+}
+[@@deriving show, yojson]
+
+and module_ = {
+    module_name : string
+  ; module_body : module_body
 }
 [@@deriving show, yojson]
 

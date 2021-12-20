@@ -207,6 +207,7 @@ type token =
   | GreaterThanOrEqual (* >= *)
   | LeftShift (* << *)
   | RightShift (* >> *)
+  | Arrow (* => *)
   | Plus (* + *)
   | Minus (* - *)
   | Times (* * *)
