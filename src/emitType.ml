@@ -6,6 +6,7 @@ type t =
   | Ast
   | DesugaredAst
   | TypedAst
+  | Lir
   | Ir
   | Bc
   | Asm
@@ -26,6 +27,7 @@ let to_string (this : t) : string =
   | Ast -> "ast"
   | DesugaredAst -> "desugared-ast"
   | TypedAst -> "typed-ast"
+  | Lir -> "lir"
   | Ir -> "ir"
   | Bc -> "bc"
   | Asm -> "asm"
@@ -39,23 +41,24 @@ let of_string (s : string) : t =
   |> Option.value_exn ?message:(Some "invalid emit type")
 ;;
 
-let base_extension = "cstar"
-
 let extensions (this : t) ~(no_exe_extension : bool) : string list =
+  let base = "cstar" in
+  let json = "json" in
   match this with
   | Src -> []
-  | Tokens -> [base_extension; "tokens"; "json"]
-  | Ast -> [base_extension; "raw"; "ast"; "json"]
-  | DesugaredAst -> [base_extension; "desugared"; "ast"; "json"]
-  | TypedAst -> [base_extension; "typed"; "ast"; "json"]
-  | Ir -> [base_extension; "ll"]
-  | Bc -> [base_extension; "bc"]
-  | Asm -> [base_extension; "s"]
-  | Obj -> [base_extension; "o"]
+  | Tokens -> [base; "tokens"; json]
+  | Ast -> [base; "raw"; "ast"; json]
+  | DesugaredAst -> [base; "desugared"; "ast"; json]
+  | TypedAst -> [base; "typed"; "ast"; json]
+  | Lir -> [base; "lir"; json]
+  | Ir -> [base; "ll"]
+  | Bc -> [base; "bc"]
+  | Asm -> [base; "s"]
+  | Obj -> [base; "o"]
   | Exe -> (
       match no_exe_extension with
       | true -> []
-      | false -> [base_extension; "exe"])
+      | false -> [base; "exe"])
 ;;
 
 let extension (this : t) ~(no_exe_extension : bool) : string =
@@ -98,6 +101,7 @@ let is_llvm (this : t) : bool =
   | Ast -> false
   | DesugaredAst -> false
   | TypedAst -> false
+  | Lir -> false
   | Ir -> true
   | Bc -> true
   | Asm -> true

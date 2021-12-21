@@ -29,6 +29,8 @@ type arithmetic_binary_op =
   | BitAnd
   | BitOr
   | BitXor
+  | LeftShift
+  | RightShift
 [@@deriving show, yojson]
 
 type comparison_op =

@@ -64,7 +64,8 @@ let compile_file_raw ~(args : raw_compile_args) : unit =
       | (Tokens, Ast) -> Compiler.Parse.compile_file
       | (Ast, DesugaredAst) -> Compiler.Desugar.compile_file
       | (DesugaredAst, TypedAst) -> Compiler.TypeCheck.compile_file
-      | (TypedAst, Ir) -> Compiler.CodeGen.compile_file
+      | (TypedAst, Lir) -> Compiler.Lower.compile_file
+      | (Lir, Ir) -> Compiler.CodeGen.compile_file
       | _ -> failwith "invalid src and out cstar types for compile-raw"
     in
     compile_file ~input_path:src_path ~output_path:out_path;

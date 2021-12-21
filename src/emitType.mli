@@ -6,6 +6,7 @@ type t =
   | Ast
   | DesugaredAst
   | TypedAst
+  | Lir
   | Ir
   | Bc
   | Asm

@@ -12,6 +12,7 @@ module Lex : Stage
 module Parse : Stage
 module Desugar : Stage
 module TypeCheck : Stage
+module Lower : Stage
 module CodeGen : Stage
 
 type src = {
