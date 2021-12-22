@@ -1,5 +1,10 @@
 set shell := ["bash", "-c"]
 
+just_dir := justfile_directory()
+cwd := invocation_directory()
+
+export PATH := just_dir + "/bin:" + just_dir + "/bin/llvm:" + env_var("PATH")
+
 default:
     just --list
 
@@ -226,3 +231,230 @@ watch-parser:
 
 clean-parser:
     rm -f src/parser.{ml,mli,output}
+
+generate-code-listing-generic source_paths_path output_markdown_path file_types_path:
+    #!/usr/bin/env node
+    const fsp = require("fs/promises");
+    const pathLib = require("path");
+
+    // https://github.com/fitzgen/glob-to-regexp
+    function globToRegex(glob, {
+        extended = false,
+        globstar = false,
+        flags = "",
+    }) {
+        let regex = "";
+        let inGroup = false;
+        for (let i = 0; i < glob.length; i++) {
+            const c = glob[i];
+            switch (c) {
+                case "/":
+                case "$":
+                case "^":
+                case "+":
+                case ".":
+                case "(":
+                case ")":
+                case "=":
+                case "!":
+                case "|":
+                    regex += "\\" + c;
+                    break;
+                // all fallthroughs if not extended
+                case "?":
+                    if (extended) {
+                        regex += ".";
+                        break;
+                    }
+                case "[":
+                case "]":
+                    if (extended) {
+                        regex += c;
+                        break;
+                    }
+                case "{":
+                    if (extended) {
+                        inGroup = true;
+                        regex += "(";
+                        break;
+                    }
+                case "}":
+                    if (extended) {
+                        inGroup = false;
+                        regex += ")";
+                        break;
+                    }
+                case ",":
+                    if (inGroup) {
+                        regex += "|";
+                        break;
+                    }
+                    regex += "\\" + c;
+                    break;
+                case "*":
+                    const prev = glob[i - 1];
+                    let starCount = 1;
+                    while (glob[i + 1] === "*") {
+                        starCount++;
+                        i++;
+                    }
+                    const next = glob[i + 1];
+                    if (!globstar) {
+                        regex += ".*";
+                    } else {
+                        const isGlobstar = starCount > 1
+                            && (prev === "/" || prev === undefined)
+                            && (next === "/" || next === undefined);
+                        if (isGlobstar) {
+                            regex += "((?:[^/]*(?:\/|$))*)";
+                            i++;
+                        } else {
+                            regex += "([^/]*)";;
+                        }
+                    }
+                    break;
+                default:
+                    regex += c;
+                    break;
+                }
+        }
+
+        if (!flags || !~flags.indexOf("g")) {
+            regex = "^" + regex + "$";
+        }
+
+        return new RegExp(regex, flags);
+    }
+
+    async function readFileTypes(fileTypesPath) {
+        const fileTypes = (await fsp.readFile(fileTypesPath))
+            .toString()
+            .split("\n")
+            .filter(Boolean)
+            .map(line => {
+                const [fileType, globsStr] = line.split(": ", 2);
+                const globs = globsStr
+                    .split(", ")
+                    .map(glob => {
+                        const regex = globToRegex(glob, {
+                            extended: true, 
+                            globstar: true,
+                        });
+                        return {glob, regex};
+                    });
+                const test = (s) => {
+                    // fileType === "ocaml" && console.log({s, globs});
+                    return globs.some(glob => glob.regex.test(s));
+                };
+                return {
+                    fileType,
+                    globs,
+                    test,
+                };
+            })
+            ;
+        const detect = (path) => {
+            const fileName = pathLib.basename(path);
+            // console.log({path});
+            return fileTypes
+                .find(e => e.test(fileName))
+                .fileType
+                ;
+        };
+        return {fileTypes, detect};
+    }
+
+    async function readSources(pathsPath) {
+        const s = (await fsp.readFile(pathsPath)).toString();
+        const paths = (s.includes("\0") 
+            ? s.split("\0")
+            : s.split("\n")
+        ).filter(Boolean);
+        return await Promise.all(
+            paths.map(async path => {
+                const src = (await fsp.readFile(path)).toString();
+                return {path, src};
+            })
+        );
+    }
+
+    function markdownHeaderToHtmlId(header) {
+        return [...header]
+            .map(c => {
+                if (/[a-zA-Z0-9-]/.test(c)) {
+                    return c;
+                } else if (/\s/.test(c)) {
+                    return "-";
+                } else {
+                    return "";
+                }
+            })
+            .join("")
+            .toLowerCase()
+            ;
+    }
+
+    const tableOfContentsName = "Table of Contents";
+    const tableOfContentsId = markdownHeaderToHtmlId(tableOfContentsName);
+
+    function generateSourceMarkdown({src, fileTypes}) {
+        const tick = "`";
+        const ticks = "```";
+        const fileType = fileTypes.detect(src.path);
+        return [
+            `### ${tick}${src.path}${tick}`,
+            `${ticks} ${fileType}`,
+            src.src,
+            `${ticks}`,
+            `[${tableOfContentsName}](#${tableOfContentsId})`,
+        ].join("\n");
+    }
+
+    function generateMarkdownTableOfContents(sources) {
+        const paths = sources.map(e => e.path);
+        return [
+            `## ${tableOfContentsName}`,
+            ...paths.map(path => {
+                const tick = "`";
+                const id = markdownHeaderToHtmlId(path);
+                return `* [${tick}${path}${tick}](#${id})`;
+            })
+        ].join("\n");
+    }
+
+    async function generateMarkdownCodeListing({
+        sourcePathsPath, 
+        fileTypesPath, 
+        outputMarkdownPath,
+    }) {
+        const fileTypes = await readFileTypes(fileTypesPath);
+        const sources = await readSources(sourcePathsPath);
+        const markdown = [
+            `# Code Listing`,
+            generateMarkdownTableOfContents(sources),
+            ...sources
+                .map(src => generateSourceMarkdown({src, fileTypes}))
+        ]
+            .join("\n\n")
+            ;
+        await fsp.writeFile(outputMarkdownPath, markdown);
+    }
+
+    async function main() {
+        await generateMarkdownCodeListing({
+            sourcePathsPath: "{{source_paths_path}}", 
+            outputMarkdownPath: "{{output_markdown_path}}", 
+            fileTypesPath: "{{file_types_path}}",
+        });
+    }
+
+    main().catch(e => {
+        console.error(e);
+        process.exit(1);
+    })
+
+generate-code-listing:
+    just generate-code-listing-generic \
+        <(fd '\.ml(|i|l|y)' src -0) \
+        docs/code-listing.md \
+        <(rg --type-list)
