@@ -244,12 +244,12 @@ fn get_two_by_index<T>(a: T[]&, i: usize, j: usize): Result<(T&, T&), IndexError
     let first = try {
         get_by_index(a, i).match {
             Ok(i) => i,
-            Err(e) => return Err(e),
+            Err(e) => break Err(e),
         }
     };
     let second = get_by_index(a, j).match {
         Ok(i) => i,
-        Err(e) => return Err(e),
+        Err(e) => break Err(e),
     }
     Ok((first, second))
 }
@@ -426,7 +426,7 @@ impl Hello {
     }
     
     fn remove_last_name(self: Self&mut) = {
-        self.*.last_name = "";
+        self.*mut.last_name = "";
     }
     
 }
@@ -498,8 +498,8 @@ fn main() {
         let c = Some("🏳️‍⚧️").map(fn {n: b}(s) = n + s.len()).?;
         None.map(fn {a: a.&, b: b.&mut, n: c.&mut}(s) = {
             print(f"{s}: {a.*}, {b.*}, {n.*}");
-            n.*++;
-            b.* += n.*;
+            n.*mut++;
+            b.*mut += n.*;
         });
         print(f"{s}: {a}, {b}, {c}");
     }
