@@ -7,10 +7,10 @@ Also written as `cstar` and pronounced **Sea Star**.
 
 
 ## Proposal
-See the [proposal](./proposal.md) for an overview of the language.
+See the [proposal](./docs/proposal.md) for an overview of the language.
 
 ## Language Reference Manual
-See the [language reference manual](./LRM.md) for a detailed reference manual for the language.
+See the [language reference manual](./docs/LRM.md) for a detailed reference manual for the language.
 
 
 
