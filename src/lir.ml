@@ -55,8 +55,7 @@ type unary_op =
   | Dereference
 [@@deriving yojson]
 
-type binary_op =
-  | Assign
+type arithmetic_binary_op =
   | Add
   | Subtract
   | Multiply
@@ -69,12 +68,21 @@ type binary_op =
   | BitXor
   | LeftShift
   | RightShift
+[@@deriving yojson]
+
+type comparison_op =
   | Equal
   | NotEqual
   | LessThan
   | LessThanOrEqual
   | GreaterThan
   | GreaterThanOrEqual
+[@@deriving yojson]
+
+type binary_op =
+  | Assign
+  | Arithmetic of arithmetic_binary_op
+  | Comparison of comparison_op
 [@@deriving yojson]
 
 type label = string [@@deriving yojson]
@@ -101,7 +109,7 @@ and raw_expr =
   | Call of call_expr
   | If of if_expr
   | GoTo of expr
-  | Block of expr list
+  | Block of expr list (* non-empty *)
 [@@deriving yojson]
 
 and expr = {
