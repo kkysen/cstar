@@ -282,7 +282,7 @@ let compile ~(lir : lir) ~(ctx : LL.llcontext) ~(mod_ : LL.llmodule) : unit =
     in
     let ret_val = compile_expr func_value ~scope ~irb in
     ignore ret_val;
-    failwith "TODO"
+    (* failwith "TODO" *)
   in
 
   let compile_func (f : func) : unit =
@@ -295,8 +295,10 @@ let compile ~(lir : lir) ~(ctx : LL.llcontext) ~(mod_ : LL.llmodule) : unit =
     ()
   in
 
-  globals |> List.iter ~f:compile_global;
-  functions |> List.iter ~f:compile_func;
+  (* globals |> List.iter ~f:compile_global; *)
+  (* functions |> List.iter ~f:compile_func; *)
+  ignore compile_global;
+  ignore compile_func;
 
   let i8 = LL.i8_type ctx in
   let i32 = LL.i32_type ctx in

@@ -191,7 +191,10 @@ module Parse = MakeStage (struct
     let {src; tokens} = token_src in
     let {path; code} = src in
     let lexbuf = Lexing.from_string code in
-    let body = Parser.module_body parse_token lexbuf in
+    (* let body = Parser.module_body parse_token lexbuf in *)
+    ignore parse_token;
+    ignore lexbuf;
+    let body = {Ast.module_items = []} in
     let name = Filename.basename path in
     let module_ = {Ast.module_name = name; Ast.module_body = body} in
     let ast = {Ast.path; Ast.module_} in
@@ -241,8 +244,10 @@ module Lower = MakeStage (struct
     Lir.(
       let u64 = IntType {bits = 64; unsigned = true} in
       let i64 = IntType {bits = 64; unsigned = false} in
+      ignore u64;
+      ignore i64;
       {path = ast.path; globals = []; functions = [
-      {
+      (* {
         func_name = "gcd";
         func_type = {
           func_args = [|i64; i64|];
@@ -257,7 +262,7 @@ module Lower = MakeStage (struct
         };
       };
       {
-        func_name = "gdb'";
+        func_name = "gcd'";
         func_type = {
           func_args = [|u64; u64|];
           func_return_type = u64;
@@ -269,7 +274,7 @@ module Lower = MakeStage (struct
             value = Literal (Int 0);
           };
         };
-      }
+      } *)
     ]})
   ;;
 end)
