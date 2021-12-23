@@ -480,7 +480,9 @@ generate-report-markdown:
         > cstar.md
 
 generate-report-pdf:
-    cd report && mdpdf *.md
+    cd report && \
+        rg --files --type markdown \
+        | xargs --max-args 1 mdpdf
 
 generate-report-archive:
     git archive \
