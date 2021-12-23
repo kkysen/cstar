@@ -484,7 +484,7 @@ generate-report-pdf:
         && (echo "mdpdf uses a headless chromium and doesn't work under WSL2, try WSL1" \
             && exit 1) \
         || true
-    cd report && fd --extension md --exec mdpdf '{}' '{}.pdf'
+    cd report && fd --extension md --exec echo mdpdf '{}' '{}.pdf' | bash
 
 generate-report-archive:
     git archive \
