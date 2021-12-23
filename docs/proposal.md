@@ -1,4 +1,4 @@
-# C*
+# C* - Language Proposal
 
 Also written as `cstar` and pronounced **Sea Star**.
 

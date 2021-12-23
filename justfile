@@ -394,7 +394,7 @@ generate-code-listing-generic source_paths_path output_markdown_path file_types_
             ;
     }
 
-    const tableOfContentsName = "Table of Contents";
+    const tableOfContentsName = "Code Listing - Table of Contents";
     const tableOfContentsId = markdownHeaderToHtmlId(tableOfContentsName);
 
     function generateSourceMarkdown({src, fileTypes}) {
@@ -463,7 +463,7 @@ generate-git-log:
     echo "# Project Timeline / Git Log" > report/git-log.md
     echo '' >> report/git-log.md
     echo '```log' >> report/git-log.md
-    git log >> report/git-log.md
+    git log --stat >> report/git-log.md
     echo '```' >> report/git-log.md
 
 
@@ -480,6 +480,9 @@ generate-report-markdown:
         > cstar.md
 
 generate-report-pdf:
+    @rg 'WSL2' /proc/version --quiet \
+        && echo "mdpdf uses a headless chromium and doesn't work under WSL2, try WSL1" \
+        && exit 1
     cd report && \
         rg --files --type markdown \
         | xargs --max-args 1 mdpdf
@@ -491,4 +494,4 @@ generate-report-archive:
         --prefix "$(basename -s .git "$(git remote get-url origin)")/" \
         $(git branch --show-current)
 
-generate-report: generate-report-docs generate-code-listing generate-git-log generate-report-markdown generate-report-pdf generate-report-archive
+generate-report: generate-report-docs generate-code-listing generate-git-log generate-report-markdown generate-report-archive generate-report-pdf
