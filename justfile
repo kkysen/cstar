@@ -481,8 +481,9 @@ generate-report-markdown:
 
 generate-report-pdf:
     @rg 'WSL2' /proc/version --quiet \
-        && echo "mdpdf uses a headless chromium and doesn't work under WSL2, try WSL1" \
-        && exit 1
+        && (echo "mdpdf uses a headless chromium and doesn't work under WSL2, try WSL1" \
+            && exit 1) \
+        || true
     cd report && \
         rg --files --type markdown \
         | xargs --max-args 1 mdpdf
