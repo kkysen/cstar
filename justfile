@@ -458,3 +458,12 @@ generate-code-listing:
         <(fd '\.ml(|i|l|y)' src -0) \
         docs/code-listing.md \
         <(rg --type-list)
+
+generate-git-log:
+    echo "# Project Timeline / Git Log" > docs/git-log.md
+    echo '' >> docs/git-log.md
+    echo '```log' >> docs/git-log.md
+    git log >> docs/git-log.md
+    echo '```' >> docs/git-log.md
+
+generate-report: generate-code-listing generate-git-log
