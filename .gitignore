@@ -11,3 +11,4 @@ llvm.sh
 *.err
 *.out
 runtests.log
+report/

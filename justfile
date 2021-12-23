@@ -456,14 +456,37 @@ generate-code-listing-generic source_paths_path output_markdown_path file_types_
 generate-code-listing:
     just generate-code-listing-generic \
         <(fd '\.ml(|i|l|y)' src -0) \
-        docs/code-listing.md \
+        report/code-listing.md \
         <(rg --type-list)
 
 generate-git-log:
-    echo "# Project Timeline / Git Log" > docs/git-log.md
-    echo '' >> docs/git-log.md
-    echo '```log' >> docs/git-log.md
-    git log >> docs/git-log.md
-    echo '```' >> docs/git-log.md
+    echo "# Project Timeline / Git Log" > report/git-log.md
+    echo '' >> report/git-log.md
+    echo '```log' >> report/git-log.md
+    git log >> report/git-log.md
+    echo '```' >> report/git-log.md
 
-generate-report: generate-code-listing generate-git-log
+
+generate-report-docs:
+    rm -rf report
+    cp -r docs report
+
+generate-report-markdown:
+    cd report && bat \
+        proposal.md \
+        LRM.md \
+        git-log.md \
+        code-listing.md \
+        > cstar.md
+
+generate-report-pdf:
+    cd report && mdpdf *.md
+
+generate-report-archive:
+    git archive \
+        --format zip \
+        --output report/cstar.zip \
+        --prefix "$(basename -s .git "$(git remote get-url origin)")/" \
+        $(git branch --show-current)
+
+generate-report: generate-report-docs generate-code-listing generate-git-log generate-report-markdown generate-report-pdf generate-report-archive
