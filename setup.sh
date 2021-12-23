@@ -202,6 +202,10 @@ install-from-npm() {
     npm-install esy
 }
 
+install-from-npm-dev-only() {
+    npm-install mdpdf
+}
+
 install-llvm() {
     if is-command llvm-config; then
         local version="$(llvm-config --version)"
@@ -292,6 +296,7 @@ install-build() {
 
 install-dev-only() {
     install-from-vscode
+    install-from-npm-dev-only
 }
 
 install-dev-deps() {
