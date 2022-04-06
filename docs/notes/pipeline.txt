@@ -1,0 +1,40 @@
+llvm backend for optimization
+c backend for portability (or do llvm -> wasm -> c?)
+wasm backend for speed (llvm -> wasm for optimized wasm)
+graal truffle (JITted) interpreter for speed
+	needs to implemented on JVM directly for truffle to work
+	hopefully can share rust frontend
+	compile to IR, truffle interpreter for IR
+	hopefully can be written in Kotlin
+or use cranelift jit backend
+
+
+jit fast path:
+	incremental parser (tree-sitter, rowan)
+	compile translation unit to cstar IR
+		ideally make this incremental
+	if graal
+		patch modified items with new cstar IR
+		truffle interpreter continues to run, re-JITting new IR
+	if cranelift
+		regenerate code for cstar IR
+
+cstar IR
+	significantly higher-level than LLVM IR
+	generic, no monomorphization yet
+	can do simple optimizations on it like in Rust MIR
+	let graal do the specialization when JITting
+
+
+
+src -> lex -> tokens 
+    -> parse -> ast
+	-> desugar -> desugared ast
+	-> name resolution -> HIR
+	-> type check + sema (poly) -> THIR
+	-> lower -> MIR (poly) = cstar IR (for other backends)
+	-> monomorphize -> HIR + MIR (mono)
+	-> name resolution (mono) -> HIR
+	-> type check + sema (mono) -> THIR + MIR
+	-> lower -> MIR (mono)
+	-> codegen -> llvm IR

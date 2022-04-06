@@ -1,0 +1,146 @@
+top-level
+
+pub
+	optional (in mod, etc.)
+	can modify use, let
+	pub things need type annotations always
+	I think functions always need type annotations too
+	for now, type annotate everything, 
+	but in future, do module local inference
+
+use
+	imports
+
+fn
+	functions
+
+impl
+	impl methods, traits eventually?
+
+let
+	for consts (const blocks)
+	maybe also for functions
+
+mod
+	modules, todo later
+
+struct
+enum
+union
+trait (for future)
+
+pub let Option = enum<T> {
+	None,
+	Some(T),
+}
+
+let x: Option<i32> = Some(1);
+
+pub let hello = fn(a: u32): u64 = {
+	let b = {
+		a * a
+	};
+}
+
+@annotation on item
+
+restrictions on binding names:
+	prefer snake case
+	_ is the nothing binding (also type inference)
+	_variable is the unused binding
+	cannot have whitespace, :, ;, other weird punctuation, not a literal
+	no other restrictions really, can use keywords like
+		let let
+		let mod
+		let impl
+		let struct
+		let fn
+		let use
+		
+		can't have if, match, for be field names
+		
+
+let mut = 0;
+let let = 0;
+let mut mut = 0;
+let mut let = 0;
+
+
+
+turbofish
+
+let S = struct {}
+
+impl S {
+	let foo = fn<T>() {}
+}
+
+let main = fn() {
+	let s = S {};
+	s.foo<u32>();
+	
+	s.foo < u32 > ();
+	// don't know if foo is a function or field while parsing
+	// nor do you know u32 is a type
+	// and () is a valid value
+	// maybe just give generics higher precedence than comparison
+	// rust uses a turbofish ::<>, but we don't have :: and other options look weird
+	// TS uses precedence, which means it's not a superset of JS, but we don't have that concern
+	// thus, if you want a comparison, you have to do this:
+	(s.foo < u32) > ();
+}
+
+tokens
+
+don't lex keywords, do that in the parser
+
+WhiteSpace: \n\r \t
+	throw away (really shouldn't for error recovery)
+Assignment: =
+Dot: .
+SemiColon: ;
+Colon: :
+OpenBrace: {
+CloseBrace: }
+OpenParen: (
+CloseParen: )
+OpenBracket: [
+CloseBracket: ]
+At: @
+Times: *
+And: &
+Or: |
+Xor: ^
+Bang: !
+Comma: ,
+Percent: %
+Plus: +
+Minus: -
+LineComment: regex \/\/[^\s]*
+SyntaxComment: /-
+LessThan: <
+GreaterThan: >
+LessThanOrEquals: <=
+GreaterThanOrEquals: >=
+Equals: ==
+NotEquals: !=
+Underscore: _
+QuestionMark: ?
+Integer: regex
+Decimal: regex
+Char: regex '.'
+String: regex ()
+Pipe: |
+Tilde: ~
+// Increment: ++
+// Decrement: --
+AddEquals: +=
+MinusEquals: -=
+TimesEquals: *=
+DivideEquals: /=
+Divide: /
+XorEquals: ^=
+OrEquals: |=
+AndEquals: &=
+
+borrow from rustc lexer

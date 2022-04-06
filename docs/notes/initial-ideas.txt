@@ -1,0 +1,109 @@
+Trimmed down but better C
+
+fn foo(a: i32): i32 {
+	let b: i32 = a;
+	let c = b;
+	c
+}
+
+no generics
+no macros
+no preprocessor
+pointers, no references
+imports not includes
+expression oriented (e.x. if/else, blocks, for, while, match)
+match instead of switch (no fall through), but no pattern matching
+strings are not null terminated, but pointer + length (as a struct)
+designated initializers and/or/combo JS/Rust object/struct literals
+let/let mut
+can redeclare variable
+
+as much as possible postfix:
+	if
+	if/else
+	match
+	for (use ranges)
+		braces necessary for these control flows
+		maybe they can be prefix too
+	.* for dereference
+	.& for address of
+	.@() for builtins, like as (casting), size_of, etc.
+		.@cast(Type)
+		.@size_of()
+		.@call(func)
+		.@ref()
+		.@deref()
+		.@match {}
+		.@if {}
+		.@if {} else {}		
+
+defer if we have time
+function local type inference if we have time
+slices if we have time
+	if we do slices, then pointers can only point to one element
+	and no pointer arithmetic, indexing only on slices
+arrays if we have time (otherwise just use pointers)
+simple methods if we have time
+visibility if we have time
+tuples if we have time
+
+primitives: {i,u}{8,16,32,64,size}, f{32,64}, bool, ()/void
+
+struct S {
+	a: i32,
+	b: u64,
+}
+
+if we have time
+
+union U {
+	a: i32,
+	b: S,
+}
+
+enum E {
+	A,
+	B,
+}
+
+enum E {
+	A(S, u64),
+	B(U, u8),
+}
+
+no automatic memory
+do allocators like zig
+
+this is some sort of combination of c and zig
+
+no threads
+no atomics
+no volatile
+no runtime (std lib if we have time statically linked, also use mold)
+no lifetimes
+unsafe
+no generics
+no overloading
+no named parameters
+no default parameters or struct values
+no varargs
+no unwinding, abort on panic
+no null safety except with library support (option and result, but no generics so idk)
+no tail call elimination
+no closures
+no traits
+no function pointers (maybe?)
+
+literals
+	()
+	true, false
+	[0-9]+((u|i)(8|16|32|64|size))?
+	integers can be decimal, hex (0x), octal (0o), binary (0b)
+	suffix is (u|i)(8|16|32|64|size) for a specific integer type
+	otherwise deduced by type system
+	same with floats, but can have decimal point and scientific notation
+
+need some way to make arrays?
+
+for defer, need a way to cancel a defer
+want to simulate destructive moves, so you can move return instead of calling defer func

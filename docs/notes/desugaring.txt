@@ -1,0 +1,109 @@
+Shannon Jin10:58 AM
+join with audio
+it's ok John with send feedback via
+email
+idk why y'all can't hear
+Shannon Jin10:59 AM
+it's ok this was really touch and go
+He literally talked to us for like 5 mins
+Maybe 4 
+Ryan Lee10:59 AM
+no sweat
+Shannon Jin10:59 AM
+TLDR though there's nothing much to say
+Need parser
+Need grammer
+Cut features if necessary
+Interpolated strings could be the first feature to cut
+EOM
+Cool do you guys wanna meet up this weekend or tonight
+I'm gonna end the meeting now
+
+publicity
+annotations
+use declarations
+let declarations
+function declarations
+struct declarations
+enum declarations
+union declarations
+impl blocks
+type system
+
+expressions
+	literals
+	control flow
+	operators
+
+literals
+
+control flow
+	blocks
+	match
+		pattern matching
+	if
+	if else
+	while
+	for
+	defer
+	destructive moves
+	try .?
+	panicking
+
+operators
+	
+const
+generics
+
+iter.for e { block }
+	becomes
+{
+	let iter = iter.into_iter();
+	(true).while try {
+		let e = iter.next().?;
+		{ block }
+	}
+}
+
+
+expr.? where expr is an Option
+	becomes
+expr.ok_or(()).?
+
+
+expr.? where expr is a Result
+	becomes
+expr.match {
+	Ok(it) => it,
+	Err(e) => break e,
+}
+
+condition.if { then_block }
+	becomes
+condition.match {
+	true => { then_block },
+	false => (),
+}
+
+condition1.if { then_block } else condition2.if { elif_block }
+	becomes
+condition1.if { then_block} else { condition.2.if { elif_block } }
+
+condition.if { then_block } else { else_block }
+	becomes
+condition.match {
+	true => { then_block },
+	false => { else_block },
+}
+
+expr.method(...args) where expr: T
+	becomes
+T.method(expr, ...args)
+
+(T, U, V)
+	becomes
+struct $T_U_V {
+	0: T,
+	1: U,
+	2: V,
+}
